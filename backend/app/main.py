@@ -62,7 +62,7 @@ TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
 
 oauth2 = OAuth2PasswordBearer(tokenUrl=f"{API_PREFIX}/auth/login")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "message": "amzDUDES Reimbursement API is running",
