@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✅ Now define custom CSS after all Tailwind layers */
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+}
