@@ -54,13 +54,20 @@ def ensure_user_columns():
 ensure_user_columns()
 
 API_PREFIX = "/api"
-app = FastAPI()
+app = FastAPI(title="amzDUDES Reimbursement API")
 SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 ALGO = "HS256"
 TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
 
 oauth2 = OAuth2PasswordBearer(tokenUrl=f"{API_PREFIX}/auth/login")
 
+@app.get("/")
+def root():
+    return {
+        "message": "amzDUDES Reimbursement API is running",
+        "docs": "/docs",
+        "contact": "support@amzdudes.io",
+    }
 
 # Helper: get current user
 def get_db():
