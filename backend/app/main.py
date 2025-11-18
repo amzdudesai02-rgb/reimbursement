@@ -96,6 +96,8 @@ def get_current_user(token: str = Depends(oauth2), db: Session = Depends(get_db)
 def signup(body: SignupIn, db: Session = Depends(get_db)):
     if db.query(models.User).filter_by(email=body.email).first():
         raise HTTPException(400, "Email already registered")
+    if len(body.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password must be 72 characters or fewer.")
     token = secrets.token_urlsafe(32)
     user = models.User(
         name=body.name,
