@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
 import Contact from './pages/Contact'
 import Login from './pages/Login'
