@@ -135,10 +135,20 @@ def signup(body: SignupIn, db: Session = Depends(get_db)):
     if len(body.password.encode("utf-8")) > 72:
         raise HTTPException(status_code=400, detail="Password must be 72 characters or fewer.")
     token = secrets.token_urlsafe(32)
+    try:
+        password_hash = bcrypt.hash(body.password)
+    except ValueError as exc:
+        if "72" in str(exc):
+            raise HTTPException(
+                status_code=400,
+                detail="Password must be 72 characters or fewer.",
+            )
+        raise
+
     user = models.User(
         name=body.name,
         email=body.email,
-        password_hash=bcrypt.hash(body.password),
+        password_hash=password_hash,
         is_verified=False,
         verification_token=token,
         verification_sent_at=datetime.utcnow(),
