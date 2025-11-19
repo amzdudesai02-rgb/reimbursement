@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
 from passlib.hash import bcrypt
@@ -84,6 +84,11 @@ def root():
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     return RedirectResponse("https://reimbursement.amzdudes.io/favicon.ico")
+
+
+@app.options("/{path:path}")
+async def preflight(path: str):
+    return Response(status_code=204)
 
 # Helper: get current user
 def get_db():
