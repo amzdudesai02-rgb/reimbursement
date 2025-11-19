@@ -132,15 +132,10 @@ def get_current_user(token: str = Depends(oauth2), db: Session = Depends(get_db)
 def signup(body: SignupIn, db: Session = Depends(get_db)):
     if db.query(models.User).filter_by(email=body.email).first():
         raise HTTPException(400, "Email already registered")
-    if len(body.password) < 8:
+    if len(body.password) < 8 or len(body.password.encode("utf-8")) > 72:
         raise HTTPException(
             status_code=400,
-            detail="Password must be at least 8 characters long.",
-        )
-    if len(body.password.encode("utf-8")) > 72:
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be 72 characters or fewer.",
+            detail="Password must be between 8 and 72 characters long.",
         )
     token = secrets.token_urlsafe(32)
     try:
@@ -149,7 +144,7 @@ def signup(body: SignupIn, db: Session = Depends(get_db)):
         if "72" in str(exc):
             raise HTTPException(
                 status_code=400,
-                detail="Password must be 72 characters or fewer.",
+                detail="Password must be between 8 and 72 characters long.",
             )
         raise
 
