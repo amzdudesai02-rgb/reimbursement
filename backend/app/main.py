@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
 from passlib.hash import bcrypt
 from datetime import datetime, timedelta
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 import secrets
 import os
+import json
 
 from .database import engine
 from . import models
@@ -56,6 +58,14 @@ ensure_user_columns()
 
 API_PREFIX = "/api"
 app = FastAPI(title="amzDUDES Reimbursement API")
+cors_origins = json.loads(os.getenv("CORS_ORIGINS", '["http://localhost:5173"]'))
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 ALGO = "HS256"
 TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
