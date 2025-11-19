@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
 from passlib.hash import bcrypt
@@ -58,10 +58,22 @@ ensure_user_columns()
 
 API_PREFIX = "/api"
 app = FastAPI(title="amzDUDES Reimbursement API")
-cors_origins = json.loads(os.getenv("CORS_ORIGINS", '["http://localhost:5173"]'))
+cors_env = os.getenv("CORS_ORIGINS")
+if cors_env:
+    try:
+        parsed = json.loads(cors_env)
+        if isinstance(parsed, str):
+            cors_origins = [parsed]
+        else:
+            cors_origins = parsed
+    except json.JSONDecodeError:
+        cors_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+else:
+    cors_origins = ["http://localhost:5173"]
+allow_all = "*" in cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["*"] if allow_all else cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,10 +97,6 @@ def root():
 def favicon():
     return RedirectResponse("https://reimbursement.amzdudes.io/favicon.ico")
 
-
-@app.options("/{path:path}")
-async def preflight(path: str):
-    return Response(status_code=204)
 
 # Helper: get current user
 def get_db():
