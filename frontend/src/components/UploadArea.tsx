@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { AxiosError } from 'axios'
 import { api } from '../lib/api'
 import type { UploadReport } from '../types'
 
@@ -14,12 +15,13 @@ export default function UploadArea({ onDone }: { onDone: (r: UploadReport)=>void
      const form = new FormData()
      form.append('file', file)
      setBusy(true); setError(null)
-     try {
-       const { data } = await api.post<UploadReport>('/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-       onDone(data)
-     } catch (err: any) {
-       setError(err?.response?.data?.detail ?? 'Upload failed')
-     } finally { setBusy(false) }
+    try {
+      const { data } = await api.post<UploadReport>('/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+      onDone(data)
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ detail?: string }>
+      setError(axiosErr.response?.data?.detail ?? 'Upload failed')
+    } finally { setBusy(false) }
 }
 
 

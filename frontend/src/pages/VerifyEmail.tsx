@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { api } from '../lib/api'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
 
 type ApiError = { detail?: string }
 

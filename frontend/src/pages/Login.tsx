@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { AxiosError } from 'axios'
 import { api } from '../lib/api'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 
 type ApiErrorDetail = string | { code?: string; message?: string }

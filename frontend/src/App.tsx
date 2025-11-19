@@ -8,7 +8,8 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
-import { AuthProvider, useAuth } from './auth/AuthContext'
+import { AuthProvider } from './auth/AuthContext'
+import { useAuth } from './auth/useAuth'
 import logo from './assets/logo.png'
 
 

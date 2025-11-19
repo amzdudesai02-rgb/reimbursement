@@ -1,17 +1,22 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useMemo, useState } from "react";
+import { AuthContext } from "./context";
 
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [token, setToken] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("token") : null
+  );
 
-type AuthCtx = { token: string | null, login: (t:string)=>void, logout: ()=>void }
-const Ctx = createContext<AuthCtx>({ token: null, login: ()=>{}, logout: ()=>{} })
+  const login = (next: string) => {
+    setToken(next);
+    localStorage.setItem("token", next);
+  };
 
+  const logout = () => {
+    setToken(null);
+    localStorage.removeItem("token");
+  };
 
-export function AuthProvider({ children }: { children: React.ReactNode }){
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'))
-  function login(t: string){ setToken(t); localStorage.setItem('token', t) }
-  function logout(){ setToken(null); localStorage.removeItem('token') }
-  useEffect(()=>{},[token])
-  return <Ctx.Provider value={{ token, login, logout }}>{children}</Ctx.Provider>
+  const value = useMemo(() => ({ token, login, logout }), [token]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-
-export function useAuth(){ return useContext(Ctx) }

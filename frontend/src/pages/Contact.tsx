@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { AxiosError } from 'axios'
 import { api } from '../lib/api'
 
 
@@ -6,7 +7,9 @@ export default function Contact(){
   const [name,setName]=useState(''); const [email,setEmail]=useState(''); const [message,setMessage]=useState('');
   const [sent,setSent]=useState(false); const [err,setErr]=useState<string|null>(null)
   async function submit(e: React.FormEvent){ e.preventDefault(); setErr(null)
-    try{ await api.post('/contact',{name,email,message}); setSent(true)} catch(e:any){ setErr(e?.response?.data?.detail||'Failed') }
+    try{ await api.post('/contact',{name,email,message}); setSent(true)} catch(error){
+      const axiosErr = error as AxiosError<{ detail?: string }>
+      setErr(axiosErr.response?.data?.detail||'Failed') }
   }
   if (sent) return <div className="p-6 bg-white rounded-2xl shadow">Thanks! We’ll get back to you shortly.</div>
   return (
