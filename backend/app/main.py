@@ -58,18 +58,21 @@ ensure_user_columns()
 
 API_PREFIX = "/api"
 app = FastAPI(title="amzDUDES Reimbursement API")
-cors_env = os.getenv("CORS_ORIGINS")
-if cors_env:
+def parse_origins(raw: str | None) -> list[str]:
+    if not raw:
+        return ["http://localhost:5173"]
     try:
-        parsed = json.loads(cors_env)
+        parsed = json.loads(raw)
         if isinstance(parsed, str):
-            cors_origins = [parsed]
-        else:
-            cors_origins = parsed
+            return [parsed]
+        if isinstance(parsed, list):
+            return [str(x) for x in parsed]
     except json.JSONDecodeError:
-        cors_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
-else:
-    cors_origins = ["http://localhost:5173"]
+        pass
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+cors_origins = parse_origins(os.getenv("CORS_ORIGINS"))
 allow_all = "*" in cors_origins
 app.add_middleware(
     CORSMiddleware,
