@@ -2,7 +2,7 @@
 
 1. **Create `.env` file** inside `/var/www/amzdudes-backend/backend/.env` (or whatever path you deployed to):
    ```
-   DATABASE_URL=postgresql+psycopg://neondb_owner:<password>@ep-...-pooler.c-2.us-west-2.aws.neon.tech/ReimbursementDashboard?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql+psycopg://neondb_owner:npg_xm3MaoUCnYT4@ep-weathered-sound-afsm39mx-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
    JWT_SECRET=super-secret-key
    CORS_ORIGINS=["https://reimbursement.amzdudes.io"]
    FRONTEND_BASE_URL=https://reimbursement.amzdudes.io
