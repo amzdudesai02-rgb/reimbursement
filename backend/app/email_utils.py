@@ -14,7 +14,6 @@ FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
 
 def _send_email(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None):
     if not SMTP_HOST:
-        # Development fallback: log to console
         print(f"[DEV EMAIL] → {to_email}\nSubject: {subject}\n{html_body}")
         return
 
