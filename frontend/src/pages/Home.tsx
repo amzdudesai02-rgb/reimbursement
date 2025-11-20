@@ -4,12 +4,18 @@ import {
   BarChart3,
   CheckCircle2,
   FileText,
+  Github,
   Link2,
+  Linkedin,
   Lock,
   Percent,
+  Play,
   Send,
+  Shield,
   ShieldCheck,
   TrendingUp,
+  Twitter,
+  Zap,
 } from "lucide-react";
 
 const heroStats = [
@@ -102,65 +108,85 @@ const pricingComparison = [
   },
 ];
 
+const heroBars = [55, 78, 65, 90];
+
 export default function Home() {
   return (
     <div className="space-y-20">
       <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_40px_120px_rgba(12,38,131,0.1)]">
-        <div className="flex flex-wrap items-center gap-12">
-          <div className="max-w-2xl space-y-6">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <div className="space-y-6">
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              ⚡ Lowest commission in the market
+              <Zap className="h-3.5 w-3.5" />
+              Lowest commission in the market
             </span>
-            <h1 className="text-4xl font-semibold text-slate-900">
+            <h1 className="text-4xl font-semibold text-slate-900 leading-tight">
               Recover Amazon FBA Reimbursements — Pay Less.
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
               Automated audits, verified claims, and the lowest commission in the market. AMZDudes finds money you didn’t know you were owed.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button className="rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]">
+              <button className="inline-flex items-center gap-2 rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]">
                 Start Free Audit
+                <ArrowRight className="h-4 w-4" />
               </button>
-              <button className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400">
+              <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400">
+                <Play className="h-4 w-4" />
                 See Dashboard
               </button>
             </div>
             <div className="mt-4 flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <ShieldCheck className="h-5 w-5 text-blue-500" />
+              <Shield className="h-5 w-5 text-blue-500" />
               <span>Amazon-safe. Your data is encrypted & secure.</span>
             </div>
           </div>
-          <div className="flex flex-col gap-5">
-            <div className="rounded-3xl bg-[#0B64FF] p-6 text-white shadow-lg">
-              <p className="text-sm uppercase tracking-[0.35em] text-white/70">AMZDudes Dashboard</p>
-              <div className="mt-4 flex items-center justify-between">
+          <div className="relative">
+            <div className="rounded-[36px] border border-slate-100 bg-white p-6 shadow-[0_35px_90px_rgba(12,38,131,0.15)]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+                <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#0B64FF] text-white">AD</span>
+                AMZDudes Dashboard
+              </div>
+              <div className="mt-6 grid gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm text-slate-500 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs text-white/70">Active Claims</p>
-                  <p className="text-3xl font-semibold">47</p>
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Active Claims</p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-900">47</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-white/70">Pending</p>
-                  <p className="text-3xl font-semibold">$12,847</p>
+                <div className="text-right sm:text-left">
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Pending</p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-900">$12,847</p>
                 </div>
               </div>
-              <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm">
-                <p className="text-white/70">You pay only</p>
-                <p className="text-4xl font-semibold">8%</p>
-                <p className="text-xs text-white/80">vs. 25% competitors</p>
+              <div className="mt-6">
+                <p className="text-sm font-semibold text-slate-600">Recovery Trend</p>
+                <div className="mt-3 flex items-end gap-3">
+                  {heroBars.map((height, idx) => (
+                    <div
+                      key={idx}
+                      className="w-8 rounded-t-2xl bg-gradient-to-t from-[#0B64FF] to-[#54A3FF]"
+                      style={{ height: `${height}px` }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="rounded-[32px] border border-slate-100 bg-slate-50 p-6 text-slate-700 shadow-inner">
+            <div className="absolute -right-6 -top-6 w-48 rounded-3xl bg-[#0B64FF] p-4 text-white shadow-2xl">
+              <p className="text-xs uppercase tracking-[0.35em] text-white/70">You pay only</p>
+              <p className="mt-2 text-4xl font-semibold">8%</p>
+              <p className="text-xs text-white/80">vs. 25% competitors</p>
+            </div>
+            <div className="absolute -left-6 -bottom-8 w-56 rounded-3xl border border-slate-100 bg-white p-4 text-sm text-slate-600 shadow-xl">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Latest Approval</p>
-              <p className="mt-3 text-3xl font-semibold text-slate-900">+$1,247.50</p>
-              <p className="text-sm text-slate-500">Damaged inventory claim</p>
-              <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+              <p className="mt-3 text-2xl font-semibold text-slate-900">+$1,247.50</p>
+              <p>Damaged inventory claim</p>
+              <span className="mt-3 inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
                 <CheckCircle2 className="h-4 w-4" />
                 Approved
               </span>
             </div>
           </div>
         </div>
-        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-3">
           {heroStats.map((stat) => (
             <div key={stat.label} className="rounded-3xl border border-slate-100 bg-slate-50/60 p-6 text-center">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">{stat.label}</p>
@@ -208,27 +234,33 @@ export default function Home() {
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 font-semibold">AD</div>
               <p className="text-lg font-semibold">Claims Dashboard</p>
             </div>
-            <div className="divide-y divide-white/5 px-6 py-4 text-sm">
-              <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1.5fr] py-2 text-white/60 uppercase tracking-wide text-xs">
-                <span>Claim ID</span>
-                <span>Type</span>
-                <span>Amount</span>
-                <span>Status</span>
-                <span>Date Filed</span>
-              </div>
-              {claims.map((claim) => (
-                <div key={claim.id} className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1.5fr] items-center border-t border-white/5 py-3 text-white">
-                  <span>{claim.id}</span>
-                  <span className="text-white/80">{claim.type}</span>
-                  <span className="font-semibold">{claim.amount}</span>
-                  <span>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${claim.statusColor}`}>
-                      {claim.status}
-                    </span>
-                  </span>
-                  <span className="text-white/80">{claim.date}</span>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+                <thead className="text-xs uppercase tracking-[0.35em] text-white/60">
+                  <tr>
+                    <th className="px-6 py-3">Claim ID</th>
+                    <th className="px-6 py-3">Type</th>
+                    <th className="px-6 py-3">Amount</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">Date Filed</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {claims.map((claim) => (
+                    <tr key={claim.id}>
+                      <td className="px-6 py-3 font-medium">{claim.id}</td>
+                      <td className="px-6 py-3 text-white/80">{claim.type}</td>
+                      <td className="px-6 py-3 font-semibold">{claim.amount}</td>
+                      <td className="px-6 py-3">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${claim.statusColor}`}>
+                          {claim.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-white/80">{claim.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
           <div className="absolute right-8 -top-10 w-64 rounded-3xl bg-[#0B64FF] p-6 text-white shadow-2xl">
@@ -297,15 +329,15 @@ export default function Home() {
       <section className="space-y-10">
         <div className="text-center">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Trusted by Amazon sellers worldwide</p>
-          <h2 className="mt-2 text-3xl font-semibold text-slate-900">Trusted by Amazon Sellers Worldwide</h2>
+          <h2 className="mt-2 text-4xl font-semibold text-slate-900">Trusted by Amazon Sellers Worldwide</h2>
           <p className="text-sm text-slate-500">Join thousands of sellers recovering what they’re owed with AMZDudes.</p>
         </div>
-        <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold text-slate-400">
+        <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold">
           {testimonialTabs.map((tab, idx) => (
             <button
               key={tab}
               className={`rounded-full px-4 py-2 ${
-                idx === 0 ? "bg-white text-slate-900 shadow" : "hover:text-slate-900"
+                idx === 0 ? "bg-white text-slate-900 shadow" : "text-slate-400 hover:text-slate-900"
               }`}
             >
               {tab}
@@ -321,8 +353,18 @@ export default function Home() {
                 ))}
               </div>
               <p className="mt-4 text-sm text-slate-600">{card.quote}</p>
-              <p className="mt-4 text-sm font-semibold text-slate-900">{card.name}</p>
-              <p className="text-xs text-slate-500">{card.role}</p>
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  {card.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{card.name}</p>
+                  <p className="text-xs text-slate-500">{card.role}</p>
+                </div>
+              </div>
             </article>
           ))}
         </div>
@@ -338,7 +380,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_25px_80px_rgba(12,38,131,0.08)]">
+      <section className="space-y-8 rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_25px_80px_rgba(12,38,131,0.08)]">
         <div className="text-center space-y-3">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Stop paying 25%+</p>
           <h2 className="text-4xl font-semibold text-slate-900">Stop Paying 25%+ To Other Reimbursement Tools</h2>
@@ -346,7 +388,11 @@ export default function Home() {
             AMZDudes charges only 8%, with no hidden fees. That’s the lowest in the industry.
           </p>
         </div>
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold text-slate-500">
+          <button className="rounded-full bg-slate-900 px-4 py-2 text-white">Other Services</button>
+          <button className="rounded-full bg-white px-4 py-2 shadow">AMZDudes — Best Value</button>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
           {pricingComparison.map((plan, idx) => (
             <article
               key={plan.title}
@@ -355,11 +401,14 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-500">{plan.title}</p>
                 {idx === 1 && (
-                  <span className="rounded-full bg-[#0B64FF] px-3 py-1 text-xs font-semibold text-white">Best Value</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#0B64FF] px-3 py-1 text-xs font-semibold text-white">
+                    <Zap className="h-3.5 w-3.5" />
+                    Best Value
+                  </span>
                 )}
               </div>
               <p className="mt-4 text-5xl font-semibold text-slate-900">{plan.rate}</p>
-              <p className="mt-2 text-sm text-slate-500">Standard commission</p>
+              <p className="mt-2 text-sm text-slate-500">Standard Commission</p>
               <ul className="mt-6 space-y-2 text-sm text-slate-600">
                 {plan.bullets.map((bullet) => (
                   <li key={bullet} className="flex items-start gap-2">
@@ -378,6 +427,11 @@ export default function Home() {
                 </div>
                 <p className="mt-2 text-sm text-slate-500">You pay: {plan.pay}</p>
               </div>
+              {idx === 1 && (
+                <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]">
+                  Start Free Audit Now <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
             </article>
           ))}
         </div>
@@ -450,6 +504,17 @@ export default function Home() {
             <div className="rounded-2xl border border-white/10 bg-slate-800 p-4 text-sm text-white/80">
               <p className="font-semibold">Amazon-Safe & Secure</p>
               <p>Bank-level encryption. Fully compliant with Amazon TOS.</p>
+            </div>
+            <div className="flex items-center gap-4 text-white/70">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer">
+                <Twitter className="h-4 w-4" />
+              </a>
+              <a href="https://github.com" target="_blank" rel="noreferrer">
+                <Github className="h-4 w-4" />
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer">
+                <Linkedin className="h-4 w-4" />
+              </a>
             </div>
           </div>
           <div>
