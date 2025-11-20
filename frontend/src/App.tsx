@@ -23,36 +23,30 @@ function Shell(){
     const { token, logout } = useAuth()
     return (
        <div className="min-h-screen bg-neutral-50 text-navy">
-        <nav className="sticky top-0 z-40 backdrop-blur bg-white/90 border-b border-slate-100">
-         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6 text-sm font-medium text-slate-600">
+        <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
+         <div className="max-w-6xl mx-auto flex items-center gap-6 px-4 py-3 text-sm font-medium text-slate-600">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="amzDUDES" className="h-8"/>
           </Link>
           <div className="hidden md:flex items-center gap-6 flex-1">
-            <a href="#features" className="hover:text-slate-900">Product</a>
+            <a href="#features" className="hover:text-slate-900">Features</a>
+            <a href="#how-it-works" className="hover:text-slate-900">How It Works</a>
             <Link to="/pricing" className="hover:text-slate-900">Pricing</Link>
-            <a href="#how-it-works" className="hover:text-slate-900">How it Works</a>
-            <Link to="/reimbursement-tool" className="hover:text-slate-900">Training</Link>
+            <a href="#security" className="hover:text-slate-900">Security</a>
             <Link to="/contact" className="hover:text-slate-900">Company</Link>
           </div>
           {token ? (
               <>
                 <Link to="/dashboard" className="hover:text-slate-900">Dashboard</Link>
-                <button
-                  onClick={logout}
-                  className="ml-3 rounded-full bg-slate-900 px-4 py-2 text-white shadow hover:bg-slate-800"
-                >
+                <button onClick={logout} className="rounded-full bg-slate-900 px-4 py-2 text-white shadow hover:bg-slate-800">
                   Logout
                 </button>
               </>
            ) : (
-              <div className="flex items-center gap-3">
-                <Link to="/login" className="text-slate-600 hover:text-slate-900">Login</Link>
-                <Link
-                  to="/signup"
-                  className="rounded-full bg-[#0B64FF] px-4 py-2 text-white shadow hover:bg-[#0450d9]"
-                >
-                  Start free audit
+              <div className="flex items-center gap-4">
+                <Link to="/login" className="text-slate-600 hover:text-slate-900">Sign In</Link>
+                <Link to="/signup" className="rounded-full bg-[#0B64FF] px-4 py-2 text-white shadow hover:bg-[#0853d6]">
+                  Start Free Audit
                 </Link>
               </div>
            )}

@@ -2,121 +2,107 @@ import {
   Activity,
   ArrowRight,
   BarChart3,
-  LineChart,
+  CheckCircle2,
+  FileText,
+  Link2,
+  Lock,
+  Percent,
+  Send,
   ShieldCheck,
-  Star,
   TrendingUp,
-  Zap,
 } from "lucide-react";
-import hero from "../assets/home1.png";
 
 const heroStats = [
   { label: "Recovered for sellers", value: "$48M+" },
-  { label: "Monthly audits", value: "12K+ files" },
-  { label: "Avg ROI", value: "6.4x" },
+  { label: "Active users", value: "12K+" },
+  { label: "Approval rate", value: "99%" },
 ];
 
-const featureCards = [
-  {
-    icon: ShieldCheck,
-    title: "Automated FBA audit",
-    desc: "SP-API ingestion surfaces inbound, fee, return, and lost claims automatically.",
-  },
-  {
-    icon: LineChart,
-    title: "Real-time dashboard",
-    desc: "See every reimbursement, claim aging, and ROI on one blue-glass board.",
-  },
-  {
-    icon: Zap,
-    title: "One-click case packets",
-    desc: "AI drafts Amazon-compliant evidence so you can approve & submit instantly.",
-  },
-  {
-    icon: BarChart3,
-    title: "Only 8% commission",
-    desc: "Keep 92% of recovered revenue with flat subscription + 8% success fee.",
-  },
+const features = [
+  { icon: ShieldCheck, title: "Automated FBA Audit", desc: "AI-powered scanning detects every eligible reimbursement across your inventory." },
+  { icon: TrendingUp, title: "Hidden Opportunities", desc: "Find lost, damaged, and destroyed inventory money Amazon owes you." },
+  { icon: BarChart3, title: "Real-time Dashboard", desc: "Track every claim status, approval, and recovered amount instantly." },
+  { icon: Percent, title: "Only 8% Commission", desc: "Cheapest in the market — keep more of what you recover." },
+  { icon: Send, title: "Recovery Tracking", desc: "Complete visibility into reimbursements, approvals, and revenue impact." },
+  { icon: Lock, title: "Amazon-Compliant & Secure", desc: "TOS-compliant, bank-level encryption, AWS-backed infrastructure." },
 ];
 
 const steps = [
-  { title: "Connect Amazon Account", desc: "Secure OAuth connection, no developer keys needed." },
-  { title: "Automated Audit", desc: "Backfill 18 months and highlight every reimbursement opportunity." },
-  { title: "File & Recover", desc: "Approve pre-drafted cases or let our managed team submit." },
-  { title: "Track Results", desc: "Live analytics, alerts, and exports built for finance teams." },
+  { icon: Link2, title: "Connect Amazon Account", desc: "Secure OAuth connection in under 60 seconds." },
+  { icon: FileText, title: "Automated Audits", desc: "We detect every fee, inbound, or return discrepancy automatically." },
+  { icon: Send, title: "File & Recover", desc: "Approve turnkey claim packets or let AMZDudes submit them for you." },
+  { icon: Activity, title: "Track Results", desc: "Live dashboards, alerts, and exports for finance and ops teams." },
 ];
 
-const testimonialCards = [
-  {
-    quote: "“amzDUDES recovered $148K in 45 days and replaced two VA roles. The Slack channel gives us answers instantly.”",
-    name: "Micheal Chen",
-    role: "Ops Lead, Volt Bikes",
-  },
-  {
-    quote: "“The pricing is transparent, reporting is gorgeous, and the team fights for every dollar we’re owed.”",
-    name: "Sara Wilkins",
-    role: "Head of Finance, Lume Labs",
-  },
-  {
-    quote: "“We tried GETIDA and Seller Investigators. Nobody matched amzDUDES’ automation plus human follow-through.”",
-    name: "Dwight Thompson",
-    role: "Co-founder, Bloomful",
-  },
-];
-
-const comparison = [
-  {
-    title: "Other tools",
-    percent: "20–25%",
-    bullets: ["High recoveries taxed at 25%", "Manual spreadsheets", "Slow case follow-up", "Opaque pricing"],
-  },
-  {
-    title: "AMZDUDES",
-    percent: "8%",
-    highlight: true,
-    bullets: ["Flat subscription + 8% success fee", "Automated drafts & evidence", "Slack/WhatsApp escalation", "No long-term contracts"],
-  },
+const securityPoints = [
+  "OAuth-only Seller Central access",
+  "SOC2-ready infrastructure",
+  "24/7 fraud monitoring & SLA",
+  "Encrypted data at rest and in transit",
 ];
 
 export default function Home() {
   return (
     <div className="space-y-20">
-      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_40px_120px_rgba(8,46,176,0.08)]">
+      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_40px_120px_rgba(12,38,131,0.1)]">
         <div className="flex flex-wrap items-center gap-12">
           <div className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">
-              FBA reimbursements
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+              ⚡ Lowest commission in the market
             </span>
-            <h1 className="text-4xl font-semibold leading-tight text-slate-900">
-              Recover Amazon FBA reimbursements — pay less.
+            <h1 className="text-4xl font-semibold text-slate-900">
+              Recover Amazon FBA Reimbursements — Pay Less.
             </h1>
-            <p className="text-lg text-slate-600">
-              Automated audits, verified claims, and the lowest commission in the industry. AMZDUDES finds every dollar Amazon owes you and plugs straight into your workflow.
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Automated audits, verified claims, and the lowest commission in the market. AMZDudes finds money you didn’t know you were owed.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <button className="rounded-full bg-[#0B64FF] px-6 py-3 text-sm font-semibold text-white shadow hover:bg-[#044fe0]">
-                Start free audit
+            <div className="flex flex-wrap gap-3">
+              <button className="rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]">
+                Start Free Audit
               </button>
-              <button className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400">
-                Book live demo
+              <button className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400">
+                See Dashboard
               </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <ShieldCheck className="h-5 w-5 text-blue-500" />
+              <span>Amazon-safe. Your data is encrypted & secure.</span>
             </div>
           </div>
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5">
             <div className="rounded-3xl bg-[#0B64FF] p-6 text-white shadow-lg">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/70">Only 8% commission</p>
-              <p className="mt-3 text-5xl font-semibold">8%</p>
-              <p className="text-sm text-white/80">Industry-low fee backed by automation</p>
+              <p className="text-sm uppercase tracking-[0.35em] text-white/70">AMZDudes Dashboard</p>
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-white/70">Active Claims</p>
+                  <p className="text-3xl font-semibold">47</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-white/70">Pending</p>
+                  <p className="text-3xl font-semibold">$12,847</p>
+                </div>
+              </div>
+              <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm">
+                <p className="text-white/70">You pay only</p>
+                <p className="text-4xl font-semibold">8%</p>
+                <p className="text-xs text-white/80">vs. 25% competitors</p>
+              </div>
             </div>
-            <div className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-inner">
-              <img src={hero} alt="Dashboard mock" className="rounded-2xl" />
+            <div className="rounded-[32px] border border-slate-100 bg-slate-50 p-6 text-slate-700 shadow-inner">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Latest Approval</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">+$1,247.50</p>
+              <p className="text-sm text-slate-500">Damaged inventory claim</p>
+              <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                Approved
+              </span>
             </div>
           </div>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {heroStats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{stat.label}</p>
+            <div key={stat.label} className="rounded-3xl border border-slate-100 bg-slate-50/60 p-6 text-center">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">{stat.label}</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">{stat.value}</p>
             </div>
           ))}
@@ -124,61 +110,38 @@ export default function Home() {
       </section>
 
       <section id="features" className="space-y-6 text-center">
-        <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-blue-600">Powerful features</p>
-          <h2 className="mt-2 text-3xl font-semibold text-slate-900">
-            Everything you need to maximize FBA reimbursements.
-          </h2>
+        <div className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Built for Amazon sellers</p>
+          <h2 className="text-3xl font-semibold text-slate-900">Powerful features built for Amazon sellers</h2>
+          <p className="text-sm text-slate-500">
+            Everything you need to maximize your FBA reimbursements, all in one automated platform.
+          </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {featureCards.map((card) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
             <article
-              key={card.title}
-              className="rounded-3xl border border-slate-100 bg-white p-6 text-left shadow-[0_20px_50px_rgba(10,35,130,0.08)]"
+              key={feature.title}
+              className="rounded-3xl border border-slate-100 bg-white p-6 text-left shadow-[0_30px_70px_rgba(12,38,131,0.08)]"
             >
-              <card.icon className="h-10 w-10 text-[#0B64FF]" />
-              <h3 className="mt-4 text-lg font-semibold text-slate-900">{card.title}</h3>
-              <p className="mt-2 text-sm text-slate-500">{card.desc}</p>
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <feature.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">{feature.title}</h3>
+              <p className="mt-2 text-sm text-slate-500">{feature.desc}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section
-        id="how-it-works"
-        className="rounded-[32px] border border-slate-100 bg-gradient-to-br from-[#F6F8FF] via-white to-[#EEF2FF] p-10 shadow-[0_30px_80px_rgba(8,46,176,0.08)]"
-      >
-        <p className="text-xs uppercase tracking-[0.4em] text-blue-600">How AMZDUDES works</p>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-900">Simple steps. Massive recovery.</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-4">
-          {steps.map((step, index) => (
-            <div key={step.title} className="rounded-3xl border border-white bg-white/80 p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-lg font-semibold text-blue-600">
-                {index + 1}
-              </div>
-              <h3 className="mt-4 text-lg font-semibold text-slate-900">{step.title}</h3>
-              <p className="mt-2 text-sm text-slate-500">{step.desc}</p>
-            </div>
-          ))}
+      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_35px_90px_rgba(12,38,131,0.08)]">
+        <div className="text-center space-y-3">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Complete visibility</p>
+          <h2 className="text-3xl font-semibold text-slate-900">Complete visibility into your reimbursements</h2>
+          <p className="text-sm text-slate-500">
+            Track claims, monitor recoveries, and analyze your Amazon FBA reimbursements with dashboards built for sellers.
+          </p>
         </div>
-      </section>
-
-      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_30px_80px_rgba(8,46,176,0.08)]">
-        <div className="flex flex-wrap items-center gap-10">
-          <div className="flex-1 space-y-4">
-            <p className="text-xs uppercase tracking-[0.4em] text-blue-600">Complete visibility</p>
-            <h2 className="text-3xl font-semibold text-slate-900">
-              Track every claim, recoveries, and trends in one glance.
-            </h2>
-            <p className="text-sm text-slate-500">
-              Live insights, finance-ready exports, and alerts built for Amazon-first operators.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-600">
-              <li>✔ Live analytics & recovery pacing</li>
-              <li>✔ Expert exports for accruals & audits</li>
-              <li>✔ Alerts when cases are approved or denied</li>
-            </ul>
-          </div>
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="rounded-[36px] border border-slate-100 bg-slate-50/70 p-6">
             <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-lg">
               <div className="flex items-center justify-between text-sm text-white/70">
@@ -193,104 +156,89 @@ export default function Home() {
                 { label: "Inbound", value: "$24,325 · 152 cases" },
                 { label: "Damaged", value: "$206 · 3 cases" },
                 { label: "Returns", value: "$0 · 9 cases" },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-                  <span>{item.label}</span>
-                  <span>{item.value}</span>
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+                  <span>{row.label}</span>
+                  <span>{row.value}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="space-y-8">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-blue-600">Trusted by Amazon sellers worldwide</p>
-          <h2 className="mt-2 text-3xl font-semibold text-slate-900">
-            Thousands of sellers recover and retain more with AMZDudes.
-          </h2>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {testimonialCards.map((card) => (
-            <article
-              key={card.name}
-              className="rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_25px_60px_rgba(10,35,130,0.08)]"
-            >
-              <Star className="h-8 w-8 text-blue-500" />
-              <p className="mt-4 text-sm text-slate-600">{card.quote}</p>
-              <div className="mt-4 text-sm">
-                <p className="font-semibold text-slate-900">{card.name}</p>
-                <p className="text-slate-500">{card.role}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            { label: "$48M+", desc: "Total recovered for sellers" },
-            { label: "12,000+", desc: "Active seller accounts" },
-            { label: "99%", desc: "Case win rate" },
-          ].map((metric) => (
-            <div key={metric.label} className="rounded-3xl border border-slate-100 bg-white p-5 text-center shadow-sm">
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{metric.label}</p>
-              <p className="mt-2 text-sm font-semibold text-slate-700">{metric.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_30px_80px_rgba(8,46,176,0.08)]">
-        <div className="flex flex-wrap items-center gap-4">
-          <Activity className="h-10 w-10 text-blue-500" />
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-blue-600">Stop paying 25%+</p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-900">
-              AMZDUDES charges 8% with no hidden fees. Lowest in the industry.
-            </h2>
+          <div className="space-y-3 text-sm text-slate-600">
+            <p>✔ Live analytics & recovery pacing</p>
+            <p>✔ Expert exports for accruals & audits</p>
+            <p>✔ Alerts when cases are approved or denied</p>
+            <p>✔ Slack + email digests for founders & finance</p>
           </div>
         </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
-          {comparison.map((plan) => (
-            <article
-              key={plan.title}
-              className={`rounded-3xl border p-6 ${
-                plan.highlight ? "border-blue-200 bg-blue-50/40" : "border-slate-100 bg-slate-50/50"
-              }`}
-            >
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{plan.title}</p>
-              <div className="mt-2 flex items-end gap-2">
-                <span className="text-4xl font-semibold text-slate-900">{plan.percent}</span>
-                <span className="text-sm text-slate-500">Avg fee</span>
+      </section>
+
+      <section id="how-it-works" className="rounded-[32px] border border-slate-100 bg-slate-50 p-10 shadow-[0_20px_60px_rgba(12,38,131,0.08)]">
+        <div className="text-center space-y-3">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">How AMZDudes works</p>
+          <h2 className="text-3xl font-semibold text-slate-900">How AMZDudes Works</h2>
+          <p className="text-sm text-slate-500">
+            From setup to recovery in 4 simple steps. Start finding hidden money in your Amazon account today.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-6 md:grid-cols-4">
+          {steps.map((step, idx) => (
+            <article key={step.title} className="rounded-3xl bg-white p-6 text-center shadow-sm">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                {String(idx + 1).padStart(2, "0")}
               </div>
-              <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                {plan.bullets.map((bullet) => (
-                  <li key={bullet}>• {bullet}</li>
-                ))}
-              </ul>
+              <div className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-blue-600">
+                <step.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-500">{step.desc}</p>
             </article>
           ))}
         </div>
-        <div className="mt-8 rounded-3xl bg-emerald-50 p-6 text-center text-sm text-emerald-700">
-          Save $1,200–$1,700 on every $10,000 recovered compared to legacy tools charging 25%.
+      </section>
+
+      <section id="security" className="rounded-[32px] border border-slate-100 bg-white p-10 shadow-[0_25px_80px_rgba(12,38,131,0.08)]">
+        <div className="flex flex-wrap items-center gap-8">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Security</p>
+            <h2 className="text-3xl font-semibold text-slate-900">Enterprise-grade security & compliance</h2>
+            <p className="text-sm text-slate-500">
+              Built with AWS, encrypted end-to-end, and monitored 24/7 so your Seller Central data stays safe.
+            </p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              {securityPoints.map((point) => (
+                <li key={point} className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex-1 rounded-3xl border border-slate-100 bg-slate-50 p-6">
+            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+              <Lock className="mx-auto h-10 w-10 text-blue-500" />
+              <p className="mt-3 text-slate-900 font-semibold">AWS + Cloudflare shield</p>
+              <p>Multi-region backups, IP restrictions, and role-based controls.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-slate-100 bg-gradient-to-r from-[#0C2CF8] to-[#1283FF] p-10 text-white shadow-[0_30px_90px_rgba(7,28,112,0.45)]">
+      <section className="rounded-[32px] border border-slate-100 bg-gradient-to-r from-[#0B64FF] to-[#224CFF] p-10 text-white shadow-[0_35px_100px_rgba(12,38,131,0.4)]">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/70">Ready to recover more?</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-white/70">Ready to recover more?</p>
             <h2 className="mt-2 text-3xl font-semibold">Stop paying 25% to other reimbursement tools.</h2>
-            <p className="text-sm text-white/80">
-              AMZDUDES charges 8%, with no setup fees. That’s real power to the seller.
+            <p className="text-sm text-white/80 mt-2">
+              AMZDudes charges 8%, with no setup fees. We show every opportunity before you switch.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0B64FF] shadow">
-              Start free audit
+              Start Free Audit
             </button>
-            <button className="inline-flex items-center gap-2 rounded-full border border-white/60 px-6 py-3 text-sm font-semibold text-white">
-              Schedule call <ArrowRight className="h-4 w-4" />
+            <button className="inline-flex items-center gap-2 rounded-full border border-white/70 px-6 py-3 text-sm font-semibold text-white">
+              Schedule Call <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
