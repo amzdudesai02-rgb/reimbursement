@@ -73,7 +73,7 @@ def parse_origins(raw: str | None) -> list[str]:
 
 
 cors_origins = parse_origins(os.getenv("CORS_ORIGINS"))
-allow_all = "*" in cors_origins
+allow_all = "*" in cors_origins or not cors_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if allow_all else cors_origins,
