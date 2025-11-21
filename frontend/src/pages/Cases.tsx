@@ -2,20 +2,6 @@ import { useState } from "react";
 import { Search, Download, ChevronUp, ChevronDown } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
-type CaseStatus = "RESOLVED" | "SUCCESS";
-
-type Case = {
-  id: number;
-  storeName: string;
-  createdDate: string;
-  filedDate: string;
-  caseStatus: CaseStatus;
-  potentialValue: number;
-  actualRecovered: number | null;
-  amazonCaseId: string | null;
-  reimbursementId: string | null;
-};
-
 type ReimbursementReport = {
   caseSummaryId: number;
   storeName: string;
@@ -26,13 +12,6 @@ type ReimbursementReport = {
   amazonOrderId: string;
   reason: string;
 };
-
-const mockCases: Case[] = [
-  { id: 2491975, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-07-02", filedDate: "2024-05-30", caseStatus: "RESOLVED", potentialValue: 0.00, actualRecovered: 5.75, amazonCaseId: "15363954821", reimbursementId: "15100436301" },
-  { id: 2340473, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-07", filedDate: "2024-05-09", caseStatus: "SUCCESS", potentialValue: 7.45, actualRecovered: 21.19, amazonCaseId: "15250064371", reimbursementId: "14961849691" },
-  { id: 1538135, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-01-26", filedDate: "2024-05-03", caseStatus: "SUCCESS", potentialValue: 23.66, actualRecovered: 33.25, amazonCaseId: "15214472821", reimbursementId: "14940754861" },
-  { id: 1538136, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-01-27", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 1843.68, actualRecovered: 1648.32, amazonCaseId: "", reimbursementId: "N/A" },
-];
 
 const mockReimbursementReports: ReimbursementReport[] = [
   { caseSummaryId: 1182093, storeName: "Cowell's Beach N' Bikini", caseDateSuccess: "2023-11-28", reimbursementDate: "2023-11-27", reimbursementId: "13845284641", amazonCaseId: "14373324351", amazonOrderId: "N/A", reason: "lost" },
