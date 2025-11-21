@@ -228,4 +228,4 @@ async def summary(user=Depends(get_current_user)):
 async def list_items(skip: int = 0, limit: int = 100, user=Depends(get_current_user)):
     with get_session() as db:
         items = crud.list_reimbursements(db, skip=skip, limit=limit)
-        return [ReimbursementOut.model_validate(i) for i in items]
+        return [ReimbursementOut.from_amazon_reimbursement(i) for i in items]

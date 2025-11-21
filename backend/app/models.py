@@ -62,3 +62,7 @@ class ContactMessage(Base):
     email = Column(String(255))
     message = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
+
+
+# Alias for backward compatibility
+Reimbursement = AmazonReimbursement

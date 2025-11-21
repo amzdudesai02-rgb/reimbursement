@@ -32,12 +32,12 @@ class ReimbursementCreate(BaseModel):
     status: str = "Pending"  # default if not provided
 
 class SummaryOut(BaseModel):
-    total_reimbursements: float
-    total_orders: int
-    average_refund: Optional[float] = None
+    total_amount: float
+    row_count: int
+    currency: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class SignupIn(BaseModel):
    name: str
@@ -74,11 +74,29 @@ class ResendVerificationIn(BaseModel):
 
 class ReimbursementOut(BaseModel):
     id: int
-    order_id: str
-    reason: str
+    order_id: Optional[str] = None
+    sku: Optional[str] = None
+    asin: Optional[str] = None
+    issue_type: Optional[str] = None
     amount: float
-    status: str
-    created_at: datetime
+    currency: Optional[str] = None
+    date: Optional[str] = None
+    notes: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+    @classmethod
+    def from_amazon_reimbursement(cls, item):
+        """Map AmazonReimbursement model to ReimbursementOut schema"""
+        return cls(
+            id=item.id,
+            order_id=item.amazon_order_id,
+            sku=item.sku,
+            asin=item.asin,
+            issue_type=item.reason,
+            amount=float(item.amount_total or 0),
+            currency=item.currency_unit,
+            date=item.approval_date.isoformat() if item.approval_date else None,
+            notes=item.product_name,
+        )
