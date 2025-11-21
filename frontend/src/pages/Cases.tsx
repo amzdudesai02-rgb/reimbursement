@@ -2,6 +2,18 @@ import { useState } from "react";
 import { Search, Download, ChevronUp, ChevronDown } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
+type SummaryCase = {
+  id: number;
+  storeName: string;
+  createdDate: string;
+  filedDate: string;
+  caseStatus: "RESOLVED" | "SUCCESS" | "PENDING";
+  potentialValue: number;
+  actualRecovered: number | null;
+  amazonCaseId: string | null;
+  reimbursementId: string | null;
+};
+
 type ReimbursementReport = {
   caseSummaryId: number;
   storeName: string;
@@ -12,6 +24,19 @@ type ReimbursementReport = {
   amazonOrderId: string;
   reason: string;
 };
+
+const mockSummaryCases: SummaryCase[] = [
+  { id: 2491975, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-07-02", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 0.00, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
+  { id: 2340473, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-07", filedDate: "2024-05-09", caseStatus: "SUCCESS", potentialValue: 7.45, actualRecovered: 21.19, amazonCaseId: "15250064371", reimbursementId: "14961849691" },
+  { id: 1538135, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-01-26", filedDate: "2024-05-03", caseStatus: "SUCCESS", potentialValue: 23.66, actualRecovered: 33.25, amazonCaseId: "15214472821", reimbursementId: "14940754861" },
+  { id: 1538136, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-01-27", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 1843.68, actualRecovered: 1648.32, amazonCaseId: "15363954821", reimbursementId: "15100436301" },
+  { id: 1538137, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-02-15", filedDate: "-", caseStatus: "PENDING", potentialValue: 125.50, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
+  { id: 1538138, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-03-10", filedDate: "2024-03-05", caseStatus: "SUCCESS", potentialValue: 45.20, actualRecovered: 50.00, amazonCaseId: "15250064372", reimbursementId: "14961849692" },
+  { id: 1538139, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-04-20", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 0.00, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
+  { id: 1538140, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-05-12", filedDate: "2024-05-08", caseStatus: "SUCCESS", potentialValue: 89.30, actualRecovered: 95.50, amazonCaseId: "15250064373", reimbursementId: "14961849693" },
+  { id: 1538141, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-01", filedDate: "-", caseStatus: "PENDING", potentialValue: 200.00, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
+  { id: 1538142, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-15", filedDate: "2024-06-10", caseStatus: "SUCCESS", potentialValue: 156.75, actualRecovered: 175.00, amazonCaseId: "15250064374", reimbursementId: "14961849694" },
+];
 
 const mockReimbursementReports: ReimbursementReport[] = [
   { caseSummaryId: 1182093, storeName: "Cowell's Beach N' Bikini", caseDateSuccess: "2023-11-28", reimbursementDate: "2023-11-27", reimbursementId: "13845284641", amazonCaseId: "14373324351", amazonOrderId: "N/A", reason: "lost" },
@@ -43,12 +68,31 @@ const tabs = [
   "Detected Lost and Damaged",
 ];
 
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export default function Cases() {
-  const [activeTab, setActiveTab] = useState(1); // Start with Reimbursement Reports tab
+  const [activeTab, setActiveTab] = useState(0); // Start with Summary tab
   const [store, setStore] = useState("All");
+  const [claimTypes, setClaimTypes] = useState("All");
+  const [status, setStatus] = useState("All");
+  const [caseId, setCaseId] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(25);
+
+  // Filter summary cases
+  const filteredSummaryCases = mockSummaryCases.filter((caseItem) => {
+    if (store !== "All" && caseItem.storeName !== store) return false;
+    if (status !== "All" && caseItem.caseStatus !== status) return false;
+    if (searchQuery && !caseItem.id.toString().includes(searchQuery) && 
+        !caseItem.storeName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
 
   // Filter reimbursement reports
   const filteredReports = mockReimbursementReports.filter((report) => {
@@ -59,10 +103,15 @@ export default function Cases() {
     return true;
   });
 
-  const totalPages = Math.ceil(filteredReports.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const paginatedReports = filteredReports.slice(startIndex, endIndex);
+  const totalPagesSummary = Math.ceil(filteredSummaryCases.length / entriesPerPage);
+  const startIndexSummary = (currentPage - 1) * entriesPerPage;
+  const endIndexSummary = startIndexSummary + entriesPerPage;
+  const paginatedSummaryCases = filteredSummaryCases.slice(startIndexSummary, endIndexSummary);
+
+  const totalPagesReports = Math.ceil(filteredReports.length / entriesPerPage);
+  const startIndexReports = (currentPage - 1) * entriesPerPage;
+  const endIndexReports = startIndexReports + entriesPerPage;
+  const paginatedReports = filteredReports.slice(startIndexReports, endIndexReports);
 
   return (
     <DashboardLayout>
@@ -89,33 +138,231 @@ export default function Cases() {
           </div>
         </div>
 
-        {/* Filters and Search - Only show Store and Search for Reimbursement Reports */}
-        {activeTab === 1 && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <select
-                value={store}
-                onChange={(e) => setStore(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-              >
-                <option value="All">Store: All</option>
-                <option value="Cowell's Beach N' Bikini">Cowell's Beach N' Bikini</option>
-              </select>
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <select
+              value={store}
+              onChange={(e) => setStore(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All">Store: All</option>
+              <option value="Cowell's Beach N' Bikini">Cowell's Beach N' Bikini</option>
+            </select>
 
-              <div className="flex-1 flex items-center gap-2">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Download
+            <select
+              value={claimTypes}
+              onChange={(e) => setClaimTypes(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All">Claim Types: All</option>
+            </select>
+
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All">Status: All</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="SUCCESS">SUCCESS</option>
+              <option value="PENDING">PENDING</option>
+            </select>
+
+            <select
+              value={caseId}
+              onChange={(e) => setCaseId(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All">Case ID: All</option>
+            </select>
+
+            <div className="flex-1 flex items-center gap-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Table */}
+        {activeTab === 0 && (
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        ID
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Store Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Created Date
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Filed Date
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Case Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Potential Value (net proceeds)
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Actual Recovered
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Amazon Case ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Reimbursement ID(s)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedSummaryCases.map((caseItem) => (
+                    <tr key={caseItem.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {caseItem.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {caseItem.storeName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {caseItem.createdDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {caseItem.filedDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`text-sm font-medium ${
+                            caseItem.caseStatus === "SUCCESS"
+                              ? "text-green-600"
+                              : caseItem.caseStatus === "RESOLVED"
+                              ? "text-blue-600"
+                              : "text-yellow-600"
+                          }`}
+                        >
+                          {caseItem.caseStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {currencyFormatter.format(caseItem.potentialValue)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {caseItem.actualRecovered !== null
+                          ? currencyFormatter.format(caseItem.actualRecovered)
+                          : "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {caseItem.amazonCaseId || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {caseItem.reimbursementId ? (
+                          <span className="text-gray-700">{caseItem.reimbursementId}</span>
+                        ) : (
+                          <span className="text-red-600">N/A</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Show</span>
+                <select
+                  value={entriesPerPage}
+                  onChange={(e) => {
+                    setEntriesPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm text-gray-700">Entries</span>
+              </div>
+              <div className="text-sm text-gray-700">
+                Showing {startIndexSummary + 1} to {Math.min(endIndexSummary, filteredSummaryCases.length)} of{" "}
+                {filteredSummaryCases.length} results
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPagesSummary }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === page
+                        ? "bg-teal-600 text-white"
+                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesSummary, p + 1))}
+                  disabled={currentPage === totalPagesSummary}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
                 </button>
               </div>
             </div>
@@ -238,7 +485,7 @@ export default function Cases() {
                 <span className="text-sm text-gray-700">Entries</span>
               </div>
               <div className="text-sm text-gray-700">
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredReports.length)} of{" "}
+                Showing {startIndexReports + 1} to {Math.min(endIndexReports, filteredReports.length)} of{" "}
                 {filteredReports.length} results
               </div>
               <div className="flex items-center gap-2">
@@ -249,7 +496,7 @@ export default function Cases() {
                 >
                   Previous
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from({ length: totalPagesReports }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
@@ -263,8 +510,8 @@ export default function Cases() {
                   </button>
                 ))}
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesReports, p + 1))}
+                  disabled={currentPage === totalPagesReports}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
@@ -274,8 +521,8 @@ export default function Cases() {
           </div>
         )}
 
-        {/* Summary Tab - Show placeholder for other tabs */}
-        {activeTab !== 1 && (
+        {/* Placeholder for other tabs */}
+        {activeTab !== 0 && activeTab !== 1 && (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 text-center">
             <p className="text-gray-600">{tabs[activeTab]} content coming soon...</p>
           </div>
