@@ -181,12 +181,11 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Title and Filters */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
-          {/* Test: If you see this, the new layout is working */}
-          <div className="flex items-center gap-4 mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+          <div className="flex items-center gap-3 mb-6">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm"
             >
               <Menu className="h-4 w-4" />
               Filters
@@ -194,7 +193,7 @@ export default function Dashboard() {
             <select 
               value={dateRange}
               onChange={handleDateRangeChange}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
             >
               <option value="All Time">Date Range: All Time</option>
               <option value="Last 30 days">Last 30 days</option>
@@ -203,23 +202,23 @@ export default function Dashboard() {
             <select 
               value={store}
               onChange={handleStoreChange}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
             >
               <option value="All">Store: All</option>
               <option value="Cowell's Beach N' Bikini">Cowell&apos;s Beach N&apos; Bikini</option>
             </select>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">NA Region</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">NA Region</h2>
         </div>
 
         {/* Main Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Three Main Cards */}
           {dashboardCards.map((card, index) => (
-            <div key={card.title} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-700">{card.title}</h3>
-                <Info className="h-4 w-4 text-gray-400" />
+            <div key={card.title} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-sm font-semibold text-gray-800">{card.title}</h3>
+                <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help transition-colors" />
               </div>
 
               {card.showChart && card.amount > 0 ? (
@@ -229,33 +228,33 @@ export default function Dashboard() {
                     label={`${card.cases} Cases`}
                     color={index === 0 ? "text-green-600" : "text-blue-600"}
                   />
-                  <div className="mt-4 space-y-1.5">
+                  <div className="mt-5 space-y-2 max-h-64 overflow-y-auto">
                     {card.rows.map((row) => (
                       <div
                         key={row.label}
-                        className="flex items-center justify-between text-xs py-1.5"
+                        className="flex items-center justify-between text-xs py-2 px-2 rounded-md hover:bg-gray-50 transition-colors"
                       >
-                        <span className="text-gray-600">{row.label}</span>
-                        <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-900 font-medium w-16 text-right">{format.format(row.amount)}</span>
-                          <span className="text-gray-500 w-8 text-right">{row.cases}</span>
+                        <span className="text-gray-600 font-medium">{row.label}</span>
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="text-gray-900 font-semibold w-20 text-right">{format.format(row.amount)}</span>
+                          <span className="text-gray-500 w-10 text-right">{row.cases}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                   <button 
                     onClick={() => console.log("View Stores clicked for", card.title)}
-                    className="mt-4 w-full py-2 text-xs font-medium text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors cursor-pointer"
+                    className="mt-5 w-full py-2.5 text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border-2 border-teal-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
                   >
                     View Stores
                   </button>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center">
+                <div className="text-center py-12">
+                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-100">
                     <div className="text-2xl font-bold text-gray-400">N/A</div>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 px-4">
                     No cases are pending Amazon Decision for time period.
                   </p>
                 </div>
@@ -264,24 +263,30 @@ export default function Dashboard() {
           ))}
 
           {/* Action Required Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-red-600 px-6 py-3 flex items-center justify-between">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between shadow-sm">
               <h3 className="text-sm font-semibold text-white">Action Required</h3>
-              <Info className="h-4 w-4 text-white" />
+              <Info className="h-4 w-4 text-white/90 hover:text-white cursor-help transition-colors" />
             </div>
             <div className="p-6">
-              <div className="bg-gray-50 rounded-lg p-6 mb-4 text-center">
-                <div className="text-4xl font-bold text-gray-900 mb-2">{totalActionItems}</div>
-                <div className="text-sm text-gray-600">items require your attention</div>
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 mb-5 text-center border border-gray-200 shadow-inner">
+                <div className="text-5xl font-bold text-gray-900 mb-2">{totalActionItems}</div>
+                <div className="text-sm text-gray-600 font-medium">items require your attention</div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 {actionItems.map((item) => (
                   <div
                     key={item.label}
-                    className="flex items-center justify-between text-sm py-2 border-b border-gray-100 last:border-0"
+                    className={`flex items-center justify-between text-sm py-2.5 px-3 rounded-lg transition-colors ${
+                      item.cases > 0 
+                        ? "bg-red-50 border border-red-100" 
+                        : "hover:bg-gray-50"
+                    }`}
                   >
-                    <span className={item.cases > 0 ? "text-red-600" : "text-gray-600"}>{item.label}</span>
-                    <span className={`font-medium ${item.cases > 0 ? "text-red-600" : "text-gray-500"}`}>
+                    <span className={`font-medium ${item.cases > 0 ? "text-red-700" : "text-gray-600"}`}>
+                      {item.label}
+                    </span>
+                    <span className={`font-bold text-base ${item.cases > 0 ? "text-red-600" : "text-gray-400"}`}>
                       {item.cases}
                     </span>
                   </div>
@@ -289,7 +294,7 @@ export default function Dashboard() {
               </div>
               <button 
                 onClick={() => console.log("View Actions clicked")}
-                className="mt-4 w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                className="mt-5 w-full py-2.5 text-sm font-semibold text-red-600 hover:text-white hover:bg-red-600 border-2 border-red-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
                 View Actions
               </button>

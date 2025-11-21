@@ -6,6 +6,12 @@ import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
+import Reports from './pages/Reports'
+import Documents from './pages/Documents'
+import Inventory from './pages/Inventory'
+import Orders from './pages/Orders'
+import Users from './pages/Users'
+import Settings from './pages/Settings'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
 import { AuthProvider } from './auth/AuthContext'
@@ -75,6 +81,12 @@ export default function App(){
     <BrowserRouter>
      <Routes>
        <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
+       <Route path="/reports" element={<Protected><Reports/></Protected>} />
+       <Route path="/documents" element={<Protected><Documents/></Protected>} />
+       <Route path="/inventory" element={<Protected><Inventory/></Protected>} />
+       <Route path="/orders" element={<Protected><Orders/></Protected>} />
+       <Route path="/users" element={<Protected><Users/></Protected>} />
+       <Route path="/settings" element={<Protected><Settings/></Protected>} />
        <Route path="/*" element={<Shell/>} />
      </Routes>
     </BrowserRouter>
