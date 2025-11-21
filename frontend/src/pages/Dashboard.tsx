@@ -190,6 +190,7 @@ export default function Dashboard() {
         {/* Title and Filters */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
+          {/* Test: If you see this, the new layout is working */}
           <div className="flex items-center gap-4 mb-4">
             <button 
               onClick={() => setShowFilters(!showFilters)}
