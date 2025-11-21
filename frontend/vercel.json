@@ -1,10 +1,17 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/verify",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verify/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
       "destination": "/index.html"
     }
-  ],
-  "cleanUrls": true
+  ]
 }
 
