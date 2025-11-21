@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Download, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, Download, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
 type SummaryCase = {
@@ -23,6 +23,16 @@ type ReimbursementReport = {
   amazonCaseId: string;
   amazonOrderId: string;
   reason: string;
+};
+
+type ReversalReport = {
+  caseNo: number;
+  storeName: string;
+  reversedReimbursementDate: string;
+  reversedReimbursementId: string;
+  originReimbursementId: string;
+  caseId: string;
+  sku: string;
 };
 
 const mockSummaryCases: SummaryCase[] = [
@@ -58,6 +68,14 @@ const mockReimbursementReports: ReimbursementReport[] = [
   { caseSummaryId: 1538031, storeName: "Cowell's Beach N' Bikini", caseDateSuccess: "2024-06-05", reimbursementDate: "2024-06-04", reimbursementId: "14464839625", amazonCaseId: "14718756035", amazonOrderId: "N/A", reason: "damaged" },
   { caseSummaryId: 1538032, storeName: "Cowell's Beach N' Bikini", caseDateSuccess: "2024-06-10", reimbursementDate: "2024-06-09", reimbursementId: "14464839626", amazonCaseId: "14718756036", amazonOrderId: "N/A", reason: "inbound" },
   { caseSummaryId: 1538033, storeName: "Cowell's Beach N' Bikini", caseDateSuccess: "2024-06-15", reimbursementDate: "2024-06-14", reimbursementId: "14464839627", amazonCaseId: "14718756037", amazonOrderId: "N/A", reason: "lost" },
+];
+
+const mockReversalReports: ReversalReport[] = [
+  { caseNo: 1985268, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-04-26", reversedReimbursementId: "14874910691", originReimbursementId: "14773564971", caseId: "15089847231", sku: "850030689252" },
+  { caseNo: 1985269, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-05-10", reversedReimbursementId: "14874910692", originReimbursementId: "14773564972", caseId: "15089847232", sku: "850030689253" },
+  { caseNo: 1985270, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-05-15", reversedReimbursementId: "14874910693", originReimbursementId: "14773564973", caseId: "15089847233", sku: "850030689254" },
+  { caseNo: 1985271, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-06-01", reversedReimbursementId: "14874910694", originReimbursementId: "14773564974", caseId: "15089847234", sku: "850030689255" },
+  { caseNo: 1985272, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-06-05", reversedReimbursementId: "14874910695", originReimbursementId: "14773564975", caseId: "15089847235", sku: "850030689256" },
 ];
 
 const tabs = [
@@ -103,6 +121,17 @@ export default function Cases() {
     return true;
   });
 
+  // Filter reversal reports
+  const filteredReversalReports = mockReversalReports.filter((report) => {
+    if (store !== "All" && report.storeName !== store) return false;
+    if (searchQuery && !report.caseNo.toString().includes(searchQuery) && 
+        !report.reversedReimbursementId.includes(searchQuery) &&
+        !report.originReimbursementId.includes(searchQuery) &&
+        !report.caseId.includes(searchQuery) &&
+        !report.sku.includes(searchQuery)) return false;
+    return true;
+  });
+
   const totalPagesSummary = Math.ceil(filteredSummaryCases.length / entriesPerPage);
   const startIndexSummary = (currentPage - 1) * entriesPerPage;
   const endIndexSummary = startIndexSummary + entriesPerPage;
@@ -112,6 +141,11 @@ export default function Cases() {
   const startIndexReports = (currentPage - 1) * entriesPerPage;
   const endIndexReports = startIndexReports + entriesPerPage;
   const paginatedReports = filteredReports.slice(startIndexReports, endIndexReports);
+
+  const totalPagesReversal = Math.ceil(filteredReversalReports.length / entriesPerPage);
+  const startIndexReversal = (currentPage - 1) * entriesPerPage;
+  const endIndexReversal = startIndexReversal + entriesPerPage;
+  const paginatedReversalReports = filteredReversalReports.slice(startIndexReversal, endIndexReversal);
 
   return (
     <DashboardLayout>
@@ -150,32 +184,37 @@ export default function Cases() {
               <option value="Cowell's Beach N' Bikini">Cowell's Beach N' Bikini</option>
             </select>
 
-            <select
-              value={claimTypes}
-              onChange={(e) => setClaimTypes(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-            >
-              <option value="All">Claim Types: All</option>
-            </select>
+            {/* Show additional filters only for Summary tab */}
+            {activeTab === 0 && (
+              <>
+                <select
+                  value={claimTypes}
+                  onChange={(e) => setClaimTypes(e.target.value)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                >
+                  <option value="All">Claim Types: All</option>
+                </select>
 
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-            >
-              <option value="All">Status: All</option>
-              <option value="RESOLVED">RESOLVED</option>
-              <option value="SUCCESS">SUCCESS</option>
-              <option value="PENDING">PENDING</option>
-            </select>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                >
+                  <option value="All">Status: All</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                  <option value="SUCCESS">SUCCESS</option>
+                  <option value="PENDING">PENDING</option>
+                </select>
 
-            <select
-              value={caseId}
-              onChange={(e) => setCaseId(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-            >
-              <option value="All">Case ID: All</option>
-            </select>
+                <select
+                  value={caseId}
+                  onChange={(e) => setCaseId(e.target.value)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                >
+                  <option value="All">Case ID: All</option>
+                </select>
+              </>
+            )}
 
             <div className="flex-1 flex items-center gap-2">
               <div className="relative flex-1 max-w-md">
@@ -521,8 +560,165 @@ export default function Cases() {
           </div>
         )}
 
+        {/* Reversal Reports Table */}
+        {activeTab === 2 && (
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Case No.
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Store Name
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Reversed Reimbursement Date
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Reversed Reimbursement ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Origin Reimbursement ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Case ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      sku
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedReversalReports.map((report) => (
+                    <tr key={report.caseNo} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {report.caseNo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.storeName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.reversedReimbursementDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a
+                          href={`https://sellercentral.amazon.com/reimbursements/${report.reversedReimbursementId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
+                        >
+                          {report.reversedReimbursementId}
+                          <ExternalLink className="h-3 w-3 text-orange-500" />
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a
+                          href={`https://sellercentral.amazon.com/reimbursements/${report.originReimbursementId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
+                        >
+                          {report.originReimbursementId}
+                          <ExternalLink className="h-3 w-3 text-orange-500" />
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a
+                          href={`https://sellercentral.amazon.com/cases/${report.caseId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
+                        >
+                          {report.caseId}
+                          <ExternalLink className="h-3 w-3 text-orange-500" />
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.sku}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Show</span>
+                <select
+                  value={entriesPerPage}
+                  onChange={(e) => {
+                    setEntriesPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm text-gray-700">Entries</span>
+              </div>
+              <div className="text-sm text-gray-700">
+                Showing {startIndexReversal + 1} to {Math.min(endIndexReversal, filteredReversalReports.length)} of{" "}
+                {filteredReversalReports.length} results
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPagesReversal }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === page
+                        ? "bg-teal-600 text-white"
+                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesReversal, p + 1))}
+                  disabled={currentPage === totalPagesReversal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 0 && activeTab !== 1 && (
+        {activeTab !== 0 && activeTab !== 1 && activeTab !== 2 && (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 text-center">
             <p className="text-gray-600">{tabs[activeTab]} content coming soon...</p>
           </div>
