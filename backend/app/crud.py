@@ -2,11 +2,6 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from typing import Iterable
 
-
-
-from sqlalchemy.orm import Session
-from . import models, schemas
-
 def get_reimbursements(db: Session):
     return db.query(models.Reimbursement).all()
 
