@@ -81,8 +81,6 @@ const actionItems = [
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [cases, setCases] = useState<Reimbursement[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("All Time");
   const [store, setStore] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
@@ -90,16 +88,10 @@ export default function Dashboard() {
   useEffect(() => {
     async function bootstrap() {
       try {
-        const [summaryRes, reimbursements] = await Promise.all([
-          api.get<Summary>("/summary"),
-          api.get<Reimbursement[]>("/reimbursements?limit=100"),
-        ]);
+        const summaryRes = await api.get<Summary>("/summary");
         setSummary(summaryRes.data);
-        setCases(reimbursements.data);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
-      } finally {
-        setLoading(false);
       }
     }
     bootstrap();
