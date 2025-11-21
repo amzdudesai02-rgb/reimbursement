@@ -9,6 +9,7 @@ import {
   Users,
   Settings,
   LogOut,
+  FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import logo from '../assets/logo.png';
@@ -19,6 +20,7 @@ interface DashboardLayoutProps {
 
 const sidebarItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
+  { icon: FolderOpen, label: 'Cases', path: '/cases' },
   { icon: Layers, label: 'Reports', path: '/reports' },
   { icon: FileText, label: 'Documents', path: '/documents' },
   { icon: Box, label: 'Inventory', path: '/inventory' },

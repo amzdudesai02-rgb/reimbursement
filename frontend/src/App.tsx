@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
+import Cases from './pages/Cases'
 import Reports from './pages/Reports'
 import Documents from './pages/Documents'
 import Inventory from './pages/Inventory'
@@ -81,6 +82,7 @@ export default function App(){
     <BrowserRouter>
      <Routes>
        <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
+       <Route path="/cases" element={<Protected><Cases/></Protected>} />
        <Route path="/reports" element={<Protected><Reports/></Protected>} />
        <Route path="/documents" element={<Protected><Documents/></Protected>} />
        <Route path="/inventory" element={<Protected><Inventory/></Protected>} />
