@@ -182,6 +182,17 @@ export default function Cases() {
     return true;
   });
 
+  // Filter detected lost and damaged
+  const filteredDetectedLostAndDamaged = mockDetectedLostAndDamaged.filter((item) => {
+    if (store !== "All" && item.storeName !== store) return false;
+    if (claimTypes !== "All" && claimTypes !== "Select" && item.reason.toLowerCase() !== claimTypes.toLowerCase()) return false;
+    if (searchQuery && !item.transactionId.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !item.asin.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !item.sellerSku.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !item.fulfillmentNetworkSku.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
   const totalPagesSummary = Math.ceil(filteredSummaryCases.length / entriesPerPage);
   const startIndexSummary = (currentPage - 1) * entriesPerPage;
   const endIndexSummary = startIndexSummary + entriesPerPage;
