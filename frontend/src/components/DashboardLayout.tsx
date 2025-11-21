@@ -36,10 +36,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Left Sidebar with Tabs */}
-      <aside className="w-64 bg-gray-800 flex flex-col py-4 flex-shrink-0">
+      <aside className="w-56 bg-gray-800 flex flex-col py-4 flex-shrink-0">
         {/* Logo */}
         <div className="px-4 mb-8">
-          <img src={logo} alt="Logo" className="h-10 w-10" />
+          <img src={logo} alt="Logo" className="h-8 w-8" />
         </div>
 
         {/* Navigation Tabs with Icons and Labels */}

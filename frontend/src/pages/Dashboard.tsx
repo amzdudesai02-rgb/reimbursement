@@ -212,7 +212,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Three Main Cards */}
           {dashboardCards.map((card, index) => (
             <div key={card.title} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow">
