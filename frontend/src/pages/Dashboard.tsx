@@ -68,52 +68,6 @@ type CardData = {
   showChart: boolean;
 };
 
-const cardData: CardData[] = [
-  {
-    title: "Total Recovered",
-    amount: 4792,
-    cases: 18,
-    showChart: true,
-    rows: [
-      { label: "Inbound", amount: 4392, cases: 2 },
-      { label: "Cancelled", amount: 0, cases: 0 },
-      { label: "Shipments", amount: 0, cases: 0 },
-      { label: "Lost", amount: 275, cases: 12 },
-      { label: "Damaged", amount: 125, cases: 4 },
-      { label: "Returns", amount: 0, cases: 0 },
-      { label: "Removal Orders", amount: 0, cases: 0 },
-      { label: "Overcharged Fee", amount: 0, cases: 0 },
-      { label: "Lost In Transit", amount: 0, cases: 0 },
-      { label: "Awd Inbound", amount: 0, cases: 0 },
-    ],
-  },
-  {
-    title: "Awaiting Amazon Decision",
-    amount: 0,
-    cases: 0,
-    showChart: false,
-    rows: [],
-  },
-  {
-    title: "In the Pipeline",
-    amount: 24533,
-    cases: 164,
-    showChart: true,
-    rows: [
-      { label: "Inbound", amount: 24327, cases: 152 },
-      { label: "Cancelled", amount: 0, cases: 9 },
-      { label: "Shipments", amount: 0, cases: 0 },
-      { label: "Lost", amount: 0, cases: 0 },
-      { label: "Damaged", amount: 206, cases: 3 },
-      { label: "Returns", amount: 0, cases: 0 },
-      { label: "Removal Orders", amount: 0, cases: 0 },
-      { label: "Overcharged Fee", amount: 0, cases: 0 },
-      { label: "Lost In Transit", amount: 0, cases: 0 },
-      { label: "Awd Inbound", amount: 0, cases: 0 },
-    ],
-  },
-];
-
 const actionItems = [
   { label: "Other Documents", cases: 0 },
   { label: "Needed", cases: 0 },
@@ -129,6 +83,9 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [cases, setCases] = useState<Reimbursement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState("All Time");
+  const [store, setStore] = useState("All");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     async function bootstrap() {
@@ -151,13 +108,81 @@ export default function Dashboard() {
   const currency = summary?.currency ?? "USD";
   const format = currencyFormatter(currency);
 
-  // Update card data with real values if available
-  if (summary) {
-    cardData[0].amount = summary.total_amount;
-    cardData[0].cases = summary.row_count;
-  }
+  // Create card data with state
+  const [dashboardCards, setDashboardCards] = useState<CardData[]>([
+    {
+      title: "Total Recovered",
+      amount: summary?.total_amount ?? 4792,
+      cases: summary?.row_count ?? 18,
+      showChart: true,
+      rows: [
+        { label: "Inbound", amount: 4392, cases: 2 },
+        { label: "Cancelled", amount: 0, cases: 0 },
+        { label: "Shipments", amount: 0, cases: 0 },
+        { label: "Lost", amount: 275, cases: 12 },
+        { label: "Damaged", amount: 125, cases: 4 },
+        { label: "Returns", amount: 0, cases: 0 },
+        { label: "Removal Orders", amount: 0, cases: 0 },
+        { label: "Overcharged Fee", amount: 0, cases: 0 },
+        { label: "Lost In Transit", amount: 0, cases: 0 },
+        { label: "Awd Inbound", amount: 0, cases: 0 },
+      ],
+    },
+    {
+      title: "Awaiting Amazon Decision",
+      amount: 0,
+      cases: 0,
+      showChart: false,
+      rows: [],
+    },
+    {
+      title: "In the Pipeline",
+      amount: 24533,
+      cases: 164,
+      showChart: true,
+      rows: [
+        { label: "Inbound", amount: 24327, cases: 152 },
+        { label: "Cancelled", amount: 0, cases: 9 },
+        { label: "Shipments", amount: 0, cases: 0 },
+        { label: "Lost", amount: 0, cases: 0 },
+        { label: "Damaged", amount: 206, cases: 3 },
+        { label: "Returns", amount: 0, cases: 0 },
+        { label: "Removal Orders", amount: 0, cases: 0 },
+        { label: "Overcharged Fee", amount: 0, cases: 0 },
+        { label: "Lost In Transit", amount: 0, cases: 0 },
+        { label: "Awd Inbound", amount: 0, cases: 0 },
+      ],
+    },
+  ]);
+
+  // Update card data when summary changes
+  useEffect(() => {
+    if (summary) {
+      setDashboardCards((prev) => {
+        const updated = [...prev];
+        updated[0] = {
+          ...updated[0],
+          amount: summary.total_amount,
+          cases: summary.row_count,
+        };
+        return updated;
+      });
+    }
+  }, [summary]);
 
   const totalActionItems = actionItems.reduce((sum, item) => sum + item.cases, 0);
+
+  const handleDateRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDateRange(e.target.value);
+    // Here you would typically refetch data with the new date range
+    console.log("Date range changed to:", e.target.value);
+  };
+
+  const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStore(e.target.value);
+    // Here you would typically refetch data with the new store filter
+    console.log("Store changed to:", e.target.value);
+  };
 
   return (
     <DashboardLayout>
@@ -166,18 +191,29 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
           <div className="flex items-center gap-4 mb-4">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            >
               <Menu className="h-4 w-4" />
               Filters
             </button>
-            <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option>Date Range: All Time</option>
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
+            <select 
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All Time">Date Range: All Time</option>
+              <option value="Last 30 days">Last 30 days</option>
+              <option value="Last 90 days">Last 90 days</option>
             </select>
-            <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option>Store: All</option>
-              <option>Cowell&apos;s Beach N&apos; Bikini</option>
+            <select 
+              value={store}
+              onChange={handleStoreChange}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="All">Store: All</option>
+              <option value="Cowell's Beach N' Bikini">Cowell&apos;s Beach N&apos; Bikini</option>
             </select>
           </div>
           <h2 className="text-lg font-semibold text-gray-900">NA Region</h2>
@@ -186,7 +222,7 @@ export default function Dashboard() {
         {/* Main Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Three Main Cards */}
-          {cardData.map((card, index) => (
+          {dashboardCards.map((card, index) => (
             <div key={card.title} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700">{card.title}</h3>
@@ -214,7 +250,10 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                  <button className="mt-4 w-full py-2 text-xs font-medium text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors">
+                  <button 
+                    onClick={() => console.log("View Stores clicked for", card.title)}
+                    className="mt-4 w-full py-2 text-xs font-medium text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors cursor-pointer"
+                  >
                     View Stores
                   </button>
                 </>
@@ -255,7 +294,10 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button className="mt-4 w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+              <button 
+                onClick={() => console.log("View Actions clicked")}
+                className="mt-4 w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+              >
                 View Actions
               </button>
             </div>
