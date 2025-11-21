@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3,
-  Layers,
   FileText,
   Box,
   Package,
@@ -21,7 +20,6 @@ interface DashboardLayoutProps {
 const sidebarItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   { icon: FolderOpen, label: 'Cases', path: '/cases' },
-  { icon: Layers, label: 'Reports', path: '/reports' },
   { icon: FileText, label: 'Documents', path: '/documents' },
   { icon: Box, label: 'Inventory', path: '/inventory' },
   { icon: Package, label: 'Orders', path: '/orders' },
