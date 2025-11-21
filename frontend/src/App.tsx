@@ -61,7 +61,6 @@ function Shell(){
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/verify" element={<VerifyEmail/>} />
-          <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
       </Routes>
      </main>
      <footer className="py-8 text-center text-sm text-neutral-500">© {new Date().getFullYear()} amzDUDES</footer>
@@ -74,8 +73,11 @@ export default function App(){
   return (
    <AuthProvider>
     <BrowserRouter>
-     <Shell/>
+     <Routes>
+       <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
+       <Route path="/*" element={<Shell/>} />
+     </Routes>
     </BrowserRouter>
    </AuthProvider>
- )
+  )
 }

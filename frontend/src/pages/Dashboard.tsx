@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowUpRight, BarChart3, Filter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Filter, Info, Menu } from "lucide-react";
 import { api } from "../lib/api";
 import type { Reimbursement, Summary } from "../types";
+import DashboardLayout from "../components/DashboardLayout";
 
 const currencyFormatter = (currency = "USD") =>
   new Intl.NumberFormat("en-US", {
@@ -10,72 +11,118 @@ const currencyFormatter = (currency = "USD") =>
     maximumFractionDigits: 0,
   });
 
-const shimmerCard =
-  "bg-white/80 border border-white/60 shadow-[0_25px_60px_rgba(15,23,42,0.08)] rounded-3xl";
+// Donut Chart Component
+function DonutChart({ value, label, color = "text-green-600" }: { value: string; label: string; color?: string }) {
+  const percentage = 75; // Mock percentage for the donut
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+  const isGreen = color.includes('green');
 
-type RegionalBreakdown = {
+  return (
+    <div className="relative w-32 h-32 mx-auto mb-4">
+      <svg className="transform -rotate-90 w-32 h-32">
+        {/* Background circle */}
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="10"
+          fill="none"
+          className="text-gray-200"
+        />
+        {/* Progress circle */}
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="10"
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={isGreen ? 'text-green-500' : 'text-blue-500'}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className={`text-xl font-bold ${isGreen ? 'text-green-600' : 'text-blue-600'}`}>{value}</div>
+        <div className="text-xs text-gray-500 mt-1">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+type BreakdownRow = {
+  label: string;
+  amount: number;
+  cases: number;
+};
+
+type CardData = {
   title: string;
   amount: number;
   cases: number;
-  rows: { label: string; amount: number; cases: number }[];
+  rows: BreakdownRow[];
+  showChart: boolean;
 };
 
-const regionalMock: RegionalBreakdown[] = [
+const cardData: CardData[] = [
   {
     title: "Total Recovered",
     amount: 4792,
     cases: 18,
+    showChart: true,
     rows: [
       { label: "Inbound", amount: 4392, cases: 2 },
+      { label: "Cancelled", amount: 0, cases: 0 },
+      { label: "Shipments", amount: 0, cases: 0 },
       { label: "Lost", amount: 275, cases: 12 },
       { label: "Damaged", amount: 125, cases: 4 },
+      { label: "Returns", amount: 0, cases: 0 },
+      { label: "Removal Orders", amount: 0, cases: 0 },
+      { label: "Overcharged Fee", amount: 0, cases: 0 },
+      { label: "Lost In Transit", amount: 0, cases: 0 },
+      { label: "Awd Inbound", amount: 0, cases: 0 },
     ],
   },
   {
     title: "Awaiting Amazon Decision",
     amount: 0,
     cases: 0,
+    showChart: false,
     rows: [],
   },
   {
     title: "In the Pipeline",
-    amount: 24531,
+    amount: 24533,
     cases: 164,
+    showChart: true,
     rows: [
-      { label: "Inbound", amount: 24325, cases: 152 },
+      { label: "Inbound", amount: 24327, cases: 152 },
+      { label: "Cancelled", amount: 0, cases: 9 },
+      { label: "Shipments", amount: 0, cases: 0 },
+      { label: "Lost", amount: 0, cases: 0 },
       { label: "Damaged", amount: 206, cases: 3 },
-      { label: "Returns", amount: 0, cases: 9 },
+      { label: "Returns", amount: 0, cases: 0 },
+      { label: "Removal Orders", amount: 0, cases: 0 },
+      { label: "Overcharged Fee", amount: 0, cases: 0 },
+      { label: "Lost In Transit", amount: 0, cases: 0 },
+      { label: "Awd Inbound", amount: 0, cases: 0 },
     ],
   },
 ];
 
-const attentionItems = [
-  { label: "Credit Card Issue", value: 1 },
-  { label: "API Scopes", value: 1 },
-];
-
-const tabs = [
-  "Summary",
-  "Reimbursement Reports",
-  "Reversal Reports",
-  "Shipment Detail Report",
-  "Detected Lost & Damaged",
-];
-
-const roles = [
-  { name: "Rhea Anadeo", email: "rheaanadeo.professional@gmail.com", role: "Admin", store: "Cowell's Beach N' Bikini" },
-  { name: "Harline Ledesma", email: "harlinegayledesma@yahoo.com", role: "User", store: "-" },
-  { name: "Munaam Durrani", email: "projectmanager682@gmail.com", role: "User", store: "Cowell's Beach N' Bikini" },
-];
-
-const stores = [
-  { name: "Cowell's Beach N' Bikini", region: "NA", fee: "-", payment: "---", status: "Audit Complete", users: ["Rhea Anadeo", "Munaam Durrani"] },
-];
-
-const removalOrders = [
-  { id: "3035573", tracking: "1Z0F52710347881072", status: "Completed", items: 1 },
-  { id: "79551", tracking: "1Z0F527103478878808", status: "Completed", items: 2 },
-  { id: "79552", tracking: "1ZC6045K0301801395", status: "Completed", items: 1 },
+const actionItems = [
+  { label: "Other Documents", cases: 0 },
+  { label: "Needed", cases: 0 },
+  { label: "Signature Needed", cases: 0 },
+  { label: "Invoice Needed", cases: 0 },
+  { label: "Permissions Revoked", cases: 0 },
+  { label: "Credit Card Issue", cases: 1 },
+  { label: "API Issue", cases: 0 },
+  { label: "API Scopes", cases: 1 },
 ];
 
 export default function Dashboard() {
@@ -92,6 +139,8 @@ export default function Dashboard() {
         ]);
         setSummary(summaryRes.data);
         setCases(reimbursements.data);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
       } finally {
         setLoading(false);
       }
@@ -101,380 +150,118 @@ export default function Dashboard() {
 
   const currency = summary?.currency ?? "USD";
   const format = currencyFormatter(currency);
-  const totalRecovered = summary ? format.format(summary.total_amount) : "—";
-  const totalCases = summary?.row_count ?? cases.length;
 
-  const highlightedCases = useMemo(() => cases.slice(0, 8), [cases]);
+  // Update card data with real values if available
+  if (summary) {
+    cardData[0].amount = summary.total_amount;
+    cardData[0].cases = summary.row_count;
+  }
 
-   return (
-    <div className="space-y-10">
-      <header className={`${shimmerCard} p-6`}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-slate-500 uppercase tracking-[0.3em]">
-              NA Region
-            </p>
-            <h1 className="text-3xl font-semibold text-slate-900">
-              Reimbursement Overview
-            </h1>
-            <p className="text-slate-500">
-              Track your audit across stores and automate recovery tasks.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium">
-              <Filter className="h-4 w-4" /> Filters
+  const totalActionItems = actionItems.reduce((sum, item) => sum + item.cases, 0);
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Title and Filters */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
+          <div className="flex items-center gap-4 mb-4">
+            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <Menu className="h-4 w-4" />
+              Filters
             </button>
-            <select className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium">
+            <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
               <option>Date Range: All Time</option>
               <option>Last 30 days</option>
               <option>Last 90 days</option>
             </select>
-            <select className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium">
+            <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
               <option>Store: All</option>
               <option>Cowell&apos;s Beach N&apos; Bikini</option>
             </select>
           </div>
+          <h2 className="text-lg font-semibold text-gray-900">NA Region</h2>
         </div>
-      </header>
 
-      <section className="grid gap-6 xl:grid-cols-4">
-        <div className={`${shimmerCard} p-5`}>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Total Recovered
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-semibold text-slate-900">
-                {totalRecovered}
-              </p>
-              <p className="text-xs text-slate-500">{totalCases} cases</p>
-            </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-              +8.2% vs last month
-            </span>
-          </div>
-        </div>
-        <div className={`${shimmerCard} p-5`}>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Awaiting Amazon Decision
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-3xl font-semibold text-slate-900">N/A</p>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
-              0 cases
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            All submissions resolved within SLA.
-          </p>
-        </div>
-        <div className={`${shimmerCard} p-5`}>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            In the Pipeline
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-3xl font-semibold text-slate-900">
-              {format.format(24531)}
-            </p>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600">
-              164 cases
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            Auto-tracked via SP-API.
-          </p>
-        </div>
-        <div className={`${shimmerCard} p-5 bg-gradient-to-br from-rose-500 to-rose-600 text-white`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/70">
-                Action Required
-              </p>
-              <p className="mt-3 text-4xl font-semibold">
-                {attentionItems.reduce((sum, item) => sum + item.value, 0)}
-              </p>
-              <p className="text-sm text-white/80">
-                items need your attention
-              </p>
-            </div>
-            <AlertTriangle className="h-10 w-10 text-white/80" />
-          </div>
-          <ul className="mt-4 space-y-2 text-sm">
-            {attentionItems.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center justify-between rounded-2xl bg-white/10 px-3 py-2"
-              >
-                <span>{item.label}</span>
-                <span className="text-lg font-semibold">{item.value}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+        {/* Main Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Three Main Cards */}
+          {cardData.map((card, index) => (
+            <div key={card.title} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-700">{card.title}</h3>
+                <Info className="h-4 w-4 text-gray-400" />
+              </div>
 
-      <section className={`${shimmerCard} p-6`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              NA Region Snapshot
-            </h2>
-            <p className="text-sm text-slate-500">
-              Breakdown of reimbursements and pipeline by claim type.
-            </p>
-          </div>
-          <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-            Export region report <ArrowUpRight className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="mt-6 grid gap-6 lg:grid-cols-4">
-          {regionalMock.map((card) => (
-            <div key={card.title} className="rounded-3xl border border-slate-100 bg-slate-50/60 p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {card.title}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">
-                {format.format(card.amount)}
-              </p>
-              <p className="text-xs text-slate-500">{card.cases} cases</p>
-              <div className="mt-4 space-y-2 text-sm">
-                {card.rows.length === 0 && (
-                  <p className="text-slate-400">No cases pending.</p>
-                )}
-                {card.rows.map((row) => (
-                  <div key={row.label} className="flex items-center justify-between rounded-2xl bg-white p-2 shadow-sm">
-                    <span>{row.label}</span>
-                    <span className="text-sm font-medium">
-                      {format.format(row.amount)} · {row.cases}
+              {card.showChart && card.amount > 0 ? (
+                <>
+                  <DonutChart
+                    value={format.format(card.amount)}
+                    label={`${card.cases} Cases`}
+                    color={index === 0 ? "text-green-600" : "text-blue-600"}
+                  />
+                  <div className="mt-4 space-y-1.5">
+                    {card.rows.map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between text-xs py-1.5"
+                      >
+                        <span className="text-gray-600">{row.label}</span>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-gray-900 font-medium w-16 text-right">{format.format(row.amount)}</span>
+                          <span className="text-gray-500 w-8 text-right">{row.cases}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="mt-4 w-full py-2 text-xs font-medium text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors">
+                    View Stores
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center">
+                    <div className="text-2xl font-bold text-gray-400">N/A</div>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    No cases are pending Amazon Decision for time period.
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Action Required Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-red-600 px-6 py-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Action Required</h3>
+              <Info className="h-4 w-4 text-white" />
+            </div>
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-lg p-6 mb-4 text-center">
+                <div className="text-4xl font-bold text-gray-900 mb-2">{totalActionItems}</div>
+                <div className="text-sm text-gray-600">items require your attention</div>
+              </div>
+              <div className="space-y-2">
+                {actionItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between text-sm py-2 border-b border-gray-100 last:border-0"
+                  >
+                    <span className={item.cases > 0 ? "text-red-600" : "text-gray-600"}>{item.label}</span>
+                    <span className={`font-medium ${item.cases > 0 ? "text-red-600" : "text-gray-500"}`}>
+                      {item.cases}
                     </span>
                   </div>
                 ))}
               </div>
+              <button className="mt-4 w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                View Actions
+              </button>
             </div>
-          ))}
+          </div>
         </div>
-      </section>
-
-      <section className={`${shimmerCard} p-6`}>
-        <div className="flex flex-wrap items-center gap-4">
-          {tabs.map((tab, idx) => (
-            <button
-              key={tab}
-              className={`rounded-full px-4 py-2 text-sm font-medium ${
-                idx === 0
-                  ? "bg-slate-900 text-white shadow"
-                  : "text-slate-500 hover:bg-slate-100"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
-          <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Store</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Case Status</th>
-                <th className="px-4 py-3">Potential Value</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {loading && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                    Loading latest cases...
-                  </td>
-                </tr>
-              )}
-              {!loading &&
-                highlightedCases.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/70">
-                    <td className="px-4 py-3 text-slate-500">{row.id}</td>
-                    <td className="px-4 py-3 font-medium">
-                      {row.sku ?? "Cowell's Beach N' Bikini"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">
-                      {row.date ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                        Resolved
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">$0.00</td>
-                    <td className="px-4 py-3 font-semibold">
-                      {format.format(row.amount)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                        View case
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className={`${shimmerCard} p-6`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">
-              User Roles & Permissions
-            </h3>
-            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-              Manage Users
-            </button>
-          </div>
-          <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-100">
-            {roles.map((role) => (
-              <div
-                key={role.email}
-                className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-slate-900">{role.name}</p>
-                  <p className="text-slate-500">{role.email}</p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                  {role.role}
-                </span>
-                <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-500">
-                  {role.store}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={`${shimmerCard} p-6`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Manage Stores
-            </h3>
-            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-              Add Store
-            </button>
-          </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100">
-            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Store Name</th>
-                  <th className="px-4 py-3">Region</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Users</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {stores.map((store) => (
-                  <tr key={store.name}>
-                    <td className="px-4 py-3 font-medium">{store.name}</td>
-                    <td className="px-4 py-3 text-slate-500">{store.region}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600">
-                        <span className="h-2 w-2 rounded-full bg-amber-500" />
-                        {store.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">
-                      {store.users.join(", ")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-       </section>
       </div>
-
-      <section className={`${shimmerCard} grid gap-6 p-6 lg:grid-cols-2`}>
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            Account & Payment Methods
-          </h3>
-          <div className="mt-4 space-y-4 text-sm text-slate-600">
-            <p>Account Owner: Prime Retail Solution</p>
-            <p>Email: info@primeretailsolution.com</p>
-            <p>Phone: 18313326237</p>
-            <p>Billing Address: 95060</p>
-            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-              Edit Profile
-            </button>
-          </div>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            Contact & Payment Method
-          </h3>
-          <div className="mt-4 space-y-3 text-sm text-slate-600">
-            <p>
-              Email us at{" "}
-              <a href="mailto:support@sellerinvestigators.com" className="text-slate-900 underline">
-                support@sellerinvestigators.com
-              </a>
-            </p>
-            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-              Book a Meeting
-            </button>
-            <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-slate-400">
-              No payment methods on file.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className={`${shimmerCard} p-6`}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Removal Orders
-          </h3>
-          <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
-            <BarChart3 className="h-4 w-4" /> View Analytics
-          </button>
-        </div>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100">
-          <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Case ID</th>
-                <th className="px-4 py-3">Tracking</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Items</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {removalOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {order.id}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">{order.tracking}</td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">{order.items}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button className="text-sm font-medium text-rose-500">
-                      Dispute
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+    </DashboardLayout>
   );
 }
