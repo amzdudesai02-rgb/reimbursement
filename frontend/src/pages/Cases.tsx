@@ -35,6 +35,17 @@ type ReversalReport = {
   sku: string;
 };
 
+type ShipmentDetailReport = {
+  storeName: string;
+  shipmentId: string;
+  asin: string;
+  sellerSku: string;
+  fulfillmentNetworkSku: string;
+  shipped: number;
+  received: number;
+  discrepancies: number;
+};
+
 const mockSummaryCases: SummaryCase[] = [
   { id: 2491975, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-07-02", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 0.00, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
   { id: 2340473, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-07", filedDate: "2024-05-09", caseStatus: "SUCCESS", potentialValue: 7.45, actualRecovered: 21.19, amazonCaseId: "15250064371", reimbursementId: "14961849691" },
@@ -76,6 +87,17 @@ const mockReversalReports: ReversalReport[] = [
   { caseNo: 1985270, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-05-15", reversedReimbursementId: "14874910693", originReimbursementId: "14773564973", caseId: "15089847233", sku: "850030689254" },
   { caseNo: 1985271, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-06-01", reversedReimbursementId: "14874910694", originReimbursementId: "14773564974", caseId: "15089847234", sku: "850030689255" },
   { caseNo: 1985272, storeName: "Cowell's Beach N' Bikini", reversedReimbursementDate: "2024-06-05", reversedReimbursementId: "14874910695", originReimbursementId: "14773564975", caseId: "15089847235", sku: "850030689256" },
+];
+
+const mockShipmentDetailReports: ShipmentDetailReport[] = [
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D429L", asin: "B00EE4DC6W", sellerSku: "PAUPILAU-16OZ", fulfillmentNetworkSku: "X003ATDFSN", shipped: 96, received: 96, discrepancies: 0 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D429L", asin: "B000BYCO2U", sellerSku: "1058285955", fulfillmentNetworkSku: "X003U2IYCS3", shipped: 48, received: 48, discrepancies: 0 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D430M", asin: "B00EE4DC7X", sellerSku: "PAUPILAU-32OZ", fulfillmentNetworkSku: "X003ATDFSO", shipped: 120, received: 118, discrepancies: 2 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D431N", asin: "B000BYCO3V", sellerSku: "1058285956", fulfillmentNetworkSku: "X003U2IYCS4", shipped: 72, received: 72, discrepancies: 0 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D432O", asin: "B00EE4DC8Y", sellerSku: "PAUPILAU-64OZ", fulfillmentNetworkSku: "X003ATDFSP", shipped: 60, received: 59, discrepancies: 1 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D433P", asin: "B000BYCO4W", sellerSku: "1058285957", fulfillmentNetworkSku: "X003U2IYCS5", shipped: 84, received: 84, discrepancies: 0 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D434Q", asin: "B00EE4DC9Z", sellerSku: "PAUPILAU-128OZ", fulfillmentNetworkSku: "X003ATDFSQ", shipped: 36, received: 35, discrepancies: 1 },
+  { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D435R", asin: "B000BYCO5X", sellerSku: "1058285958", fulfillmentNetworkSku: "X003U2IYCS6", shipped: 90, received: 90, discrepancies: 0 },
 ];
 
 const tabs = [
@@ -132,6 +154,16 @@ export default function Cases() {
     return true;
   });
 
+  // Filter shipment detail reports
+  const filteredShipmentDetails = mockShipmentDetailReports.filter((report) => {
+    if (store !== "All" && report.storeName !== store) return false;
+    if (searchQuery && !report.shipmentId.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !report.asin.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !report.sellerSku.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !report.fulfillmentNetworkSku.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
   const totalPagesSummary = Math.ceil(filteredSummaryCases.length / entriesPerPage);
   const startIndexSummary = (currentPage - 1) * entriesPerPage;
   const endIndexSummary = startIndexSummary + entriesPerPage;
@@ -146,6 +178,11 @@ export default function Cases() {
   const startIndexReversal = (currentPage - 1) * entriesPerPage;
   const endIndexReversal = startIndexReversal + entriesPerPage;
   const paginatedReversalReports = filteredReversalReports.slice(startIndexReversal, endIndexReversal);
+
+  const totalPagesShipment = Math.ceil(filteredShipmentDetails.length / entriesPerPage);
+  const startIndexShipment = (currentPage - 1) * entriesPerPage;
+  const endIndexShipment = startIndexShipment + entriesPerPage;
+  const paginatedShipmentDetails = filteredShipmentDetails.slice(startIndexShipment, endIndexShipment);
 
   return (
     <DashboardLayout>
@@ -184,7 +221,7 @@ export default function Cases() {
               <option value="Cowell's Beach N' Bikini">Cowell's Beach N' Bikini</option>
             </select>
 
-            {/* Show additional filters only for Summary tab */}
+            {/* Show additional filters for Summary tab */}
             {activeTab === 0 && (
               <>
                 <select
@@ -214,6 +251,20 @@ export default function Cases() {
                   <option value="All">Case ID: All</option>
                 </select>
               </>
+            )}
+
+            {/* Show Status filter for Shipment Detail Report tab */}
+            {activeTab === 3 && (
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+              >
+                <option value="All">Status: All</option>
+                <option value="Complete">Complete</option>
+                <option value="Pending">Pending</option>
+                <option value="Discrepancy">Discrepancy</option>
+              </select>
             )}
 
             <div className="flex-1 flex items-center gap-2">
@@ -717,8 +768,177 @@ export default function Cases() {
           </div>
         )}
 
+        {/* Shipment Detail Report Table */}
+        {activeTab === 3 && (
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Store Name
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Shipment ID
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        ASIN
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Seller SKU
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Fulfillment Network SKU
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Shipped
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Received
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        Discrepancies
+                        <div className="flex flex-col">
+                          <ChevronUp className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                        </div>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedShipmentDetails.map((report, index) => (
+                    <tr key={`${report.shipmentId}-${report.asin}-${index}`} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.storeName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.shipmentId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.asin}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.sellerSku}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.fulfillmentNetworkSku}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.shipped}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.received}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {report.discrepancies === 0 ? "--" : report.discrepancies}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Show</span>
+                <select
+                  value={entriesPerPage}
+                  onChange={(e) => {
+                    setEntriesPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm text-gray-700">Entries</span>
+              </div>
+              <div className="text-sm text-gray-700">
+                Showing {startIndexShipment + 1} to {Math.min(endIndexShipment, filteredShipmentDetails.length)} of{" "}
+                {filteredShipmentDetails.length} results
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPagesShipment }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === page
+                        ? "bg-teal-600 text-white"
+                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesShipment, p + 1))}
+                  disabled={currentPage === totalPagesShipment}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 0 && activeTab !== 1 && activeTab !== 2 && (
+        {activeTab !== 0 && activeTab !== 1 && activeTab !== 2 && activeTab !== 3 && (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 text-center">
             <p className="text-gray-600">{tabs[activeTab]} content coming soon...</p>
           </div>
