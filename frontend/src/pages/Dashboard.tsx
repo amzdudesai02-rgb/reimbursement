@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Info, Menu } from "lucide-react";
 import { api } from "../lib/api";
-import type { Reimbursement, Summary } from "../types";
+import type { Summary } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
 
 const currencyFormatter = (currency = "USD") =>
