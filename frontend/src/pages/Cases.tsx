@@ -46,6 +46,16 @@ type ShipmentDetailReport = {
   discrepancies: number;
 };
 
+type DetectedLostAndDamaged = {
+  storeName: string;
+  transactionId: string;
+  reason: string;
+  eventDate: string;
+  asin: string;
+  sellerSku: string;
+  fulfillmentNetworkSku: string;
+};
+
 const mockSummaryCases: SummaryCase[] = [
   { id: 2491975, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-07-02", filedDate: "-", caseStatus: "RESOLVED", potentialValue: 0.00, actualRecovered: null, amazonCaseId: null, reimbursementId: null },
   { id: 2340473, storeName: "Cowell's Beach N' Bikini", createdDate: "2024-06-07", filedDate: "2024-05-09", caseStatus: "SUCCESS", potentialValue: 7.45, actualRecovered: 21.19, amazonCaseId: "15250064371", reimbursementId: "14961849691" },
@@ -98,6 +108,14 @@ const mockShipmentDetailReports: ShipmentDetailReport[] = [
   { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D433P", asin: "B000BYCO4W", sellerSku: "1058285957", fulfillmentNetworkSku: "X003U2IYCS5", shipped: 84, received: 84, discrepancies: 0 },
   { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D434Q", asin: "B00EE4DC9Z", sellerSku: "PAUPILAU-128OZ", fulfillmentNetworkSku: "X003ATDFSQ", shipped: 36, received: 35, discrepancies: 1 },
   { storeName: "Cowell's Beach N' Bikini", shipmentId: "FBA1799D435R", asin: "B000BYCO5X", sellerSku: "1058285958", fulfillmentNetworkSku: "X003U2IYCS6", shipped: 90, received: 90, discrepancies: 0 },
+];
+
+const mockDetectedLostAndDamaged: DetectedLostAndDamaged[] = [
+  { storeName: "Cowell's Beach N' Bikini", transactionId: "TXN-2024-001234", reason: "Lost", eventDate: "2024-06-15", asin: "B00EE4DC6W", sellerSku: "PAUPILAU-16OZ", fulfillmentNetworkSku: "X003ATDFSN" },
+  { storeName: "Cowell's Beach N' Bikini", transactionId: "TXN-2024-001235", reason: "Damaged", eventDate: "2024-06-16", asin: "B000BYCO2U", sellerSku: "1058285955", fulfillmentNetworkSku: "X003U2IYCS3" },
+  { storeName: "Cowell's Beach N' Bikini", transactionId: "TXN-2024-001236", reason: "Lost", eventDate: "2024-06-17", asin: "B00EE4DC7X", sellerSku: "PAUPILAU-32OZ", fulfillmentNetworkSku: "X003ATDFSO" },
+  { storeName: "Cowell's Beach N' Bikini", transactionId: "TXN-2024-001237", reason: "Damaged", eventDate: "2024-06-18", asin: "B000BYCO3V", sellerSku: "1058285956", fulfillmentNetworkSku: "X003U2IYCS4" },
+  { storeName: "Cowell's Beach N' Bikini", transactionId: "TXN-2024-001238", reason: "Lost", eventDate: "2024-06-19", asin: "B00EE4DC8Y", sellerSku: "PAUPILAU-64OZ", fulfillmentNetworkSku: "X003ATDFSP" },
 ];
 
 const tabs = [
@@ -184,6 +202,11 @@ export default function Cases() {
   const endIndexShipment = startIndexShipment + entriesPerPage;
   const paginatedShipmentDetails = filteredShipmentDetails.slice(startIndexShipment, endIndexShipment);
 
+  const totalPagesDetected = Math.ceil(filteredDetectedLostAndDamaged.length / entriesPerPage);
+  const startIndexDetected = (currentPage - 1) * entriesPerPage;
+  const endIndexDetected = startIndexDetected + entriesPerPage;
+  const paginatedDetectedLostAndDamaged = filteredDetectedLostAndDamaged.slice(startIndexDetected, endIndexDetected);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -264,6 +287,19 @@ export default function Cases() {
                 <option value="Complete">Complete</option>
                 <option value="Pending">Pending</option>
                 <option value="Discrepancy">Discrepancy</option>
+              </select>
+            )}
+
+            {/* Show Claim Types filter for Detected Lost and Damaged tab */}
+            {activeTab === 4 && (
+              <select
+                value={claimTypes}
+                onChange={(e) => setClaimTypes(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+              >
+                <option value="All">Claim Types: Select</option>
+                <option value="lost">Lost</option>
+                <option value="damaged">Damaged</option>
               </select>
             )}
 
@@ -937,8 +973,185 @@ export default function Cases() {
           </div>
         )}
 
+        {/* Detected Lost and Damaged Tab */}
+        {activeTab === 4 && (
+          <>
+            {/* Informational Message */}
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                These are transaction IDs proactively identified by Amazon. If they are in this list it means they have not yet been reimbursed. Seller Investigators will continue to monitor this queue and file a case on your behalf if no reimbursements are made in 15 business days from the event date.
+              </p>
+            </div>
+
+            {/* Detected Lost and Damaged Table */}
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Store Name
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Transaction ID
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Reason
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Event Date
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          ASIN
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Seller SKU
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                          Fulfillment Network SKU
+                          <div className="flex flex-col">
+                            <ChevronUp className="h-3 w-3 text-gray-400" />
+                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                          </div>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedDetectedLostAndDamaged.length > 0 ? (
+                      paginatedDetectedLostAndDamaged.map((item, index) => (
+                        <tr key={`${item.transactionId}-${index}`} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.storeName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.transactionId}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
+                              {item.reason}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.eventDate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.asin}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.sellerSku}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.fulfillmentNetworkSku}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                          No data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700">Show</span>
+                  <select
+                    value={entriesPerPage}
+                    onChange={(e) => {
+                      setEntriesPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-gray-700">Entries</span>
+                </div>
+                <div className="text-sm text-gray-700">
+                  Showing {startIndexDetected + 1} to {Math.min(endIndexDetected, filteredDetectedLostAndDamaged.length)} of{" "}
+                  {filteredDetectedLostAndDamaged.length} results
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: totalPagesDetected }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        currentPage === page
+                          ? "bg-teal-600 text-white"
+                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPagesDetected, p + 1))}
+                    disabled={currentPage === totalPagesDetected}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 0 && activeTab !== 1 && activeTab !== 2 && activeTab !== 3 && (
+        {activeTab !== 0 && activeTab !== 1 && activeTab !== 2 && activeTab !== 3 && activeTab !== 4 && (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 text-center">
             <p className="text-gray-600">{tabs[activeTab]} content coming soon...</p>
           </div>
