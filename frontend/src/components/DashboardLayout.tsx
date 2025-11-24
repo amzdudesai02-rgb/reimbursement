@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   FileText,
@@ -12,6 +12,7 @@ import {
   Scale,
   Upload,
   Boxes,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 const brandInitials = 'AD';
@@ -20,13 +21,18 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const sidebarItems = [
-  { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
-  { icon: FolderOpen, label: 'Cases', path: '/cases' },
-  { icon: FileText, label: 'Documents', path: '/documents' },
-  { icon: Package, label: 'Orders', path: '/orders' },
-  { icon: Users, label: 'Users', path: '/users' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+type SidebarItem =
+  | { type: 'link'; icon: LucideIcon; label: string; path: string }
+  | { type: 'fba' };
+
+const sidebarItems: SidebarItem[] = [
+  { type: 'link', icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
+  { type: 'link', icon: FolderOpen, label: 'Cases', path: '/cases' },
+  { type: 'link', icon: FileText, label: 'Documents', path: '/documents' },
+  { type: 'link', icon: Package, label: 'Orders', path: '/orders' },
+  { type: 'fba' },
+  { type: 'link', icon: Users, label: 'Users', path: '/users' },
+  { type: 'link', icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 const fbaSubItems = [
@@ -39,6 +45,7 @@ const fbaSubItems = [
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const [isFbaExpanded, setIsFbaExpanded] = useState(false);
   const isFbaRoute = fbaSubItems.some((item) => location.pathname === item.path);
@@ -64,13 +71,69 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation Tabs with Icons and Labels */}
         <nav className="flex-1 flex flex-col items-center space-y-3">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
+          {sidebarItems.map((item, index) => {
+            if (item.type === 'fba') {
+              return (
+                <div key={`fba-${index}`} className="relative w-full flex justify-center">
+                  <button
+                    type="button"
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
+                      showFbaPanel
+                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                    onClick={() => {
+                      if (showFbaPanel) {
+                        setIsFbaExpanded(false);
+                      } else {
+                        navigate(fbaSubItems[0].path);
+                        setIsFbaExpanded(true);
+                      }
+                    }}
+                  >
+                    <Boxes className="h-5 w-5" />
+                  </button>
+
+                  {showFbaPanel && (
+                    <>
+                      <span className="absolute left-[60px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-l-4 border-l-teal-200 drop-shadow" />
+                      <div className="absolute left-[74px] top-1/2 -translate-y-1/2 bg-white border border-teal-200 rounded-2xl px-2 py-3 flex flex-col items-center space-y-3 shadow-lg">
+                        {fbaSubItems.map((subItem) => {
+                          const Icon = subItem.icon;
+                          const isActive = location.pathname === subItem.path;
+                          return (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              className={`group relative flex items-center justify-center h-11 w-11 rounded-xl transition ${
+                                isActive
+                                  ? 'bg-teal-600 text-white shadow shadow-teal-400/40'
+                                  : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                              }`}
+                            >
+                              <Icon className="h-4 w-4" />
+                              <div className="absolute left-14 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                                <span className="h-3 w-3 bg-teal-100 rotate-45 rounded-sm shadow-sm" />
+                                <span className="px-3 py-1 rounded-lg bg-teal-100 text-xs font-semibold text-teal-900 shadow border border-teal-200 whitespace-nowrap">
+                                  {subItem.label}
+                                </span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            }
+
+            const Icon = item.icon!;
             const isActive = location.pathname === item.path;
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={item.path!}
                 className="relative group flex items-center justify-center w-full"
               >
                 <div
@@ -82,58 +145,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <Icon className="h-5 w-5" />
                 </div>
-                <span className="pointer-events-none absolute left-16 top-1/2 -translate-y-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 whitespace-nowrap">
-                  {item.label}
-                </span>
+                {item.label && (
+                  <span className="pointer-events-none absolute left-16 top-1/2 -translate-y-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
               </Link>
             );
           })}
-
-          {/* FBA Fees group */}
-          <div className="relative w-full flex justify-center">
-            <Link
-              to={fbaSubItems[0].path}
-              className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
-                isFbaRoute
-                  ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              onClick={() => setIsFbaExpanded(true)}
-            >
-              <Boxes className="h-5 w-5" />
-            </Link>
-            {showFbaPanel && (
-              <span className="absolute left-[58px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-l-4 border-l-teal-100" />
-            )}
-
-            {showFbaPanel && (
-              <div className="absolute left-[70px] top-1/2 -translate-y-1/2 bg-teal-50 border border-teal-100 rounded-2xl px-2 py-4 flex flex-col items-center space-y-3 shadow-lg">
-                {fbaSubItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`group relative flex items-center justify-center h-10 w-10 rounded-lg transition ${
-                        isActive
-                          ? 'bg-teal-600 text-white shadow shadow-teal-400/40'
-                          : 'bg-white text-teal-700 hover:bg-teal-100'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <div className="absolute left-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                        <span className="h-3 w-3 bg-teal-100 rotate-45 rounded-sm shadow-sm" />
-                        <span className="px-3 py-1 rounded-lg bg-teal-100 text-xs font-semibold text-teal-900 shadow border border-teal-100 whitespace-nowrap">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* Logout */}
