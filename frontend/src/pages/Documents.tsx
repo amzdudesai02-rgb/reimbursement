@@ -6,12 +6,6 @@ const currencyOptions = ["USD", "EUR", "GBP"];
 const stores = ["All", "Cowell's Beach N' Bikini"];
 const filterOptions = ["All", "Submitted", "Missing", "Pending"];
 
-interface FilterConfig {
-  label: string;
-  key: keyof Filters;
-  options: string[];
-}
-
 type Filters = {
   claimType: string;
   expiry: string;
@@ -23,6 +17,14 @@ type Filters = {
   highPriority: boolean;
   newCaseNotes: boolean;
 };
+
+type FilterDropdownKey = "claimType" | "expiry" | "podBol" | "invoices" | "packingList";
+
+interface FilterConfig {
+  label: string;
+  key: FilterDropdownKey;
+  options: string[];
+}
 
 const filterConfig: FilterConfig[] = [
   { label: "Claim Type", key: "claimType", options: filterOptions },
