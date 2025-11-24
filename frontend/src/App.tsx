@@ -8,12 +8,12 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Cases from './pages/Cases'
 import Documents from './pages/Documents'
-import Inventory from './pages/Inventory'
 import Orders from './pages/Orders'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
+import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDimensionsPage, FeeCalculatorPage } from './pages/FbaTools'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import logo from './assets/logo.png'
@@ -83,10 +83,14 @@ export default function App(){
        <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
        <Route path="/cases" element={<Protected><Cases/></Protected>} />
        <Route path="/documents" element={<Protected><Documents/></Protected>} />
-       <Route path="/inventory" element={<Protected><Inventory/></Protected>} />
        <Route path="/orders" element={<Protected><Orders/></Protected>} />
        <Route path="/users" element={<Protected><Users/></Protected>} />
        <Route path="/settings" element={<Protected><Settings/></Protected>} />
+      <Route path="/fba-fees" element={<Protected><FbaFeesPage/></Protected>} />
+      <Route path="/weight-dims-alert" element={<Protected><WeightDimsAlertPage/></Protected>} />
+      <Route path="/wd-successful-cases" element={<Protected><WdSuccessfulCasesPage/></Protected>} />
+      <Route path="/export-import-dimensions" element={<Protected><ExportImportDimensionsPage/></Protected>} />
+      <Route path="/fee-calculator" element={<Protected><FeeCalculatorPage/></Protected>} />
        <Route path="/*" element={<Shell/>} />
      </Routes>
     </BrowserRouter>
