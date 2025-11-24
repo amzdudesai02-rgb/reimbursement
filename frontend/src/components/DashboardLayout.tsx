@@ -11,7 +11,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
-import logo from '../assets/logo.png';
+const brandInitials = 'AD';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -37,7 +37,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 space-y-6">
         {/* Logo */}
         <div className="flex items-center justify-center">
-          <img src={logo} alt="Logo" className="h-8 w-8" />
+          <div className="h-12 w-12 rounded-full bg-white text-gray-900 font-semibold flex items-center justify-center shadow-md border border-gray-200">
+            {brandInitials}
+          </div>
         </div>
 
         {/* Navigation Tabs with Icons and Labels */}
