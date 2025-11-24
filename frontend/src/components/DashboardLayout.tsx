@@ -77,9 +77,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div key={`fba-${index}`} className="relative w-full flex justify-center">
                   <button
                     type="button"
+                    aria-expanded={showFbaPanel}
                     className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
                       showFbaPanel
-                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
+                        ? 'bg-[#0E5A6A] text-white shadow-lg shadow-teal-600/30'
                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                     onClick={() => {
@@ -95,31 +96,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </button>
 
                   {showFbaPanel && (
-                    <>
-                      <span className="absolute left-[60px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-l-4 border-l-teal-200 drop-shadow" />
-                      <div className="absolute left-[78px] top-0 bg-white border border-teal-200 rounded-2xl shadow-xl min-w-[180px] py-3">
+                    <div className="absolute top-0 flex w-full justify-center pointer-events-none">
+                      <div className="flex flex-col w-12 rounded-2xl overflow-hidden shadow-2xl pointer-events-auto">
                         {fbaSubItems.map((subItem, idx) => {
                           const isActive = location.pathname === subItem.path;
                           return (
                             <button
                               key={subItem.path}
+                              type="button"
                               onClick={() => {
                                 navigate(subItem.path);
                                 setIsFbaExpanded(true);
                               }}
-                              className={`w-full text-left px-5 py-2 text-sm font-semibold transition flex items-center gap-2 ${
+                              className={`h-12 flex items-center justify-center transition-colors ${
                                 isActive
-                                  ? 'text-white bg-teal-600'
-                                  : 'text-teal-800 hover:bg-teal-50'
-                              } ${idx !== fbaSubItems.length - 1 ? 'border-b border-teal-100' : ''}`}
+                                  ? 'bg-[#0A3943] text-white'
+                                  : 'bg-[#0E5A6A] text-white/80 hover:bg-[#D8EEF3] hover:text-[#0E5A6A]'
+                              } ${idx !== fbaSubItems.length - 1 ? 'border-b border-white/10' : ''}`}
                             >
-                              <subItem.icon className="h-4 w-4" />
-                              <span>{subItem.label}</span>
+                              <subItem.icon className="h-5 w-5" />
                             </button>
                           );
                         })}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               );
