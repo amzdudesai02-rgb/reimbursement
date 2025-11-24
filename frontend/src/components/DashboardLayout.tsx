@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3,
@@ -40,9 +40,16 @@ const fbaSubItems = [
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
-  const [isFbaHovered, setIsFbaHovered] = useState(false);
+  const [isFbaExpanded, setIsFbaExpanded] = useState(false);
   const isFbaRoute = fbaSubItems.some((item) => location.pathname === item.path);
-  const showFbaPanel = isFbaHovered || isFbaRoute;
+
+  useEffect(() => {
+    if (isFbaRoute) {
+      setIsFbaExpanded(true);
+    }
+  }, [isFbaRoute]);
+
+  const showFbaPanel = isFbaExpanded || isFbaRoute;
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -83,11 +90,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
 
           {/* FBA Fees group */}
-          <div
-            className="relative w-full flex justify-center"
-            onMouseEnter={() => setIsFbaHovered(true)}
-            onMouseLeave={() => setIsFbaHovered(false)}
-          >
+          <div className="relative w-full flex justify-center">
             <Link
               to={fbaSubItems[0].path}
               className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
@@ -95,9 +98,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
               }`}
+              onClick={() => setIsFbaExpanded(true)}
             >
               <Boxes className="h-5 w-5" />
             </Link>
+            {showFbaPanel && (
+              <span className="absolute left-[58px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-l-4 border-l-teal-100" />
+            )}
 
             {showFbaPanel && (
               <div className="absolute left-[70px] top-1/2 -translate-y-1/2 bg-teal-50 border border-teal-100 rounded-2xl px-2 py-4 flex flex-col items-center space-y-3 shadow-lg">
