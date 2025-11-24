@@ -48,15 +48,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [isFbaExpanded, setIsFbaExpanded] = useState(false);
+  const [userCollapsedFba, setUserCollapsedFba] = useState(false);
   const activeFbaIndex = fbaSubItems.findIndex((item) => location.pathname === item.path);
   const isFbaRoute = activeFbaIndex >= 0;
   const fbaSlotHeight = 48; // 12 (h-12) * 4 px base spacing
 
   useEffect(() => {
-    if (isFbaRoute) {
+    if (isFbaRoute && !userCollapsedFba) {
       setIsFbaExpanded(true);
     }
-  }, [isFbaRoute]);
+    if (!isFbaRoute) {
+      setUserCollapsedFba(false);
+    }
+  }, [isFbaRoute, userCollapsedFba]);
 
   const showFbaPanel = isFbaExpanded || isFbaRoute;
 
@@ -81,7 +85,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="relative flex flex-col items-stretch w-12 rounded-3xl overflow-hidden shadow-2xl border border-[#0C4958]/30 bg-[#0E5A6A]">
                       <button
                         type="button"
-                        onClick={() => setIsFbaExpanded(false)}
+                        onClick={() => {
+                          setIsFbaExpanded(false);
+                          setUserCollapsedFba(true);
+                        }}
                         className="h-12 flex items-center justify-center text-white/90 hover:bg-[#0C4A56]"
                       >
                         <Boxes className="h-5 w-5" />
@@ -96,6 +103,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                               onClick={() => {
                                 navigate(subItem.path);
                                 setIsFbaExpanded(true);
+                                setUserCollapsedFba(false);
                               }}
                               className={`h-12 flex items-center justify-center transition-colors ${
                                 isActive
@@ -124,6 +132,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       onClick={() => {
                         navigate(fbaSubItems[0].path);
                         setIsFbaExpanded(true);
+                        setUserCollapsedFba(false);
                       }}
                     >
                       <Boxes className="h-5 w-5" />
