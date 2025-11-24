@@ -97,28 +97,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   {showFbaPanel && (
                     <>
                       <span className="absolute left-[60px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-l-4 border-l-teal-200 drop-shadow" />
-                      <div className="absolute left-[74px] top-1/2 -translate-y-1/2 bg-white border border-teal-200 rounded-2xl px-2 py-3 flex flex-col items-center space-y-3 shadow-lg">
-                        {fbaSubItems.map((subItem) => {
-                          const Icon = subItem.icon;
+                      <div className="absolute left-[78px] top-0 bg-white border border-teal-200 rounded-2xl shadow-xl min-w-[180px] py-3">
+                        {fbaSubItems.map((subItem, idx) => {
                           const isActive = location.pathname === subItem.path;
                           return (
-                            <Link
+                            <button
                               key={subItem.path}
-                              to={subItem.path}
-                              className={`group relative flex items-center justify-center h-11 w-11 rounded-xl transition ${
+                              onClick={() => {
+                                navigate(subItem.path);
+                                setIsFbaExpanded(true);
+                              }}
+                              className={`w-full text-left px-5 py-2 text-sm font-semibold transition flex items-center gap-2 ${
                                 isActive
-                                  ? 'bg-teal-600 text-white shadow shadow-teal-400/40'
-                                  : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
-                              }`}
+                                  ? 'text-white bg-teal-600'
+                                  : 'text-teal-800 hover:bg-teal-50'
+                              } ${idx !== fbaSubItems.length - 1 ? 'border-b border-teal-100' : ''}`}
                             >
-                              <Icon className="h-4 w-4" />
-                              <div className="absolute left-14 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
-                                <span className="h-3 w-3 bg-teal-100 rotate-45 rounded-sm shadow-sm" />
-                                <span className="px-3 py-1 rounded-lg bg-teal-100 text-xs font-semibold text-teal-900 shadow border border-teal-200 whitespace-nowrap">
-                                  {subItem.label}
-                                </span>
-                              </div>
-                            </Link>
+                              <subItem.icon className="h-4 w-4" />
+                              <span>{subItem.label}</span>
+                            </button>
                           );
                         })}
                       </div>
