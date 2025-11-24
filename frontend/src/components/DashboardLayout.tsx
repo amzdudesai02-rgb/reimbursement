@@ -50,6 +50,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isFbaExpanded, setIsFbaExpanded] = useState(false);
   const activeFbaIndex = fbaSubItems.findIndex((item) => location.pathname === item.path);
   const isFbaRoute = activeFbaIndex >= 0;
+  const fbaSlotHeight = 48; // 12 (h-12) * 4 px base spacing
 
   useEffect(() => {
     if (isFbaRoute) {
@@ -78,31 +79,40 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div key={`fba-${index}`} className="relative w-full flex justify-center">
                   {showFbaPanel ? (
                     <div className="relative flex flex-col items-stretch w-12 rounded-3xl overflow-hidden shadow-2xl border border-[#0C4958]/30 bg-[#0E5A6A]">
-                      {fbaSubItems.map((subItem, idx) => {
-                        const isActive = location.pathname === subItem.path;
-                        return (
-                          <button
-                            key={subItem.path}
-                            type="button"
-                            onClick={() => {
-                              navigate(subItem.path);
-                              setIsFbaExpanded(true);
-                            }}
-                            className={`h-12 flex items-center justify-center transition-colors ${
-                              isActive
-                                ? 'bg-[#CFE4EC] text-[#0E5A6A]'
-                                : 'bg-transparent text-white/90 hover:bg-[#0C4A56]'
-                            } ${idx !== fbaSubItems.length - 1 ? 'border-b border-white/10' : ''}`}
-                          >
-                            <subItem.icon className="h-5 w-5" />
-                          </button>
-                        );
-                      })}
+                      <button
+                        type="button"
+                        onClick={() => setIsFbaExpanded(false)}
+                        className="h-12 flex items-center justify-center text-white/90 hover:bg-[#0C4A56]"
+                      >
+                        <Boxes className="h-5 w-5" />
+                      </button>
+                      <div className="flex flex-col">
+                        {fbaSubItems.map((subItem, idx) => {
+                          const isActive = location.pathname === subItem.path;
+                          return (
+                            <button
+                              key={subItem.path}
+                              type="button"
+                              onClick={() => {
+                                navigate(subItem.path);
+                                setIsFbaExpanded(true);
+                              }}
+                              className={`h-12 flex items-center justify-center transition-colors ${
+                                isActive
+                                  ? 'bg-[#CFE4EC] text-[#0E5A6A]'
+                                  : 'bg-transparent text-white/90 hover:bg-[#0C4A56]'
+                              } ${idx !== fbaSubItems.length - 1 ? 'border-b border-white/10' : ''}`}
+                            >
+                              <subItem.icon className="h-5 w-5" />
+                            </button>
+                          );
+                        })}
+                      </div>
 
                       {activeFbaIndex >= 0 && (
                         <span
                           className="absolute -right-[10px] h-4 w-4 bg-white rotate-45 shadow-md"
-                          style={{ top: `${activeFbaIndex * 48 + 24 - 8}px` }}
+                          style={{ top: `${(activeFbaIndex + 1) * fbaSlotHeight + fbaSlotHeight / 2 - 8}px` }}
                         />
                       )}
                     </div>
