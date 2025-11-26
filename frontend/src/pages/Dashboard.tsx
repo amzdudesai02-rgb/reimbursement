@@ -1,307 +1,184 @@
-import { useEffect, useState } from "react";
-import { Info, Menu } from "lucide-react";
-import { api } from "../lib/api";
-import type { Summary } from "../types";
-import DashboardLayout from "../components/DashboardLayout";
+import { useEffect, useMemo, useState } from 'react'
+import { Menu } from 'lucide-react'
+import { api } from '../lib/api'
+import type { Summary } from '../types'
+import DashboardLayout from '../components/DashboardLayout'
 
-const currencyFormatter = (currency = "USD") =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
+const currencyFormatter = (currency = 'USD') =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency,
     maximumFractionDigits: 0,
-  });
+  })
 
-// Donut Chart Component
-function DonutChart({ value, label, color = "text-green-600" }: { value: string; label: string; color?: string }) {
-  const percentage = 75; // Mock percentage for the donut
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
-  const isGreen = color.includes('green');
+type ClaimStatus = 'Approved' | 'Pending' | 'Processing'
 
-  return (
-    <div className="relative w-32 h-32 mx-auto mb-4">
-      <svg className="transform -rotate-90 w-32 h-32">
-        {/* Background circle */}
-        <circle
-          cx="64"
-          cy="64"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="10"
-          fill="none"
-          className="text-gray-200"
-        />
-        {/* Progress circle */}
-        <circle
-          cx="64"
-          cy="64"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="10"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className={isGreen ? 'text-green-500' : 'text-blue-500'}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`text-xl font-bold ${isGreen ? 'text-green-600' : 'text-blue-600'}`}>{value}</div>
-        <div className="text-xs text-gray-500 mt-1">{label}</div>
-      </div>
-    </div>
-  );
+const claimsData = [
+  { id: 'CLM-4782', type: 'Lost Inventory', amount: 847.23, status: 'Approved', date: 'Nov 15, 2025' },
+  { id: 'CLM-4781', type: 'Damaged Item', amount: 1247.5, status: 'Approved', date: 'Nov 14, 2025' },
+  { id: 'CLM-4780', type: 'Customer Return', amount: 324, status: 'Pending', date: 'Nov 13, 2025' },
+  { id: 'CLM-4779', type: 'Inbound Damage', amount: 592.17, status: 'Processing', date: 'Nov 12, 2025' },
+  { id: 'CLM-4778', type: 'Lost In Transit', amount: 1089.45, status: 'Approved', date: 'Nov 11, 2025' },
+]
+
+const auditResults = [
+  { label: 'Items Scanned', value: '18,429', accent: 'text-slate-900' },
+  { label: 'Opportunities Found', value: '147', accent: 'text-indigo-600' },
+  { label: 'Est. Recovery', value: '$23,847', accent: 'text-emerald-500' },
+]
+
+const statusStyles: Record<ClaimStatus, string> = {
+  Approved: 'bg-emerald-200/20 text-emerald-200 border border-emerald-300/40',
+  Pending: 'bg-amber-200/20 text-amber-200 border border-amber-300/40',
+  Processing: 'bg-blue-200/20 text-blue-200 border border-blue-300/40',
 }
 
-type BreakdownRow = {
-  label: string;
-  amount: number;
-  cases: number;
-};
-
-type CardData = {
-  title: string;
-  amount: number;
-  cases: number;
-  rows: BreakdownRow[];
-  showChart: boolean;
-};
-
-const actionItems = [
-  { label: "Other Documents", cases: 0 },
-  { label: "Needed", cases: 0 },
-  { label: "Signature Needed", cases: 0 },
-  { label: "Invoice Needed", cases: 0 },
-  { label: "Permissions Revoked", cases: 0 },
-  { label: "Credit Card Issue", cases: 1 },
-  { label: "API Issue", cases: 0 },
-  { label: "API Scopes", cases: 1 },
-];
-
 export default function Dashboard() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [dateRange, setDateRange] = useState("All Time");
-  const [store, setStore] = useState("All");
-  const [showFilters, setShowFilters] = useState(false);
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [dateRange, setDateRange] = useState('Last 90 days')
+  const [store, setStore] = useState('All')
 
   useEffect(() => {
     async function bootstrap() {
       try {
-        const summaryRes = await api.get<Summary>("/summary");
-        setSummary(summaryRes.data);
+        const summaryRes = await api.get<Summary>('/summary')
+        setSummary(summaryRes.data)
       } catch (error) {
-        console.error("Failed to load dashboard data:", error);
+        console.error('Failed to load dashboard data:', error)
       }
     }
-    bootstrap();
-  }, []);
+    bootstrap()
+  }, [])
 
-  const currency = summary?.currency ?? "USD";
-  const format = currencyFormatter(currency);
-
-  // Create card data with state
-  const [dashboardCards, setDashboardCards] = useState<CardData[]>([
-    {
-      title: "Total Recovered",
-      amount: summary?.total_amount ?? 4792,
-      cases: summary?.row_count ?? 18,
-      showChart: true,
-      rows: [
-        { label: "Inbound", amount: 4392, cases: 2 },
-        { label: "Cancelled", amount: 0, cases: 0 },
-        { label: "Shipments", amount: 0, cases: 0 },
-        { label: "Lost", amount: 275, cases: 12 },
-        { label: "Damaged", amount: 125, cases: 4 },
-        { label: "Returns", amount: 0, cases: 0 },
-        { label: "Removal Orders", amount: 0, cases: 0 },
-        { label: "Overcharged Fee", amount: 0, cases: 0 },
-        { label: "Lost In Transit", amount: 0, cases: 0 },
-        { label: "Awd Inbound", amount: 0, cases: 0 },
-      ],
-    },
-    {
-      title: "Awaiting Amazon Decision",
-      amount: 0,
-      cases: 0,
-      showChart: false,
-      rows: [],
-    },
-    {
-      title: "In the Pipeline",
-      amount: 24533,
-      cases: 164,
-      showChart: true,
-      rows: [
-        { label: "Inbound", amount: 24327, cases: 152 },
-        { label: "Cancelled", amount: 0, cases: 9 },
-        { label: "Shipments", amount: 0, cases: 0 },
-        { label: "Lost", amount: 0, cases: 0 },
-        { label: "Damaged", amount: 206, cases: 3 },
-        { label: "Returns", amount: 0, cases: 0 },
-        { label: "Removal Orders", amount: 0, cases: 0 },
-        { label: "Overcharged Fee", amount: 0, cases: 0 },
-        { label: "Lost In Transit", amount: 0, cases: 0 },
-        { label: "Awd Inbound", amount: 0, cases: 0 },
-      ],
-    },
-  ]);
-
-  // Update card data when summary changes
-  useEffect(() => {
-    if (summary) {
-      setDashboardCards((prev) => {
-        const updated = [...prev];
-        updated[0] = {
-          ...updated[0],
-          amount: summary.total_amount,
-          cases: summary.row_count,
-        };
-        return updated;
-      });
-    }
-  }, [summary]);
-
-  const totalActionItems = actionItems.reduce((sum, item) => sum + item.cases, 0);
+  const format = useMemo(() => currencyFormatter(summary?.currency ?? 'USD'), [summary?.currency])
+  const totalRecovered = summary?.total_amount ?? 48392
+  const approvalRate = summary ? Math.min(99, Math.round(summary.row_count / 250)) : 73
 
   const handleDateRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDateRange(e.target.value);
-    // Here you would typically refetch data with the new date range
-    console.log("Date range changed to:", e.target.value);
-  };
+    setDateRange(e.target.value)
+    console.log('Date range changed to:', e.target.value)
+  }
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStore(e.target.value);
-    // Here you would typically refetch data with the new store filter
-    console.log("Store changed to:", e.target.value);
-  };
+    setStore(e.target.value)
+    console.log('Store changed to:', e.target.value)
+  }
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Title and Filters */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
-          <div className="flex items-center gap-3 mb-6">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm"
-            >
-              <Menu className="h-4 w-4" />
-              Filters
-            </button>
-            <select 
-              value={dateRange}
-              onChange={handleDateRangeChange}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
-            >
-              <option value="All Time">Date Range: All Time</option>
-              <option value="Last 30 days">Last 30 days</option>
-              <option value="Last 90 days">Last 90 days</option>
-            </select>
-            <select 
-              value={store}
-              onChange={handleStoreChange}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
-            >
-              <option value="All">Store: All</option>
-              <option value="Cowell's Beach N' Bikini">Cowell&apos;s Beach N&apos; Bikini</option>
-            </select>
+      <div className="space-y-10">
+        <header className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Overview</p>
+              <h1 className="text-3xl font-semibold text-slate-900">Claims Dashboard</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800">
+                <Menu className="h-4 w-4" />
+                Filters
+              </button>
+              <select
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 focus:border-teal-500 focus:outline-none"
+              >
+                <option value="Last 30 days">Last 30 days</option>
+                <option value="Last 90 days">Last 90 days</option>
+                <option value="All Time">All Time</option>
+              </select>
+              <select
+                value={store}
+                onChange={handleStoreChange}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 focus:border-teal-500 focus:outline-none"
+              >
+                <option value="All">Store: All</option>
+                <option value="Cowell's Beach N' Bikini">Cowell&apos;s Beach N&apos; Bikini</option>
+              </select>
+            </div>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">NA Region</h2>
-        </div>
+          <p className="text-sm text-slate-500">North America Region · Updated just now</p>
+        </header>
 
-        {/* Main Cards Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Three Main Cards */}
-          {dashboardCards.map((card, index) => (
-            <div key={card.title} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-semibold text-gray-800">{card.title}</h3>
-                <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help transition-colors" />
-              </div>
+        <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#050E1F] p-8 text-white shadow-[0_25px_75px_rgba(0,0,0,0.45)]">
+          <div className="pointer-events-none absolute inset-0 opacity-70">
+            <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-[#1a2f63] blur-[120px]" />
+            <div className="absolute left-0 bottom-0 h-48 w-48 rounded-full bg-[#0f8fa3] blur-[120px]" />
+          </div>
 
-              {card.showChart && card.amount > 0 ? (
-                <>
-                  <DonutChart
-                    value={format.format(card.amount)}
-                    label={`${card.cases} Cases`}
-                    color={index === 0 ? "text-green-600" : "text-blue-600"}
-                  />
-                  <div className="mt-5 space-y-2 max-h-64 overflow-y-auto">
-                    {card.rows.map((row) => (
-                      <div
-                        key={row.label}
-                        className="flex items-center justify-between text-xs py-2 px-2 rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        <span className="text-gray-600 font-medium">{row.label}</span>
-                        <div className="flex items-center gap-4 text-xs">
-                          <span className="text-gray-900 font-semibold w-20 text-right">{format.format(row.amount)}</span>
-                          <span className="text-gray-500 w-10 text-right">{row.cases}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => console.log("View Stores clicked for", card.title)}
-                    className="mt-5 w-full py-2.5 text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border-2 border-teal-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
-                  >
-                    View Stores
-                  </button>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-100">
-                    <div className="text-2xl font-bold text-gray-400">N/A</div>
-                  </div>
-                  <p className="text-sm text-gray-500 px-4">
-                    No cases are pending Amazon Decision for time period.
-                  </p>
+          <div className="relative flex flex-wrap items-start gap-6 pr-0 lg:pr-72">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-lg font-semibold">AD</div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/60">Claims Dashboard</p>
+                  <h2 className="text-2xl font-semibold text-white">Opportunities recovered</h2>
                 </div>
-              )}
-            </div>
-          ))}
-
-          {/* Action Required Card */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between shadow-sm">
-              <h3 className="text-sm font-semibold text-white">Action Required</h3>
-              <Info className="h-4 w-4 text-white/90 hover:text-white cursor-help transition-colors" />
-            </div>
-            <div className="p-6">
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 mb-5 text-center border border-gray-200 shadow-inner">
-                <div className="text-5xl font-bold text-gray-900 mb-2">{totalActionItems}</div>
-                <div className="text-sm text-gray-600 font-medium">items require your attention</div>
               </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {actionItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center justify-between text-sm py-2.5 px-3 rounded-lg transition-colors ${
-                      item.cases > 0 
-                        ? "bg-red-50 border border-red-100" 
-                        : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className={`font-medium ${item.cases > 0 ? "text-red-700" : "text-gray-600"}`}>
-                      {item.label}
-                    </span>
-                    <span className={`font-bold text-base ${item.cases > 0 ? "text-red-600" : "text-gray-400"}`}>
-                      {item.cases}
-                    </span>
+              <p className="max-w-xl text-sm text-white/70">
+                Monitor reimbursements and recovery progress across every active store. Keep an eye on approvals, pending
+                cases, and pipeline movement in real-time.
+              </p>
+            </div>
+
+            <div className="relative w-full flex-1 lg:absolute lg:right-8 lg:top-8 lg:w-64">
+              <div className="rounded-3xl bg-gradient-to-br from-[#1C6CFF] to-[#1C3DFF] p-6 text-white shadow-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">Total Recovered (90 days)</p>
+                <p className="mt-4 text-4xl font-semibold">{format.format(totalRecovered)}</p>
+                <p className="mt-2 text-sm text-white/80">{approvalRate}% approval rate this period</p>
+                <div className="mt-5 h-2 rounded-full bg-white/30">
+                  <div className="h-full rounded-full bg-white" style={{ width: `${approvalRate}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mt-8 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-semibold uppercase tracking-[0.35em] text-white/50">
+                  <th className="px-6 py-4">Claim ID</th>
+                  <th className="px-6 py-4">Type</th>
+                  <th className="px-6 py-4">Amount</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {claimsData.map((claim) => (
+                  <tr key={claim.id} className="border-t border-white/5 text-base">
+                    <td className="px-6 py-4 font-semibold text-white underline decoration-white/30 underline-offset-4">
+                      {claim.id}
+                    </td>
+                    <td className="px-6 py-4 text-white/80">{claim.type}</td>
+                    <td className="px-6 py-4 font-semibold text-white">{format.format(claim.amount)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center rounded-full px-4 py-1 text-xs font-semibold ${statusStyles[claim.status as ClaimStatus]}`}>
+                        {claim.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right text-white/60">{claim.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="relative mt-8 flex flex-wrap gap-4">
+            <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-xl sm:min-w-[240px]">
+              <p className="text-sm font-semibold text-slate-800">Audit Results</p>
+              <div className="mt-4 space-y-3 text-sm">
+                {auditResults.map((item) => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <span className="text-slate-500">{item.label}</span>
+                    <span className={`text-base font-semibold ${item.accent}`}>{item.value}</span>
                   </div>
                 ))}
               </div>
-              <button 
-                onClick={() => console.log("View Actions clicked")}
-                className="mt-5 w-full py-2.5 text-sm font-semibold text-red-600 hover:text-white hover:bg-red-600 border-2 border-red-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
-              >
-                View Actions
-              </button>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </DashboardLayout>
-  );
+  )
 }
