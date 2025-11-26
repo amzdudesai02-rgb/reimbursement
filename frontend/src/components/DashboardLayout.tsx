@@ -60,6 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       setIsFbaExpanded(true);
     }
     if (!isFbaRoute) {
+      setIsFbaExpanded(false);
       setUserCollapsedFba(false);
     }
   }, [isFbaRoute, userCollapsedFba]);
