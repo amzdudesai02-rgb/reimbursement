@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [isFbaRoute, userCollapsedFba]);
 
-  const showFbaPanel = isFbaExpanded || isFbaRoute;
+  const showFbaPanel = isFbaExpanded && !userCollapsedFba;
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
