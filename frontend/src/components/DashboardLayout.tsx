@@ -66,12 +66,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [isFbaRoute, userCollapsedFba]);
 
   const showFbaPanel = isFbaExpanded && !userCollapsedFba;
-  const isSettingsPage = location.pathname === '/settings';
-  const mainBackground = isSettingsPage ? 'bg-gray-50' : 'bg-[#0f2133]';
-  const rootBackground = isSettingsPage ? 'bg-gray-50' : 'bg-[#0f2133]';
 
   return (
-    <div className={`flex h-screen overflow-hidden ${rootBackground}`}>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Left Sidebar with Tabs */}
       <aside className="relative w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 space-y-6">
         {/* Logo */}
@@ -192,8 +189,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content Area - No Header */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Main Content */}
-        <main className={`flex-1 overflow-y-auto p-6 ${mainBackground}`}>
-          <div className={isSettingsPage ? '' : 'text-white'}>{children}</div>
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {children}
         </main>
       </div>
     </div>
