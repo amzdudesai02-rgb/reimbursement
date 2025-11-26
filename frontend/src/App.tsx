@@ -11,6 +11,7 @@ import Documents from './pages/Documents'
 import Orders from './pages/Orders'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
+import ManageStores from './pages/ManageStores'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
 import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDimensionsPage, FeeCalculatorPage } from './pages/FbaTools'
@@ -84,6 +85,7 @@ export default function App(){
        <Route path="/cases" element={<Protected><Cases/></Protected>} />
        <Route path="/documents" element={<Protected><Documents/></Protected>} />
        <Route path="/orders" element={<Protected><Orders/></Protected>} />
+       <Route path="/stores" element={<Protected><ManageStores/></Protected>} />
        <Route path="/users" element={<Protected><Users/></Protected>} />
        <Route path="/settings" element={<Protected><Settings/></Protected>} />
       <Route path="/fba-fees" element={<Protected><FbaFeesPage/></Protected>} />

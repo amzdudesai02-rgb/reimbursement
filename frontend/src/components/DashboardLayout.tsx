@@ -12,6 +12,7 @@ import {
   Scale,
   Upload,
   Boxes,
+  Store,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
@@ -29,6 +30,7 @@ const sidebarItems: SidebarItem[] = [
   { type: 'link', icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   { type: 'link', icon: FolderOpen, label: 'Cases', path: '/cases' },
   { type: 'link', icon: FileText, label: 'Documents', path: '/documents' },
+  { type: 'link', icon: Store, label: 'Manage Stores', path: '/stores' },
   { type: 'link', icon: Package, label: 'Orders', path: '/orders' },
   { type: 'fba' },
   { type: 'link', icon: Users, label: 'Users', path: '/users' },
@@ -160,7 +162,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Icon className="h-5 w-5" />
                 </div>
                 {item.label && (
-                  <span className="pointer-events-none absolute left-16 top-1/2 -translate-y-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 whitespace-nowrap">
+                  <span className="pointer-events-none absolute bottom-0 left-1/2 translate-y-full -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:-translate-y-1 whitespace-nowrap">
                     {item.label}
                   </span>
                 )}
@@ -176,7 +178,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             className="relative group flex items-center justify-center w-12 h-12 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
           >
             <LogOut className="h-5 w-5" />
-            <span className="pointer-events-none absolute left-16 top-1/2 -translate-y-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 whitespace-nowrap">
+            <span className="pointer-events-none absolute bottom-0 left-1/2 translate-y-full -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:-translate-y-1 whitespace-nowrap">
               Logout
             </span>
           </button>
