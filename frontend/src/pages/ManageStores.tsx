@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Filter, RefreshCcw, Search, Users } from 'lucide-react'
+import DashboardLayout from '../components/DashboardLayout'
 
 type StoreStatus = 'all' | 'audit-complete' | 'pending' | 'onboarding'
 
@@ -55,6 +56,7 @@ export default function ManageStores() {
   }
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <section className="space-y-1">
         <p className="text-sm font-semibold text-teal-700">Stores</p>
@@ -208,6 +210,7 @@ export default function ManageStores() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }
 
