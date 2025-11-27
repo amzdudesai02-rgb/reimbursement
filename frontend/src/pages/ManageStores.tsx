@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Filter, RefreshCcw, Search, Users } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableCellClass,
+  tableFooterClass,
+  emptyStateCellClass,
+} from '../styles/tableTheme'
 
 type StoreStatus = 'all' | 'audit-complete' | 'pending' | 'onboarding'
 
@@ -49,10 +58,10 @@ export default function ManageStores() {
     })
   }, [status, search])
 
-  const toneMap: Record<StoreRecord['statusTone'], string> = {
-    yellow: 'bg-amber-50 text-amber-700',
-    blue: 'bg-sky-50 text-sky-700',
-    teal: 'bg-teal-50 text-teal-700',
+const toneMap: Record<StoreRecord['statusTone'], string> = {
+  yellow: 'bg-amber-400/20 text-amber-100',
+  blue: 'bg-sky-400/20 text-sky-100',
+  teal: 'bg-emerald-400/20 text-emerald-100',
   }
 
   return (
@@ -114,11 +123,11 @@ export default function ManageStores() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className={tableWrapperClass}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-sm">
-            <thead>
-              <tr className="text-left text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <table className={tableClass}>
+            <thead className={tableHeadClass}>
+              <tr className="text-left">
                 <th className="px-6 py-4">Store Name</th>
                 <th className="px-6 py-4">Region</th>
                 <th className="px-6 py-4">Fee</th>
@@ -128,36 +137,36 @@ export default function ManageStores() {
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className={tableBodyClass}>
               {filtered.map((store) => (
-                <tr key={store.name} className="text-slate-700">
-                  <td className="px-6 py-4 font-semibold">{store.name}</td>
-                  <td className="px-6 py-4">{store.region}</td>
-                  <td className="px-6 py-4">{store.fee ?? '-'}</td>
-                  <td className="px-6 py-4">{store.paymentMethod ?? '---'}</td>
-                  <td className="px-6 py-4">
+                <tr key={store.name}>
+                  <td className={`${tableCellClass} font-semibold text-white`}>{store.name}</td>
+                  <td className={tableCellClass}>{store.region}</td>
+                  <td className={tableCellClass}>{store.fee ?? '-'}</td>
+                  <td className={tableCellClass}>{store.paymentMethod ?? '---'}</td>
+                  <td className={tableCellClass}>
                     <span
-                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${toneMap[store.statusTone]}`}
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${toneMap[store.statusTone]} border border-white/10`}
                     >
                       <span className="h-2 w-2 rounded-full bg-current opacity-70" />
                       {store.statusLabel}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className={tableCellClass}>
                     <div className="flex flex-wrap gap-2">
                       {store.users.map((user) => (
                         <span
                           key={user}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
+                          className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80"
                         >
-                          <Users className="h-3.5 w-3.5 text-slate-400" />
+                          <Users className="h-3.5 w-3.5 text-white/60" />
                           {user}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:border-teal-600 hover:text-teal-600">
+                  <td className={`${tableCellClass} text-right`}>
+                    <button className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/70 hover:border-teal-300 hover:text-teal-200">
                       <RefreshCcw className="h-4 w-4" />
                     </button>
                   </td>
@@ -165,7 +174,7 @@ export default function ManageStores() {
               ))}
               {!filtered.length && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={7} className={emptyStateCellClass}>
                     No stores match your filters.
                   </td>
                 </tr>
@@ -174,13 +183,13 @@ export default function ManageStores() {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 text-sm text-slate-500">
+        <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
           <div className="flex items-center gap-2">
             <span>Show</span>
             <select
               value={entries}
               onChange={(e) => setEntries(Number(e.target.value))}
-              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 focus:border-teal-600 focus:outline-none"
+              className="rounded-xl border border-white/20 bg-transparent px-3 py-1.5 text-sm font-semibold text-white focus:border-teal-300 focus:outline-none"
             >
               {[5, 10, 20].map((size) => (
                 <option key={size} value={size}>
@@ -190,19 +199,19 @@ export default function ManageStores() {
             </select>
             <span>Entries</span>
           </div>
-          <p className="text-slate-500">
+          <p>
             Showing {Math.min(filtered.length, entries)} to {filtered.length} of {filtered.length} results
           </p>
           <div className="flex items-center gap-2">
             <button
               disabled
-              className="rounded-full border border-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-400 disabled:cursor-not-allowed"
+              className="rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white/50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
               disabled
-              className="rounded-full border border-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-400 disabled:cursor-not-allowed"
+              className="rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white/50 disabled:cursor-not-allowed"
             >
               Next
             </button>

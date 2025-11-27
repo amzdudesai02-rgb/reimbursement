@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Edit3 } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableCellClass,
+  emptyStateCellClass,
+} from '../styles/tableTheme'
 
 type SettingsTab = 'account' | 'warehouse' | 'invoice' | 'reimbursement'
 
@@ -68,30 +76,32 @@ export default function Settings() {
                 Add new payment method
               </button>
             </div>
-            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  <tr>
-                    <th className="px-6 py-3">Store Name</th>
-                    <th className="px-6 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!paymentMethods.length && (
+            <div className="mt-6">
+              <div className={tableWrapperClass}>
+                <table className={tableClass}>
+                  <thead className={tableHeadClass}>
                     <tr>
-                      <td colSpan={2} className="px-6 py-16 text-center text-slate-400">
-                        No data available
-                      </td>
+                      <th className="px-6 py-3">Store Name</th>
+                      <th className="px-6 py-3">Actions</th>
                     </tr>
-                  )}
-                  {paymentMethods.map((method) => (
-                    <tr key={method.storeName} className="border-t border-slate-100">
-                      <td className="px-6 py-4 text-slate-700">{method.storeName}</td>
-                      <td className="px-6 py-4 text-right text-teal-700">Manage</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className={tableBodyClass}>
+                    {!paymentMethods.length && (
+                      <tr>
+                        <td colSpan={2} className={emptyStateCellClass}>
+                          No data available
+                        </td>
+                      </tr>
+                    )}
+                    {paymentMethods.map((method) => (
+                      <tr key={method.storeName}>
+                        <td className={tableCellClass}>{method.storeName}</td>
+                        <td className={`${tableCellClass} text-right text-teal-200`}>Manage</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

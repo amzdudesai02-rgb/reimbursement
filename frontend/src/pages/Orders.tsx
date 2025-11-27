@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { Filter, Search, Download, ChevronDown, ExternalLink } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableCellClass,
+  tableFooterClass,
+  emptyStateCellClass,
+} from "../styles/tableTheme";
 
 type RemovalOrder = {
   caseId: string;
@@ -216,10 +225,10 @@ export default function Orders() {
         </section>
 
         {/* Table */}
-        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+        <section className={tableWrapperClass}>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className={tableClass}>
+              <thead className={tableHeadClass}>
                 <tr>
                   {[
                     "Case ID",
@@ -232,43 +241,40 @@ export default function Orders() {
                     "Qty",
                     "Action",
                   ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide"
-                    >
-                      {heading}
+                    <th key={heading} className="px-6 py-3">
+                      <span className="text-teal-50">{heading}</span>
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className={tableBodyClass}>
                 {paginatedOrders.map((order) => (
-                  <tr key={order.caseId} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-sm text-teal-600 font-semibold">
+                  <tr key={order.caseId} className="transition hover:bg-white/5">
+                    <td className={`${tableCellClass} font-semibold text-teal-200`}>
                       <a href="#" className="hover:underline">
                         {order.caseId}
                       </a>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      <p className="font-semibold">{order.trackingNumber}</p>
-                      <p className="text-xs text-gray-500">{order.carrier}</p>
+                    <td className={tableCellClass}>
+                      <p className="font-semibold text-white">{order.trackingNumber}</p>
+                      <p className="text-xs text-white/70">{order.carrier}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className={tableCellClass}>
                       <p>{order.shipmentDate}</p>
                       <p>{order.lastUpdateDate}</p>
-                      <p className="text-gray-500">{order.status}</p>
+                      <p className="text-white/70">{order.status}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{order.removalOrderStatus}</td>
-                    <td className="px-6 py-4 text-sm text-teal-600">
-                      <button className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-800">
+                    <td className={tableCellClass}>{order.removalOrderStatus}</td>
+                    <td className={`${tableCellClass} text-teal-200`}>
+                      <button className="inline-flex items-center gap-1 hover:text-teal-100">
                         {order.removalOrderId}
                         <ExternalLink className="h-4 w-4" />
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{order.items}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{order.itemsStatus}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{order.qty}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className={tableCellClass}>{order.items}</td>
+                    <td className={tableCellClass}>{order.itemsStatus}</td>
+                    <td className={tableCellClass}>{order.qty}</td>
+                    <td className={`${tableCellClass} text-sm`}>
                       <div className="flex flex-col gap-2 w-24">
                         <button className="px-3 py-1.5 text-sm font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600">
                           Dispute
@@ -283,7 +289,7 @@ export default function Orders() {
 
                 {paginatedOrders.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={9} className={emptyStateCellClass}>
                       No removal orders found for the selected filters.
                     </td>
                   </tr>
@@ -293,7 +299,7 @@ export default function Orders() {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center gap-4 justify-between text-sm text-gray-600">
+          <div className={`${tableFooterClass} flex flex-wrap items-center gap-4 justify-between`}>
             <div className="flex items-center gap-2">
               <span>Show</span>
               <select
@@ -302,7 +308,7 @@ export default function Orders() {
                   setEntriesPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
               >
                 {[5, 10, 25].map((option) => (
                   <option key={option} value={option}>
@@ -320,7 +326,7 @@ export default function Orders() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
@@ -330,10 +336,8 @@ export default function Orders() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 rounded-lg border ${
-                      currentPage === page
-                        ? "bg-teal-600 border-teal-600 text-white"
-                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
                     }`}
                   >
                     {page}
@@ -342,7 +346,7 @@ export default function Orders() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>

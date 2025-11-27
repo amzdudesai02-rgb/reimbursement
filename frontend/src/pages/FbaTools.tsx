@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Info, Search, Filter } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  emptyStateCellClass,
+} from "../styles/tableTheme";
 
 type TemplateProps = {
   title: string;
@@ -74,25 +81,27 @@ function FbaTemplate({ title, subtitle, metricsLabel = "Total Savings" }: Templa
           </div>
 
           <div className="px-6 pb-6">
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {["Store", "Title", "SKU", "ASIN", "Status", "Updated"].map((heading) => (
-                      <th key={heading} className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
-                      No records found for the selected filters.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className={tableWrapperClass}>
+              <div className="overflow-x-auto">
+                <table className={tableClass}>
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      {["Store", "Title", "SKU", "ASIN", "Status", "Updated"].map((heading) => (
+                        <th key={heading} className="px-6 py-3">
+                          <span className="text-teal-50">{heading}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className={tableBodyClass}>
+                    <tr>
+                      <td colSpan={6} className={emptyStateCellClass}>
+                        No records found for the selected filters.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>

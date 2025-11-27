@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Pencil, Search } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableCellClass,
+  emptyStateCellClass,
+} from '../styles/tableTheme'
 
 type Role = 'Admin' | 'User'
 
@@ -73,54 +81,56 @@ export default function Users() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-sm">
-              <thead>
-                <tr className="text-left text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-                  <th className="px-6 py-4">User Name</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Store Access</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((user) => (
-                  <tr key={user.email}>
-                    <td className="px-6 py-4 font-semibold text-slate-900">
-                      <div className="flex items-center gap-3">
-                        <span>{user.name}</span>
-                        {user.role === 'User' && (
-                          <button
-                            type="button"
-                            className="text-slate-400 transition hover:text-teal-600"
-                            aria-label={`Edit ${user.name}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+            <div className={tableWrapperClass}>
+              <table className={tableClass}>
+                <thead className={tableHeadClass}>
+                  <tr className="text-left">
+                    <th className="px-6 py-4">User Name</th>
+                    <th className="px-6 py-4">Email</th>
+                    <th className="px-6 py-4">Role</th>
+                    <th className="px-6 py-4">Store Access</th>
+                  </tr>
+                </thead>
+                <tbody className={tableBodyClass}>
+                  {filtered.map((user) => (
+                    <tr key={user.email} className="transition hover:bg-white/5">
+                      <td className={`${tableCellClass} font-semibold text-white`}>
+                        <div className="flex items-center gap-3">
+                          <span>{user.name}</span>
+                          {user.role === 'User' && (
+                            <button
+                              type="button"
+                              className="text-white/60 transition hover:text-teal-200"
+                              aria-label={`Edit ${user.name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className={tableCellClass}>{user.email}</td>
+                      <td className={tableCellClass}>{user.role}</td>
+                      <td className={tableCellClass}>
+                        {user.storeAccess ? (
+                          <span className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80">
+                            {user.storeAccess}
+                          </span>
+                        ) : (
+                          <span className="text-white/40">-</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{user.email}</td>
-                    <td className="px-6 py-4 text-slate-600">{user.role}</td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {user.storeAccess ? (
-                        <span className="inline-flex rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-                          {user.storeAccess}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {!filtered.length && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
-                      No users found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      </td>
+                    </tr>
+                  ))}
+                  {!filtered.length && (
+                    <tr>
+                      <td colSpan={4} className={emptyStateCellClass}>
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>

@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Search, Download, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableCellClass,
+  tableFooterClass,
+  emptyStateCellClass,
+} from "../styles/tableTheme";
 
 type SummaryCase = {
   id: number;
@@ -334,115 +343,115 @@ export default function Cases() {
         </div>
 
         {/* Summary Table */}
-        {activeTab === 0 && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            {activeTab === 0 && (
+              <div className={tableWrapperClass}>
+                <div className="overflow-x-auto">
+                  <table className={tableClass}>
+                    <thead className={tableHeadClass}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         ID
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Store Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Created Date
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Filed Date
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Case Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Potential Value (net proceeds)
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Actual Recovered
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Amazon Case ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Reimbursement ID(s)
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={tableBodyClass}>
                   {paginatedSummaryCases.map((caseItem) => (
-                    <tr key={caseItem.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr key={caseItem.id} className="transition-colors hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap font-semibold`}>
                         {caseItem.id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.storeName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.createdDate}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.filedDate}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`text-sm font-medium ${
-                            caseItem.caseStatus === "SUCCESS"
-                              ? "text-green-600"
-                              : caseItem.caseStatus === "RESOLVED"
-                              ? "text-blue-600"
-                              : "text-yellow-600"
-                          }`}
-                        >
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <span
+                              className={`text-sm font-semibold ${
+                                caseItem.caseStatus === "SUCCESS"
+                                  ? "text-emerald-300"
+                                  : caseItem.caseStatus === "RESOLVED"
+                                  ? "text-sky-300"
+                                  : "text-amber-300"
+                              }`}
+                            >
                           {caseItem.caseStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                          <td className={`${tableCellClass} whitespace-nowrap font-semibold text-white`}>
                         {currencyFormatter.format(caseItem.potentialValue)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.actualRecovered !== null
                           ? currencyFormatter.format(caseItem.actualRecovered)
                           : "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.amazonCaseId || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {caseItem.reimbursementId ? (
-                          <span className="text-gray-700">{caseItem.reimbursementId}</span>
+                              <span className="text-white/80">{caseItem.reimbursementId}</span>
                         ) : (
-                          <span className="text-red-600">N/A</span>
+                              <span className="text-rose-300">N/A</span>
                         )}
                       </td>
                     </tr>
@@ -451,25 +460,25 @@ export default function Cases() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Show</span>
+                {/* Pagination */}
+                <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+                  <div className="flex items-center gap-2">
+                    <span>Show</span>
                 <select
                   value={entriesPerPage}
                   onChange={(e) => {
                     setEntriesPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
-                <span className="text-sm text-gray-700">Entries</span>
+                    <span>Entries</span>
               </div>
-              <div className="text-sm text-gray-700">
+                  <div>
                 Showing {startIndexSummary + 1} to {Math.min(endIndexSummary, filteredSummaryCases.length)} of{" "}
                 {filteredSummaryCases.length} results
               </div>
@@ -477,7 +486,7 @@ export default function Cases() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -485,11 +494,9 @@ export default function Cases() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      currentPage === page
-                        ? "bg-teal-600 text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                    }`}
+                        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                          currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
+                        }`}
                   >
                     {page}
                   </button>
@@ -497,7 +504,7 @@ export default function Cases() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPagesSummary, p + 1))}
                   disabled={currentPage === totalPagesSummary}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                 </button>
@@ -507,93 +514,93 @@ export default function Cases() {
         )}
 
         {/* Reimbursement Reports Table */}
-        {activeTab === 1 && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            {activeTab === 1 && (
+              <div className={tableWrapperClass}>
+                <div className="overflow-x-auto">
+                  <table className={tableClass}>
+                    <thead className={tableHeadClass}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Case Summary ID
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Store Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Case Date Success
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
                         Reimbursement Date
                         <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
                         </div>
                       </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Reimbursement ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Amazon Case ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Amazon Order ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-3">
                       Reason
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={tableBodyClass}>
                   {paginatedReports.map((report) => (
-                    <tr key={report.caseSummaryId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr key={report.caseSummaryId} className="transition-colors hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap font-semibold`}>
                         {report.caseSummaryId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.storeName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.caseDateSuccess}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.reimbursementDate}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.reimbursementId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.amazonCaseId ? (
                           <a
                             href={`https://sellercentral.amazon.com/cases/${report.amazonCaseId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline text-sm"
+                                className="text-teal-200 hover:text-teal-100 hover:underline"
                           >
                             {report.amazonCaseId}
                           </a>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                              <span className="text-white/40">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
                         {report.amazonOrderId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-semibold capitalize tracking-wide text-white">
                           {report.reason}
                         </span>
                       </td>
@@ -603,25 +610,25 @@ export default function Cases() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Show</span>
+                {/* Pagination */}
+                <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+                  <div className="flex items-center gap-2">
+                    <span>Show</span>
                 <select
                   value={entriesPerPage}
                   onChange={(e) => {
                     setEntriesPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
-                <span className="text-sm text-gray-700">Entries</span>
+                    <span>Entries</span>
               </div>
-              <div className="text-sm text-gray-700">
+                  <div>
                 Showing {startIndexReports + 1} to {Math.min(endIndexReports, filteredReports.length)} of{" "}
                 {filteredReports.length} results
               </div>
@@ -629,7 +636,7 @@ export default function Cases() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -637,11 +644,9 @@ export default function Cases() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      currentPage === page
-                        ? "bg-teal-600 text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                    }`}
+                        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                          currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
+                        }`}
                   >
                     {page}
                   </button>
@@ -649,7 +654,7 @@ export default function Cases() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPagesReports, p + 1))}
                   disabled={currentPage === totalPagesReports}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                 </button>
@@ -659,270 +664,177 @@ export default function Cases() {
         )}
 
         {/* Reversal Reports Table */}
-        {activeTab === 2 && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Case No.
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Store Name
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Reversed Reimbursement Date
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Reversed Reimbursement ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Origin Reimbursement ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Case ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      sku
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedReversalReports.map((report) => (
-                    <tr key={report.caseNo} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {report.caseNo}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.storeName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.reversedReimbursementDate}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a
-                          href={`https://sellercentral.amazon.com/reimbursements/${report.reversedReimbursementId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
-                        >
-                          {report.reversedReimbursementId}
-                          <ExternalLink className="h-3 w-3 text-orange-500" />
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a
-                          href={`https://sellercentral.amazon.com/reimbursements/${report.originReimbursementId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
-                        >
-                          {report.originReimbursementId}
-                          <ExternalLink className="h-3 w-3 text-orange-500" />
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a
-                          href={`https://sellercentral.amazon.com/cases/${report.caseId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm inline-flex items-center gap-1"
-                        >
-                          {report.caseId}
-                          <ExternalLink className="h-3 w-3 text-orange-500" />
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.sku}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {activeTab === 2 && (
+              <div className={tableWrapperClass}>
+                <div className="overflow-x-auto">
+                  <table className={tableClass}>
+                    <thead className={tableHeadClass}>
+                      <tr>
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
+                            Case No.
+                            <div className="flex flex-col">
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
+                            </div>
+                          </div>
+                        </th>
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
+                            Store Name
+                            <div className="flex flex-col">
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
+                            </div>
+                          </div>
+                        </th>
+                        <th className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
+                            Reversed Reimbursement Date
+                            <div className="flex flex-col">
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
+                            </div>
+                          </div>
+                        </th>
+                        <th className="px-6 py-3">Reversed Reimbursement ID</th>
+                        <th className="px-6 py-3">Origin Reimbursement ID</th>
+                        <th className="px-6 py-3">Case ID</th>
+                        <th className="px-6 py-3">SKU</th>
+                      </tr>
+                    </thead>
+                    <tbody className={tableBodyClass}>
+                      {paginatedReversalReports.map((report) => (
+                        <tr key={report.caseNo} className="transition-colors hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap font-semibold`}>{report.caseNo}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{report.storeName}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{report.reversedReimbursementDate}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <a
+                              href={`https://sellercentral.amazon.com/payments/reimbursement/view?reimbursementId=${report.reversedReimbursementId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-teal-200 hover:text-teal-100 hover:underline"
+                            >
+                              {report.reversedReimbursementId}
+                              <ExternalLink className="h-3 w-3 text-amber-300" />
+                            </a>
+                          </td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <a
+                              href={`https://sellercentral.amazon.com/payments/reimbursement/view?reimbursementId=${report.originReimbursementId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-teal-200 hover:text-teal-100 hover:underline"
+                            >
+                              {report.originReimbursementId}
+                              <ExternalLink className="h-3 w-3 text-amber-300" />
+                            </a>
+                          </td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <a
+                              href={`https://sellercentral.amazon.com/cases/${report.caseId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-teal-200 hover:text-teal-100 hover:underline"
+                            >
+                              {report.caseId}
+                              <ExternalLink className="h-3 w-3 text-amber-300" />
+                            </a>
+                          </td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{report.sku}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-            {/* Pagination */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Show</span>
-                <select
-                  value={entriesPerPage}
-                  onChange={(e) => {
-                    setEntriesPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span className="text-sm text-gray-700">Entries</span>
+                {/* Pagination */}
+                <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+                  <div className="flex items-center gap-2">
+                    <span>Show</span>
+                    <select
+                      value={entriesPerPage}
+                      onChange={(e) => {
+                        setEntriesPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
+                    >
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span>Entries</span>
+                  </div>
+                  <div>
+                    Showing {startIndexReversal + 1} to {Math.min(endIndexReversal, filteredReversalReports.length)} of{" "}
+                    {filteredReversalReports.length} results
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPagesReversal }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                          currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPagesReversal, p + 1))}
+                      disabled={currentPage === totalPagesReversal}
+                      className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-gray-700">
-                Showing {startIndexReversal + 1} to {Math.min(endIndexReversal, filteredReversalReports.length)} of{" "}
-                {filteredReversalReports.length} results
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: totalPagesReversal }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      currentPage === page
-                        ? "bg-teal-600 text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPagesReversal, p + 1))}
-                  disabled={currentPage === totalPagesReversal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            )}
 
         {/* Shipment Detail Report Table */}
         {activeTab === 3 && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+          <div className={tableWrapperClass}>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={tableClass}>
+                <thead className={tableHeadClass}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Store Name
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Shipment ID
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        ASIN
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Seller SKU
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Fulfillment Network SKU
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Shipped
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Received
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        Discrepancies
-                        <div className="flex flex-col">
-                          <ChevronUp className="h-3 w-3 text-gray-400" />
-                          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                        </div>
-                      </div>
-                    </th>
+                    {["Store Name", "Shipment ID", "ASIN", "Seller SKU", "Fulfillment Network SKU", "Shipped", "Received", "Discrepancies"].map(
+                      (heading) => (
+                        <th key={heading} className="px-6 py-3">
+                          <div className="flex items-center gap-1 text-teal-50">
+                            {heading}
+                            <div className="flex flex-col">
+                              <ChevronUp className="h-3 w-3 text-white/60" />
+                              <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
+                            </div>
+                          </div>
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={tableBodyClass}>
                   {paginatedShipmentDetails.map((report, index) => (
-                    <tr key={`${report.shipmentId}-${report.asin}-${index}`} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.storeName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.shipmentId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.asin}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.sellerSku}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.fulfillmentNetworkSku}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.shipped}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.received}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {report.discrepancies === 0 ? "--" : report.discrepancies}
-                      </td>
+                    <tr key={`${report.shipmentId}-${report.asin}-${index}`} className="transition-colors hover:bg-white/5">
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.storeName}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.shipmentId}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.asin}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.sellerSku}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.fulfillmentNetworkSku}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.shipped}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.received}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{report.discrepancies === 0 ? "--" : report.discrepancies}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -930,32 +842,31 @@ export default function Cases() {
             </div>
 
             {/* Pagination */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Show</span>
+                <span>Show</span>
                 <select
                   value={entriesPerPage}
                   onChange={(e) => {
                     setEntriesPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
-                <span className="text-sm text-gray-700">Entries</span>
+                <span>Entries</span>
               </div>
-              <div className="text-sm text-gray-700">
-                Showing {startIndexShipment + 1} to {Math.min(endIndexShipment, filteredShipmentDetails.length)} of{" "}
-                {filteredShipmentDetails.length} results
+              <div>
+                Showing {startIndexShipment + 1} to {Math.min(endIndexShipment, filteredShipmentDetails.length)} of {filteredShipmentDetails.length} results
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -963,10 +874,8 @@ export default function Cases() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      currentPage === page
-                        ? "bg-teal-600 text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
                     }`}
                   >
                     {page}
@@ -975,7 +884,7 @@ export default function Cases() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPagesShipment, p + 1))}
                   disabled={currentPage === totalPagesShipment}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                 </button>
@@ -987,116 +896,52 @@ export default function Cases() {
         {/* Detected Lost and Damaged Tab */}
         {activeTab === 4 && (
           <>
-            {/* Informational Message */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
-              <p className="text-sm text-gray-700 leading-relaxed">
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4 text-blue-900">
+              <p className="text-sm leading-relaxed">
                 These are transaction IDs proactively identified by Amazon. If they are in this list it means they have not yet been reimbursed. Seller Investigators will continue to monitor this queue and file a case on your behalf if no reimbursements are made in 15 business days from the event date.
               </p>
             </div>
 
-            {/* Detected Lost and Damaged Table */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className={tableWrapperClass}>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className={tableClass}>
+                  <thead className={tableHeadClass}>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Store Name
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Transaction ID
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Reason
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Event Date
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          ASIN
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Seller SKU
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                          Fulfillment Network SKU
-                          <div className="flex flex-col">
-                            <ChevronUp className="h-3 w-3 text-gray-400" />
-                            <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-                          </div>
-                        </div>
-                      </th>
+                      {["Store Name", "Transaction ID", "Reason", "Event Date", "ASIN", "Seller SKU", "Fulfillment Network SKU"].map(
+                        (heading) => (
+                          <th key={heading} className="px-6 py-3">
+                            <div className="flex items-center gap-1 text-teal-50">
+                              {heading}
+                              <div className="flex flex-col">
+                                <ChevronUp className="h-3 w-3 text-white/60" />
+                                <ChevronDown className="h-3 w-3 -mt-1 text-white/60" />
+                              </div>
+                            </div>
+                          </th>
+                        )
+                      )}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={tableBodyClass}>
                     {paginatedDetectedLostAndDamaged.length > 0 ? (
                       paginatedDetectedLostAndDamaged.map((item, index) => (
-                        <tr key={`${item.transactionId}-${index}`} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.storeName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.transactionId}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
+                        <tr key={`${item.transactionId}-${index}`} className="transition-colors hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.storeName}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.transactionId}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>
+                            <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                               {item.reason}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.eventDate}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.asin}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.sellerSku}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {item.fulfillmentNetworkSku}
-                          </td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.eventDate}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.asin}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.sellerSku}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{item.fulfillmentNetworkSku}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                        <td colSpan={7} className={emptyStateCellClass}>
                           No data available
                         </td>
                       </tr>
@@ -1105,33 +950,31 @@ export default function Cases() {
                 </table>
               </div>
 
-              {/* Pagination */}
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">Show</span>
+                  <span>Show</span>
                   <select
                     value={entriesPerPage}
                     onChange={(e) => {
                       setEntriesPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
                   >
                     <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <span className="text-sm text-gray-700">Entries</span>
+                  <span>Entries</span>
                 </div>
-                <div className="text-sm text-gray-700">
-                  Showing {startIndexDetected + 1} to {Math.min(endIndexDetected, filteredDetectedLostAndDamaged.length)} of{" "}
-                  {filteredDetectedLostAndDamaged.length} results
+                <div>
+                  Showing {startIndexDetected + 1} to {Math.min(endIndexDetected, filteredDetectedLostAndDamaged.length)} of {filteredDetectedLostAndDamaged.length} results
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Previous
                   </button>
@@ -1139,10 +982,8 @@ export default function Cases() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        currentPage === page
-                          ? "bg-teal-600 text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                        currentPage === page ? "bg-teal-500 text-white" : "border border-white/20 text-white hover:bg-white/10"
                       }`}
                     >
                       {page}
@@ -1151,7 +992,7 @@ export default function Cases() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPagesDetected, p + 1))}
                     disabled={currentPage === totalPagesDetected}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Next
                   </button>

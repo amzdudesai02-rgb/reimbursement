@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import { Info, Filter, XCircle } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import {
+  tableWrapperClass,
+  tableClass,
+  tableHeadClass,
+  tableBodyClass,
+  tableFooterClass,
+  emptyStateCellClass,
+} from "../styles/tableTheme";
 
 const currencyOptions = ["USD", "EUR", "GBP"];
 const stores = ["All", "Cowell's Beach N' Bikini"];
@@ -239,11 +247,12 @@ export default function Documents() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="px-6 pb-6">
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+        {/* Table */}
+        <div className="px-6 pb-6">
+          <div className={tableWrapperClass}>
+            <div className="overflow-x-auto">
+              <table className={tableClass}>
+                <thead className={tableHeadClass}>
                   <tr>
                     {[
                       "Store Name",
@@ -256,50 +265,49 @@ export default function Documents() {
                       "PackingList Generator",
                       "Case Action",
                     ].map((heading) => (
-                      <th key={heading} className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        {heading}
+                      <th key={heading} className="px-6 py-3">
+                        <span className="text-teal-50">{heading}</span>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className={tableBodyClass}>
                   <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={9} className={emptyStateCellClass}>
                       No data available
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600 mt-4">
-              <div className="flex items-center gap-2">
-                <span>Show</span>
-                <select
-                  value={entriesToShow}
-                  onChange={(e) => setEntriesToShow(Number(e.target.value))}
-                  className="px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  {[5, 10, 25].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <span>Entries</span>
-              </div>
-              <p>
-                Showing 0 to 0 of 0 results
-              </p>
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-500 bg-white cursor-not-allowed" disabled>
-                  Previous
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-500 bg-white cursor-not-allowed" disabled>
-                  Next
-                </button>
-              </div>
             </div>
+
+          <div className={`${tableFooterClass} mt-4 flex flex-wrap items-center justify-between gap-4`}>
+            <div className="flex items-center gap-2">
+              <span>Show</span>
+              <select
+                value={entriesToShow}
+                onChange={(e) => setEntriesToShow(Number(e.target.value))}
+                className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none"
+              >
+                {[5, 10, 25].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <span>Entries</span>
+            </div>
+            <p>Showing 0 to 0 of 0 results</p>
+            <div className="flex items-center gap-2">
+              <button className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/70" disabled>
+                Previous
+              </button>
+              <button className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/70" disabled>
+                Next
+              </button>
+            </div>
+          </div>
           </div>
         </section>
       </div>
