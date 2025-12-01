@@ -62,12 +62,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       "keydown",
       "scroll",
       "touchstart",
-      "visibilitychange",
     ];
 
     activityEvents.forEach((event) => {
       window.addEventListener(event, resetTimer);
     });
+
+    // Track when tab becomes visible again
+    document.addEventListener("visibilitychange", resetTimer);
 
     // Start timer when token is present
     resetTimer();
@@ -77,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       activityEvents.forEach((event) => {
         window.removeEventListener(event, resetTimer);
       });
+      document.removeEventListener("visibilitychange", resetTimer);
     };
   }, [token]);
 
