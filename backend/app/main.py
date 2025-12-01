@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from sqlalchemy import inspect, text
 import secrets
 import os
 import json
+import time
 
 from .database import engine
 from . import models
@@ -97,6 +98,35 @@ SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 ALGO = "HS256"
 # Default access token lifetime (can be overridden via JWT_EXPIRES_MINUTES)
 TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "60"))
+
+# Simple in-memory rate limiting store: {(scope, ip): [timestamps...]}
+_rate_limit_store: dict[tuple[str, str], list[float]] = {}
+RATE_LIMIT_WINDOW_SECONDS = 5 * 60  # 5 minutes
+RATE_LIMIT_MAX_ATTEMPTS = 10        # per window per IP
+
+
+def rate_limiter(scope: str):
+    """Dependency factory for basic per-IP rate limiting."""
+
+    def _inner(request: Request):
+        ip = request.client.host if request.client else "unknown"
+        key = (scope, ip)
+        now = time.time()
+        window_start = now - RATE_LIMIT_WINDOW_SECONDS
+
+        timestamps = _rate_limit_store.get(key, [])
+        # Drop timestamps outside the window
+        timestamps = [ts for ts in timestamps if ts >= window_start]
+        if len(timestamps) >= RATE_LIMIT_MAX_ATTEMPTS:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many requests. Please wait a few minutes and try again.",
+            )
+
+        timestamps.append(now)
+        _rate_limit_store[key] = timestamps
+
+    return _inner
 
 oauth2 = OAuth2PasswordBearer(tokenUrl=f"{API_PREFIX}/auth/login")
 
@@ -209,15 +239,51 @@ def verify_email(body: VerifyTokenIn, db: Session = Depends(get_db)):
 
 
 @app.post(f"{API_PREFIX}/auth/login", response_model=TokenOut)
-def login(body: LoginIn, db: Session = Depends(get_db)):
+def login(
+    body: LoginIn,
+    request: Request,
+    _: None = Depends(rate_limiter("login")),
+    db: Session = Depends(get_db),
+):
+    ip = request.client.host if request.client else None
+
     user = db.query(models.User).filter_by(email=body.email).first()
     if not user or not bcrypt.verify(body.password, user.password_hash):
+        # Record failed login attempt
+        evt = models.SecurityEvent(
+            user_id=user.id if user else None,
+            ip=ip,
+            event_type="login_failed",
+            detail="Invalid credentials",
+        )
+        db.add(evt)
+        db.commit()
         raise HTTPException(401, "Invalid credentials")
+
     if not user.is_verified:
+        evt = models.SecurityEvent(
+            user_id=user.id,
+            ip=ip,
+            event_type="login_blocked_unverified",
+            detail="Email not verified",
+        )
+        db.add(evt)
+        db.commit()
         raise HTTPException(
             status_code=403,
             detail={"code": "EMAIL_NOT_VERIFIED", "message": "Please verify your email first."},
         )
+
+    # Successful login
+    evt = models.SecurityEvent(
+        user_id=user.id,
+        ip=ip,
+        event_type="login_success",
+        detail=None,
+    )
+    db.add(evt)
+    db.commit()
+
     return TokenOut(access_token=create_token(user.email))
 
 

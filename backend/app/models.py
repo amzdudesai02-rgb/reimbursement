@@ -67,6 +67,19 @@ class ContactMessage(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class SecurityEvent(Base):
+    """Security/audit log for auth and sensitive actions"""
+    __tablename__ = "security_events"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    ip = Column(String(64), nullable=True, index=True)
+    event_type = Column(String(64), nullable=False, index=True)  # e.g. login_success, login_failed
+    detail = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", backref="security_events")
+
 class Store(Base):
     """Represents an Amazon store/seller account"""
     __tablename__ = 'stores'
