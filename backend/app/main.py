@@ -358,7 +358,7 @@ def list_stores(user=Depends(get_current_user), db: Session = Depends(get_db)):
     return result
 
 
-@app.get(f"{API_PREFIX}/stores/{store_id}/connection", response_model=AmazonConnectionOut)
+@app.get(f"{API_PREFIX}/stores/{{store_id}}/connection", response_model=AmazonConnectionOut)
 def get_store_connection(
     store_id: int,
     user=Depends(get_current_user),
