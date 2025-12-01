@@ -121,7 +121,7 @@ export default function Home() {
               Lowest commission in the market
             </span>
             <h1 className="text-4xl font-semibold leading-tight text-slate-900">
-              Recover Amazon FBA Reimbursements — Pay Less.
+              Recover Amazon FBA Reimbursements Pay Less.
             </h1>
             <p className="text-lg leading-relaxed text-slate-600">
               Automated audits, verified claims, and the lowest commission in the market. AMZDudes finds money you didn’t know you were owed.

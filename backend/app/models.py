@@ -9,7 +9,10 @@ from sqlalchemy import (
     func,
     text,
     Index,
+    ForeignKey,
+    JSON,
 )
+from sqlalchemy.orm import relationship
 from .database import Base
 
 
@@ -62,6 +65,59 @@ class ContactMessage(Base):
     email = Column(String(255))
     message = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class Store(Base):
+    """Represents an Amazon store/seller account"""
+    __tablename__ = 'stores'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    store_name = Column(String(255), nullable=False)
+    region = Column(String(50), nullable=True)  # US, CA, UK, etc.
+    marketplace_id = Column(String(50), nullable=True)  # ATVPDKIKX0DER for US
+    is_active = Column(Boolean, nullable=False, server_default=text("true"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="stores")
+    amazon_connection = relationship("AmazonConnection", back_populates="store", uselist=False)
+
+
+class AmazonConnection(Base):
+    """Stores OAuth tokens and credentials for Amazon SP-API"""
+    __tablename__ = 'amazon_connections'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False, unique=True, index=True)
+    selling_partner_id = Column(String(255), nullable=False, unique=True, index=True)
+    
+    # LWA (Login with Amazon) tokens
+    lwa_refresh_token = Column(Text, nullable=False)  # Encrypted in production
+    lwa_access_token = Column(Text, nullable=True)  # Short-lived, cached
+    lwa_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # AWS credentials for signing requests
+    aws_access_key_id = Column(String(255), nullable=True)
+    aws_secret_access_key = Column(Text, nullable=True)  # Encrypted in production
+    aws_session_token = Column(Text, nullable=True)  # From STS AssumeRole
+    aws_session_expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Additional metadata
+    marketplace_ids = Column(JSON, nullable=True)  # List of marketplace IDs seller operates in
+    mws_auth_token = Column(String(255), nullable=True)  # Legacy MWS token if needed
+    
+    # Status
+    is_connected = Column(Boolean, nullable=False, server_default=text("true"))
+    last_sync_at = Column(DateTime(timezone=True), nullable=True)
+    last_error = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    store = relationship("Store", back_populates="amazon_connection")
 
 
 # Alias for backward compatibility

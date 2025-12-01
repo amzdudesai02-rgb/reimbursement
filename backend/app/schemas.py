@@ -72,6 +72,63 @@ class VerifyTokenIn(BaseModel):
 class ResendVerificationIn(BaseModel):
     email: EmailStr
 
+# ---------- AMAZON STORE SCHEMAS ----------
+class StoreBase(BaseModel):
+    store_name: str
+    region: Optional[str] = None
+    marketplace_id: Optional[str] = None
+
+
+class StoreCreate(StoreBase):
+    pass
+
+
+class StoreOut(StoreBase):
+    id: int
+    user_id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    is_connected: Optional[bool] = False  # From AmazonConnection
+
+    class Config:
+        from_attributes = True
+
+
+class AmazonConnectionOut(BaseModel):
+    id: int
+    store_id: int
+    selling_partner_id: str
+    is_connected: bool
+    last_sync_at: Optional[datetime] = None
+    marketplace_ids: Optional[list[str]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------- AMAZON OAUTH SCHEMAS ----------
+class AmazonOAuthInitOut(BaseModel):
+    """Response with authorization URL for seller to visit"""
+    authorization_url: str
+    state: str  # CSRF token for verification
+
+
+class AmazonOAuthCallbackIn(BaseModel):
+    """Request body when Amazon redirects back with authorization code"""
+    spapi_oauth_code: str
+    selling_partner_id: str
+    state: str  # Must match the state from init
+
+
+class AmazonOAuthCallbackOut(BaseModel):
+    """Response after successful OAuth callback"""
+    store_id: int
+    store_name: str
+    message: str
+
+
 class ReimbursementOut(BaseModel):
     id: int
     order_id: Optional[str] = None

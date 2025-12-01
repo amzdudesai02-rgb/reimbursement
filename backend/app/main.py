@@ -26,6 +26,17 @@ from app.schemas import (
     MessageOut,
     VerifyTokenIn,
     ResendVerificationIn,
+    AmazonOAuthInitOut,
+    AmazonOAuthCallbackIn,
+    AmazonOAuthCallbackOut,
+    StoreCreate,
+    StoreOut,
+    AmazonConnectionOut,
+)
+from app.sp_api_client import (
+    exchange_authorization_code,
+    generate_authorization_url,
+    SPAPIClient,
 )
 
 # ✅ Create tables automatically when server starts
@@ -214,6 +225,156 @@ def contact(body: ContactIn, db: Session = Depends(get_db)):
     db.add(msg)
     db.commit()
     return MessageOut(ok=True, message="Message received. We'll get back to you soon.")
+
+
+# ---------- AMAZON STORE & OAUTH ENDPOINTS ----------
+
+@app.get(f"{API_PREFIX}/auth/amazon/init", response_model=AmazonOAuthInitOut)
+def amazon_oauth_init(user=Depends(get_current_user)):
+    """
+    Initialize Amazon OAuth flow.
+    Returns authorization URL for seller to visit.
+    """
+    # Generate CSRF token
+    state = secrets.token_urlsafe(32)
+    
+    # Store state in session/cache (in production, use Redis or similar)
+    # For now, we'll include it in the response and verify on callback
+    
+    authorization_url = generate_authorization_url(state)
+    
+    return AmazonOAuthInitOut(
+        authorization_url=authorization_url,
+        state=state
+    )
+
+
+@app.post(f"{API_PREFIX}/auth/amazon/callback", response_model=AmazonOAuthCallbackOut)
+def amazon_oauth_callback(
+    body: AmazonOAuthCallbackIn,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Handle Amazon OAuth callback.
+    Exchange authorization code for tokens and create/store connection.
+    """
+    try:
+        # Exchange authorization code for tokens
+        token_response = exchange_authorization_code(body.spapi_oauth_code)
+        
+        refresh_token = token_response["refresh_token"]
+        selling_partner_id = body.selling_partner_id
+        
+        # Check if connection already exists
+        existing_conn = db.query(models.AmazonConnection).filter_by(
+            selling_partner_id=selling_partner_id
+        ).first()
+        
+        if existing_conn:
+            # Update existing connection
+            existing_conn.lwa_refresh_token = refresh_token
+            existing_conn.lwa_access_token = token_response.get("access_token")
+            expires_in = token_response.get("expires_in", 3600)
+            existing_conn.lwa_token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            existing_conn.is_connected = True
+            existing_conn.last_error = None
+            db.commit()
+            
+            store = existing_conn.store
+        else:
+            # Create new store and connection
+            # Try to get store name from SP-API (or use default)
+            store_name = f"Amazon Store {selling_partner_id[:8]}"
+            
+            # Create store
+            store = models.Store(
+                user_id=user.id,
+                store_name=store_name,
+                region="US",  # Default, can be updated later
+                marketplace_id="ATVPDKIKX0DER",  # US marketplace
+            )
+            db.add(store)
+            db.flush()  # Get store.id
+            
+            # Create connection
+            expires_in = token_response.get("expires_in", 3600)
+            connection = models.AmazonConnection(
+                store_id=store.id,
+                selling_partner_id=selling_partner_id,
+                lwa_refresh_token=refresh_token,
+                lwa_access_token=token_response.get("access_token"),
+                lwa_token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
+                is_connected=True,
+            )
+            db.add(connection)
+            db.commit()
+        
+        return AmazonOAuthCallbackOut(
+            store_id=store.id,
+            store_name=store.store_name,
+            message="Amazon store connected successfully!"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to connect Amazon store: {str(e)}"
+        )
+
+
+@app.get(f"{API_PREFIX}/stores", response_model=list[StoreOut])
+def list_stores(user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """List all stores for the current user"""
+    stores = db.query(models.Store).filter_by(user_id=user.id).all()
+    
+    result = []
+    for store in stores:
+        store_dict = {
+            "id": store.id,
+            "user_id": store.user_id,
+            "store_name": store.store_name,
+            "region": store.region,
+            "marketplace_id": store.marketplace_id,
+            "is_active": store.is_active,
+            "created_at": store.created_at,
+            "updated_at": store.updated_at,
+            "is_connected": False,
+        }
+        
+        # Check connection status
+        if store.amazon_connection:
+            store_dict["is_connected"] = store.amazon_connection.is_connected
+        
+        result.append(StoreOut(**store_dict))
+    
+    return result
+
+
+@app.get(f"{API_PREFIX}/stores/{store_id}/connection", response_model=AmazonConnectionOut)
+def get_store_connection(
+    store_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get connection details for a store"""
+    store = db.query(models.Store).filter_by(id=store_id, user_id=user.id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    connection = store.amazon_connection
+    if not connection:
+        raise HTTPException(status_code=404, detail="No connection found for this store")
+    
+    return AmazonConnectionOut(
+        id=connection.id,
+        store_id=connection.store_id,
+        selling_partner_id=connection.selling_partner_id,
+        is_connected=connection.is_connected,
+        last_sync_at=connection.last_sync_at,
+        marketplace_ids=connection.marketplace_ids,
+        created_at=connection.created_at,
+    )
 
 
 # Protect these endpoints if desired:
