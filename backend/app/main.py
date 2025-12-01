@@ -95,7 +95,8 @@ app.add_middleware(
 )
 SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 ALGO = "HS256"
-TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
+# Default access token lifetime (can be overridden via JWT_EXPIRES_MINUTES)
+TOKEN_MINUTES = int(os.getenv("JWT_EXPIRES_MINUTES", "60"))
 
 oauth2 = OAuth2PasswordBearer(tokenUrl=f"{API_PREFIX}/auth/login")
 
