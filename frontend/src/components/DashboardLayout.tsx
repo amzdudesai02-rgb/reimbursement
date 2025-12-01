@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -16,7 +16,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
-const brandInitials = 'AD';
+import { api } from '../lib/api';
+
+const fallbackInitials = 'AD';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -48,9 +50,14 @@ const fbaSubItems = [
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { token, logout } = useAuth();
   const [isFbaExpanded, setIsFbaExpanded] = useState(false);
   const [userCollapsedFba, setUserCollapsedFba] = useState(false);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profileEmail, setProfileEmail] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const activeFbaIndex = fbaSubItems.findIndex((item) => location.pathname === item.path);
   const isFbaRoute = activeFbaIndex >= 0;
   const fbaSlotHeight = 48; // 12 (h-12) * 4 px base spacing
@@ -67,14 +74,98 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const showFbaPanel = isFbaExpanded && !userCollapsedFba;
 
+  // Load current user profile for initials
+  useEffect(() => {
+    if (!token) {
+      setProfileName(null);
+      setProfileEmail(null);
+      return;
+    }
+    api
+      .get('/auth/me')
+      .then((res) => {
+        setProfileName(res.data.name ?? null);
+        setProfileEmail(res.data.email ?? null);
+      })
+      .catch(() => {
+        // Silent failure – keep fallback initials
+      });
+  }, [token]);
+
+  const computedInitials = (() => {
+    const source = (profileName || profileEmail || '').trim();
+    if (!source) return fallbackInitials;
+    const parts = source.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    // Single word (e.g. email or single name)
+    const word = parts[0];
+    if (word.length >= 2) return (word[0] + word[1]).toUpperCase();
+    return word[0]?.toUpperCase() ?? fallbackInitials;
+  })();
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Left Sidebar with Tabs */}
       <aside className="relative w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 space-y-6">
         {/* Logo */}
         <div className="flex items-center justify-center">
-          <div className="h-12 w-12 rounded-full bg-white text-gray-900 font-semibold flex items-center justify-center shadow-md border border-gray-200">
-            {brandInitials}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowProfileMenu((prev) => !prev)}
+              className="flex items-center justify-center focus:outline-none"
+            >
+              <div className="h-12 w-12 overflow-hidden rounded-full bg-white text-gray-900 font-semibold flex items-center justify-center shadow-md border border-gray-200">
+                {avatarUrl ? (
+                  // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                  <img src={avatarUrl} alt="Profile picture" className="h-full w-full object-cover" />
+                ) : (
+                  computedInitials
+                )}
+              </div>
+            </button>
+
+            {showProfileMenu && (
+              <div className="absolute left-16 top-1/2 z-30 w-56 -translate-y-1/2 rounded-xl border border-gray-100 bg-white p-3 text-xs shadow-xl">
+                <div className="mb-3">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.18em]">
+                    Signed in as
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                    {profileName || 'Reimbursement User'}
+                  </p>
+                  {profileEmail && (
+                    <p className="mt-0.5 text-[11px] text-gray-500 truncate">{profileEmail}</p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+                >
+                  Change profile picture
+                </button>
+                <p className="mt-2 text-[11px] text-gray-500">
+                  This updates your picture locally in the app. We can later link this to your account settings.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    setAvatarUrl(url);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -32,6 +32,7 @@ from app.schemas import (
     StoreCreate,
     StoreOut,
     AmazonConnectionOut,
+    CurrentUserOut,
 )
 from app.sp_api_client import (
     exchange_authorization_code,
@@ -217,6 +218,12 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
             detail={"code": "EMAIL_NOT_VERIFIED", "message": "Please verify your email first."},
         )
     return TokenOut(access_token=create_token(user.email))
+
+
+@app.get(f"{API_PREFIX}/auth/me", response_model=CurrentUserOut)
+def get_me(user=Depends(get_current_user)):
+    """Return the current authenticated user's basic profile."""
+    return user
 
 
 @app.post(f"{API_PREFIX}/contact", response_model=MessageOut)

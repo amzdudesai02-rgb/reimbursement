@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from pydantic import BaseModel
 from typing import Optional
 
 # ---------- USER SCHEMAS ----------
@@ -54,6 +53,14 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = 'bearer'
 
+
+class CurrentUserOut(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class ContactIn(BaseModel):
     name: str
