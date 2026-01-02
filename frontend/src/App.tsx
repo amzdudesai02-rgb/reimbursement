@@ -14,6 +14,7 @@ import Settings from './pages/Settings'
 import ManageStores from './pages/ManageStores'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDimensionsPage, FeeCalculatorPage } from './pages/FbaTools'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
@@ -64,13 +65,16 @@ function Shell(){
           <Route path="/" element={<Home/>} />
           <Route path="/pricing" element={<Pricing/>} />
           <Route path="/contact" element={<Contact/>} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
           <Route path="/reimbursement-tool" element={<ReimbursementTool/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/verify" element={<VerifyEmail/>} />
       </Routes>
      </main>
-     <footer className="py-8 text-center text-sm text-neutral-500">© {new Date().getFullYear()} amzDUDES</footer>
+     <footer className="py-8 text-center text-sm text-neutral-500">
+       © {new Date().getFullYear()} amzDUDES | <Link to="/privacy-policy" className="hover:text-slate-700 underline">Privacy Policy</Link>
+     </footer>
   </div>
  )
 }
