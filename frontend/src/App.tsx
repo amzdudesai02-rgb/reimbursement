@@ -15,6 +15,7 @@ import ManageStores from './pages/ManageStores'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Security from './pages/Security'
 import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDimensionsPage, FeeCalculatorPage } from './pages/FbaTools'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
@@ -40,7 +41,7 @@ function Shell(){
             <a href="#features" className="hover:text-slate-900">Features</a>
             <a href="#how-it-works" className="hover:text-slate-900">How It Works</a>
             <Link to="/pricing" className="hover:text-slate-900">Pricing</Link>
-            <a href="#security" className="hover:text-slate-900">Security</a>
+            <Link to="/security" className="hover:text-slate-900">Security</Link>
             <Link to="/contact" className="hover:text-slate-900">Company</Link>
           </div>
           {token ? (
@@ -66,6 +67,7 @@ function Shell(){
           <Route path="/pricing" element={<Pricing/>} />
           <Route path="/contact" element={<Contact/>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
+          <Route path="/security" element={<Security/>} />
           <Route path="/reimbursement-tool" element={<ReimbursementTool/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
