@@ -1,4 +1,4 @@
-import { Shield, Lock, Database, Eye, CheckCircle2, FileText, Server, Key, AlertTriangle, Users, Globe, Clock } from 'lucide-react';
+import { Shield, Lock, Database, Eye, CheckCircle2, FileText, Server, Key, AlertTriangle, Users } from 'lucide-react';
 
 export default function Security() {
   const sections = [
