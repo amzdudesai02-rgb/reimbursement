@@ -73,7 +73,7 @@ function Shell(){
       </Routes>
      </main>
      <footer className="py-8 text-center text-sm text-neutral-500">
-       © {new Date().getFullYear()} amzDUDES | <Link to="/privacy-policy" className="hover:text-slate-700 underline">Privacy Policy</Link>
+       © {new Date().getFullYear()} AMZDUDES | <Link to="/privacy-policy" className="hover:text-slate-700 underline">Privacy Policy</Link>
      </footer>
   </div>
  )
