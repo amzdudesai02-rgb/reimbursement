@@ -91,7 +91,7 @@ export default function Pricing() {
             <div className="mt-5 space-y-2 text-sm text-slate-600">
               <p dangerouslySetInnerHTML={{ __html: plan.feeHtml }} />
               <p>{plan.range}</p>
-            </div>
+              </div>
             <button
               className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold ${
                 plan.highlight
@@ -120,11 +120,11 @@ export default function Pricing() {
             <h2 className="text-2xl font-semibold text-slate-900">
               Everything you need to run reimbursements like a revenue channel.
             </h2>
-          </div>
+              </div>
           <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
             Download feature sheet
           </button>
-        </div>
+              </div>
         <div className="mt-6 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
             <thead>
@@ -133,8 +133,8 @@ export default function Pricing() {
                 <th className="p-4 text-center">Starter</th>
                 <th className="p-4 text-center">Growth</th>
                 <th className="p-4 text-center">Enterprise</th>
-              </tr>
-            </thead>
+          </tr>
+        </thead>
             <tbody className="divide-y divide-slate-100">
               {[
                 "Automated inbound shortage detection",
@@ -150,22 +150,22 @@ export default function Pricing() {
                   <td className="p-4 font-medium text-slate-700">{feature}</td>
                   <td className="p-4 text-center text-slate-500">
                     {idx < 5 ? "✔ Included" : idx === 5 ? "—" : "—"}
-                  </td>
+              </td>
                   <td className="p-4 text-center text-slate-500">
                     {idx < 6 ? "✔ Included" : idx === 6 ? "✔" : "Add-on"}
-                  </td>
+              </td>
                   <td className="p-4 text-center text-slate-500">
                     {idx === 7 ? "✔ Custom" : "✔ Included"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
         <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-500">
           Feature matrix updated Oct 2025. All plans include onboarding, SP-API
           integration, and proactive claim drafting.
-        </div>
+    </div>
       </section>
 
       <section className="rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_25px_60px_rgba(15,23,42,0.08)]">
@@ -174,31 +174,31 @@ export default function Pricing() {
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-slate-900">
           Pay for recoveries, not bureaucracy.
-        </h2>
-        <div className="mt-6 overflow-x-auto">
+  </h2>
+  <div className="mt-6 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <th className="p-4">Factor</th>
                 <th className="p-4 text-center text-indigo-600 border-l-4 border-indigo-500">
-                  AMZDUDES
-                </th>
+              AMZDUDES
+            </th>
                 <th className="p-4 text-center">Legacy vendors</th>
-              </tr>
-            </thead>
+          </tr>
+        </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {competitorRows.map((row) => (
                 <tr key={row[0]}>
                   <td className="p-4 font-medium text-slate-700">{row[0]}</td>
                   <td className="p-4 text-center font-semibold text-slate-900">
                     {row[1]}
-                  </td>
+              </td>
                   <td className="p-4 text-center text-slate-500">{row[2]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
         <p className="mt-4 text-xs text-slate-500">
           Rates audited Oct 2025 across GETIDA, Seller Investigators, Refunds
           Manager.
