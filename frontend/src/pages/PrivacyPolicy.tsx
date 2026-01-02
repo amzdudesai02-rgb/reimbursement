@@ -1,6 +1,4 @@
-import { Link } from 'react-router-dom';
 import { Shield, Lock, Database, Eye, Trash2, Mail, FileText, CheckCircle2, ArrowRight, Users, Clock, AlertCircle, Zap } from 'lucide-react';
-import logo from '../assets/logo.png';
 
 export default function PrivacyPolicy() {
   const sections = [
@@ -32,38 +30,6 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      {/* Premium Header with Glass Effect */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-5">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <img src={logo} alt="AMZDUDES" className="h-10 w-auto transition-all duration-300 group-hover:scale-110"/>
-              <div className="absolute inset-0 bg-blue-500/20 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
-            </div>
-            <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-700">
-              AMZDUDES
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all hover:scale-105">
-              Home
-            </Link>
-            <Link to="/pricing" className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all hover:scale-105">
-              Pricing
-            </Link>
-            <Link to="/contact" className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all hover:scale-105">
-              Contact
-            </Link>
-            <Link 
-              to="/signup" 
-              className="text-sm font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Get Started
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-16">
           {/* Premium Sidebar Navigation */}
@@ -531,66 +497,6 @@ export default function PrivacyPolicy() {
           </main>
         </div>
       </div>
-
-      {/* Premium Footer */}
-      <footer className="relative border-t-2 border-slate-200 bg-gradient-to-b from-white via-slate-50 to-white mt-24">
-        <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.02'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <img src={logo} alt="AMZDUDES" className="h-10"/>
-                <span className="text-2xl font-black text-slate-900">AMZDUDES</span>
-              </div>
-              <p className="text-base text-slate-600 leading-relaxed font-medium max-w-md">
-                Automated Amazon reimbursement recovery platform helping sellers recover money they're owed. 
-                Secure, compliant, and trusted by thousands of sellers.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-black text-slate-900 mb-6 text-lg uppercase tracking-wide">Legal</h4>
-              <div className="space-y-3">
-                <Link to="/privacy-policy" className="block text-base text-slate-600 hover:text-slate-900 font-semibold transition-colors hover:translate-x-1 transform">
-                  Privacy Policy
-                </Link>
-                <Link to="/contact" className="block text-base text-slate-600 hover:text-slate-900 font-semibold transition-colors hover:translate-x-1 transform">
-                  Contact Us
-                </Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-black text-slate-900 mb-6 text-lg uppercase tracking-wide">Company</h4>
-              <div className="space-y-3">
-                <Link to="/pricing" className="block text-base text-slate-600 hover:text-slate-900 font-semibold transition-colors hover:translate-x-1 transform">
-                  Pricing
-                </Link>
-                <a href="mailto:support@amzdudes.io" className="block text-base text-slate-600 hover:text-slate-900 font-semibold transition-colors hover:translate-x-1 transform">
-                  support@amzdudes.io
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="pt-10 border-t-2 border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-base text-slate-600 font-semibold">
-              © {new Date().getFullYear()} <strong className="text-slate-900 font-black">AMZDUDES</strong>. All rights reserved.
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full border border-green-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-bold text-green-700">Secure</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full border border-blue-200">
-                <Shield className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-bold text-blue-700">Compliant</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full border border-purple-200">
-                <CheckCircle2 className="w-4 h-4 text-purple-600" />
-                <span className="text-sm font-bold text-purple-700">Trusted</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
