@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { AxiosError } from 'axios'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BarChart3, Mail, ShieldCheck, User, Zap } from 'lucide-react'
+import { ArrowRight, BarChart3, Eye, EyeOff, Mail, ShieldCheck, User, Zap } from 'lucide-react'
 import { api } from '../lib/api'
 
 type ApiMessage = { detail?: string; message?: string }
@@ -22,6 +22,7 @@ export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -169,12 +170,24 @@ export default function Signup() {
                 <input
                   id="signup-password"
                   required
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a secure password"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-12 pr-4 text-sm text-slate-900 shadow-inner focus:border-[#0B64FF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0B64FF]/20 dark:bg-white dark:text-slate-900"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 py-3 pl-12 pr-12 text-sm text-slate-900 shadow-inner focus:border-[#0B64FF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0B64FF]/20 dark:bg-white dark:text-slate-900"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
               <p className="text-xs text-slate-400">
                 At least 8 characters, include one number or symbol.
