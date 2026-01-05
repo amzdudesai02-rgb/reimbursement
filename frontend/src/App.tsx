@@ -20,6 +20,7 @@ import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDi
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import logo from './assets/logo.png'
+import PageTitle from './components/PageTitle'
 
 
 function Protected({ children }: { children: JSX.Element }){
@@ -86,6 +87,7 @@ export default function App(){
   return (
    <AuthProvider>
     <BrowserRouter>
+     <PageTitle />
      <Routes>
        <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
        <Route path="/cases" element={<Protected><Cases/></Protected>} />
