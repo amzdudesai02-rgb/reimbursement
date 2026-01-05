@@ -42,7 +42,7 @@ function Shell(){
             <a href="#how-it-works" className="hover:text-slate-900">How It Works</a>
             <Link to="/pricing" className="hover:text-slate-900">Pricing</Link>
             <Link to="/security" className="hover:text-slate-900">Security</Link>
-            <Link to="/contact" className="hover:text-slate-900">Company</Link>
+            <Link to="/contact" className="hover:text-slate-900">Contact</Link>
           </div>
           {token ? (
               <>
