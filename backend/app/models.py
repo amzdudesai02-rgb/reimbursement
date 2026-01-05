@@ -72,7 +72,7 @@ class SecurityEvent(Base):
     __tablename__ = "security_events"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     ip = Column(String(64), nullable=True, index=True)
     event_type = Column(String(64), nullable=False, index=True)  # e.g. login_success, login_failed
     detail = Column(Text, nullable=True)
@@ -85,7 +85,7 @@ class Store(Base):
     __tablename__ = 'stores'
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True)
     store_name = Column(String(255), nullable=False)
     region = Column(String(50), nullable=True)  # US, CA, UK, etc.
     marketplace_id = Column(String(50), nullable=True)  # ATVPDKIKX0DER for US
@@ -103,7 +103,7 @@ class AmazonConnection(Base):
     __tablename__ = 'amazon_connections'
     
     id = Column(Integer, primary_key=True, index=True)
-    store_id = Column(Integer, ForeignKey('stores.id'), nullable=False, unique=True, index=True)
+    store_id = Column(Integer, ForeignKey('stores.id', ondelete="CASCADE"), nullable=False, unique=True, index=True)
     selling_partner_id = Column(String(255), nullable=False, unique=True, index=True)
     
     # LWA (Login with Amazon) tokens

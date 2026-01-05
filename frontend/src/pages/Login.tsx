@@ -79,7 +79,7 @@ export default function Login() {
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
         <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0B64FF] via-[#0645D6] to-[#021A62] p-10 text-white">
           <div className="relative space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-white/80">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-wider text-white/80">
               <Zap className="h-4 w-4" />
               Secure Access
             </span>
@@ -89,14 +89,14 @@ export default function Login() {
                 Log in to monitor reimbursements in real time.
               </h1>
             </div>
-            <p className="text-white/80">
+            <p className="text-sm text-white/80">
               One-click visibility into every case, approval, and claim packet—
               built for FBA recovery operators who need instant clarity.
             </p>
             <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 sm:grid-cols-3">
               {authStats.map((stat) => (
                 <div key={stat.label} className="space-y-1">
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/70">
+                  <p className="text-sm font-medium uppercase tracking-wider text-white/70">
                     {stat.label}
                   </p>
                   <p className="text-2xl font-semibold">{stat.value}</p>

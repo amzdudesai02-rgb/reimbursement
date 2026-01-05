@@ -74,16 +74,16 @@ export default function Signup() {
               <h1 className="mt-2 text-3xl font-semibold text-slate-900">
                 Create your reimbursement workspace
               </h1>
-              <p className="mt-3 text-base text-slate-600">
+              <p className="mt-3 text-sm text-slate-600">
                 Connect Seller Central, review auto-generated cases, and recover money Amazon owes you—without paying onboarding or hidden fees.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               {onboardingHighlights.map((item) => (
                 <div key={item.label} className="rounded-3xl border border-white bg-white/70 p-4 shadow-[0_15px_45px_rgba(12,38,131,0.1)]">
-                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">{item.label}</p>
+                  <p className="text-sm font-medium uppercase tracking-wider text-slate-500">{item.label}</p>
                   <p className="mt-2 text-2xl font-semibold text-slate-900">{item.value}</p>
-                  <p className="text-xs text-slate-500">{item.desc}</p>
+                  <p className="mt-1 text-sm text-slate-500">{item.desc}</p>
                 </div>
               ))}
             </div>
