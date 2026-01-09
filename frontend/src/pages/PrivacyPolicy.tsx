@@ -124,19 +124,43 @@ export default function PrivacyPolicy() {
                     </div>
                     <div className="absolute -inset-1 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl opacity-20 blur group-hover:opacity-40 transition-opacity -z-10"></div>
                   </div>
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">Amazon Data Collection</h2>
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">Amazon Data Collection via SP-API</h2>
                 </div>
                 <div className="prose prose-lg prose-slate max-w-none">
                   <p className="text-lg text-slate-700 leading-relaxed font-medium mb-8">
                     When you connect your Amazon Seller Central account to our Service, we collect and 
-                    process the following types of Amazon data through the Selling Partner API (SP-API):
+                    process the following types of Amazon data exclusively through Amazon's Selling Partner API (SP-API) 
+                    for the sole purpose of providing our reimbursement tracking and case filing services:
                   </p>
+                  
+                  <div className="mb-10 p-8 bg-gradient-to-r from-blue-50 via-purple-50 to-blue-50 rounded-2xl border-2 border-blue-300 shadow-lg">
+                    <h3 className="text-2xl font-black text-slate-900 mb-4">SP-API Data Sources</h3>
+                    <p className="text-base text-slate-700 leading-relaxed font-semibold mb-6">
+                      We access your Amazon seller data through the following SP-API endpoints, 
+                      <strong className="text-slate-900"> only with your explicit authorization via OAuth:</strong>
+                    </p>
+                    <ul className="space-y-3 text-base text-slate-700 font-medium">
+                      <li className="flex items-start gap-3">
+                        <span className="text-blue-600 font-black text-xl">•</span>
+                        <span><strong className="text-slate-900">Finances API:</strong> Financial events, reimbursement transactions, payment information, and financial records</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-blue-600 font-black text-xl">•</span>
+                        <span><strong className="text-slate-900">Reports API:</strong> FBA inventory adjustment reports, shipment detail reports, fee preview reports, and inventory data</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-blue-600 font-black text-xl">•</span>
+                        <span><strong className="text-slate-900">Orders API (if needed):</strong> Order information and order-related details for reimbursement case filing</span>
+                      </li>
+                    </ul>
+                  </div>
+
                   <div className="grid md:grid-cols-2 gap-6 mt-10">
                     {[
-                      { title: 'Financial Data', desc: 'Reimbursement transactions, financial events, payment information, and related financial records', gradient: 'from-blue-500 to-blue-600', icon: '💰' },
-                      { title: 'Orders Data', desc: 'Order information, order IDs, and order-related details', gradient: 'from-green-500 to-green-600', icon: '📦' },
-                      { title: 'FBA Reports', desc: 'FBA inventory adjustment reports, shipment details, fee preview reports, and inventory data', gradient: 'from-purple-500 to-purple-600', icon: '📊' },
-                      { title: 'Inventory Data', desc: 'SKU information, ASINs, product details, and inventory adjustments', gradient: 'from-orange-500 to-orange-600', icon: '📋' },
+                      { title: 'Financial Data (Finances API)', desc: 'Reimbursement transactions, financial events (Payments, Refunds, Service Fees, Adjustments), payment information, and related financial records', gradient: 'from-blue-500 to-blue-600', icon: '💰' },
+                      { title: 'FBA Reports (Reports API)', desc: 'FBA inventory adjustment reports (lost, damaged, destroyed inventory), shipment detail reports, fee preview reports, and inventory adjustment data', gradient: 'from-green-500 to-green-600', icon: '📊' },
+                      { title: 'Inventory Data', desc: 'SKU information, ASINs, product details, inventory adjustments, and warehouse transfer data from FBA reports', gradient: 'from-purple-500 to-purple-600', icon: '📦' },
+                      { title: 'Order Information', desc: 'Order IDs, order dates, and order-related details required for filing reimbursement cases (only when needed for case submission)', gradient: 'from-orange-500 to-orange-600', icon: '📋' },
                     ].map((item, idx) => (
                       <div key={idx} className="group/item relative bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 border-2 border-slate-200 hover:border-blue-400 transition-all shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${item.gradient} opacity-5 rounded-bl-3xl`}></div>
@@ -145,6 +169,18 @@ export default function PrivacyPolicy() {
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">{item.desc}</p>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="mt-10 p-8 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-300 rounded-2xl shadow-lg">
+                    <h4 className="font-black text-xl text-slate-900 mb-3 flex items-center gap-3">
+                      <AlertCircle className="w-6 h-6 text-amber-600" />
+                      What We Do NOT Collect
+                    </h4>
+                    <p className="text-slate-800 leading-relaxed font-semibold text-base mb-4">
+                      <strong>We do NOT collect:</strong> Customer personal information, customer names, addresses, 
+                      email addresses, phone numbers, or any customer-facing data. We only collect seller-side 
+                      financial and inventory data necessary for reimbursement tracking and case filing.
+                    </p>
                   </div>
                 </div>
               </section>
@@ -158,17 +194,19 @@ export default function PrivacyPolicy() {
                     </div>
                     <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl opacity-20 blur group-hover:opacity-40 transition-opacity -z-10"></div>
                   </div>
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">How We Use Your Data</h2>
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">How We Use Your Amazon Data</h2>
                 </div>
                 <div className="prose prose-lg prose-slate max-w-none">
-                  <p className="text-lg text-slate-700 leading-relaxed font-medium mb-8">We use the collected Amazon data solely for the following purposes:</p>
+                  <p className="text-lg text-slate-700 leading-relaxed font-medium mb-8">
+                    <strong className="text-slate-900 font-bold">We use the collected Amazon SP-API data EXCLUSIVELY for the following purposes:</strong>
+                  </p>
                   <div className="space-y-5 mt-8">
                     {[
-                      { title: 'Analysis & Reporting', desc: 'To analyze reimbursement transactions and identify missing reimbursements', icon: Zap },
-                      { title: 'Dashboard Display', desc: 'To display your reimbursement data, financial events, and inventory adjustments in the Service dashboard', icon: Eye },
-                      { title: 'Case Filing', desc: 'To assist in filing reimbursement cases with Amazon on your behalf (if you authorize such actions)', icon: FileText },
-                      { title: 'Service Improvement', desc: 'To improve the functionality and accuracy of our Service', icon: ArrowRight },
-                      { title: 'Customer Support', desc: 'To provide customer support and respond to your inquiries', icon: Users },
+                      { title: 'Reimbursement Analysis & Tracking', desc: 'To analyze financial events from the Finances API to identify reimbursement transactions and track recovered amounts. We match financial events with inventory adjustments to identify missing reimbursements.', icon: Zap },
+                      { title: 'Dashboard Display & Reporting', desc: 'To display your reimbursement data, financial events, and inventory adjustments from Reports API in the Service dashboard. All data is displayed only to authenticated users who own the data.', icon: Eye },
+                      { title: 'Reimbursement Case Filing', desc: 'To assist in filing reimbursement cases with Amazon on your behalf when you identify missing reimbursements. This requires your explicit authorization and approval before any case is filed.', icon: FileText },
+                      { title: 'Service Functionality', desc: 'To provide core Service functionality including automated scanning, case packet generation, and reimbursement tracking as described in our Service description.', icon: ArrowRight },
+                      { title: 'Customer Support', desc: 'To provide customer support, respond to your inquiries, and troubleshoot issues related to your reimbursement data and Service usage.', icon: Users },
                     ].map((item, idx) => {
                       const Icon = item.icon;
                       return (
@@ -184,16 +222,33 @@ export default function PrivacyPolicy() {
                       );
                     })}
                   </div>
-                  <div className="mt-10 p-8 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-300 rounded-2xl shadow-lg">
+                  <div className="mt-10 p-8 bg-gradient-to-r from-red-50 via-amber-50 to-red-50 border-2 border-red-300 rounded-2xl shadow-lg">
                     <div className="flex items-start gap-4">
-                      <div className="p-3 bg-amber-500 rounded-xl shadow-lg">
+                      <div className="p-3 bg-red-500 rounded-xl shadow-lg">
                         <AlertCircle className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-black text-xl text-slate-900 mb-3">What We Don't Do</h4>
-                        <p className="text-slate-800 leading-relaxed font-semibold text-base">
-                          <strong>We do NOT:</strong> Sell, rent, or share your Amazon data with third parties for marketing purposes. 
-                          We do not use your data for any purpose other than providing the Service.
+                        <h4 className="font-black text-xl text-slate-900 mb-3">What We Do NOT Do With Your Amazon Data</h4>
+                        <ul className="space-y-2 text-slate-800 leading-relaxed font-semibold text-base">
+                          <li className="flex items-start gap-2">
+                            <span className="text-red-600 font-black">✗</span>
+                            <span><strong>We do NOT sell, rent, or share</strong> your Amazon data with third parties for marketing, advertising, or any commercial purposes</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-red-600 font-black">✗</span>
+                            <span><strong>We do NOT use your data</strong> for any purpose other than providing the Reimbursement Dashboard Service</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-red-600 font-black">✗</span>
+                            <span><strong>We do NOT share your data</strong> with competitors or use it to benefit other sellers</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-red-600 font-black">✗</span>
+                            <span><strong>We do NOT access</strong> customer personal information, customer data, or any data unrelated to reimbursement tracking</span>
+                          </li>
+                        </ul>
+                        <p className="mt-4 text-slate-800 leading-relaxed font-bold text-base">
+                          Your Amazon seller data is used <strong className="text-slate-900">ONLY</strong> for reimbursement tracking and case filing services as authorized by you.
                         </p>
                       </div>
                     </div>
@@ -216,12 +271,20 @@ export default function PrivacyPolicy() {
                   <div>
                     <h3 className="text-2xl font-black text-slate-900 mb-5 flex items-center gap-3">
                       <Database className="w-6 h-6 text-blue-600" />
-                      Storage Location
+                      Storage Location & Infrastructure
                     </h3>
-                    <p className="text-lg text-slate-700 leading-relaxed font-medium">
-                      Your data is stored in secure databases hosted on cloud infrastructure. We use industry-standard 
-                      hosting providers with robust security measures.
+                    <p className="text-lg text-slate-700 leading-relaxed font-medium mb-6">
+                      <strong className="text-slate-900 font-bold">Your Amazon seller data is stored securely on AWS (Amazon Web Services) cloud infrastructure.</strong> 
+                      We use AWS databases and storage services with enterprise-grade security measures, redundant backups, 
+                      and data centers located in secure facilities with 24/7 monitoring.
                     </p>
+                    <div className="p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
+                      <p className="text-base text-slate-700 leading-relaxed font-semibold">
+                        <strong className="text-slate-900">Infrastructure Provider:</strong> Amazon Web Services (AWS)<br />
+                        <strong className="text-slate-900">Storage Type:</strong> Encrypted cloud databases with automated backups<br />
+                        <strong className="text-slate-900">Geographic Location:</strong> US-based AWS data centers (configurable based on requirements)
+                      </p>
+                    </div>
                   </div>
                   
                   <div>
@@ -441,7 +504,8 @@ export default function PrivacyPolicy() {
                           </div>
                           <div>
                             <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Company Name</div>
-                            <div className="text-3xl font-black text-white">AMZDUDES</div>
+                            <div className="text-3xl font-black text-white mb-2">AMZDUDES</div>
+                            <p className="text-sm text-white/80 font-medium">Amazon Reimbursement Dashboard Service Provider</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-6">
@@ -449,11 +513,12 @@ export default function PrivacyPolicy() {
                             <Mail className="w-8 h-8 text-white" />
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Support Email</div>
+                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Support & Privacy Contact Email</div>
                             <a href="mailto:support@amzdudes.io" className="text-2xl font-black text-white hover:text-blue-200 transition-colors inline-flex items-center gap-3 group">
                               support@amzdudes.io
                               <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
                             </a>
+                            <p className="text-sm text-white/80 font-medium mt-2">For privacy inquiries, data deletion requests, or security concerns</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-6">
@@ -461,11 +526,12 @@ export default function PrivacyPolicy() {
                             <FileText className="w-8 h-8 text-white" />
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Website</div>
+                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Service Website</div>
                             <a href="https://reimbursement.amzdudes.io" className="text-2xl font-black text-white hover:text-blue-200 transition-colors inline-flex items-center gap-3 group">
                               https://reimbursement.amzdudes.io
                               <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
                             </a>
+                            <p className="text-sm text-white/80 font-medium mt-2">Privacy Policy URL: https://reimbursement.amzdudes.io/privacy-policy</p>
                           </div>
                         </div>
                       </div>

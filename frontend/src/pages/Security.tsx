@@ -10,6 +10,7 @@ export default function Security() {
     { id: 'compliance', title: 'Compliance & Certifications', icon: CheckCircle2, color: 'emerald' },
     { id: 'monitoring', title: 'Monitoring & Incident Response', icon: Eye, color: 'red' },
     { id: 'best-practices', title: 'Security Best Practices', icon: AlertTriangle, color: 'amber' },
+    { id: 'contact', title: 'Security Contact', icon: Shield, color: 'blue' },
   ];
 
   const colorClasses = {
@@ -73,7 +74,8 @@ export default function Security() {
                       Security
                     </h1>
                     <p className="text-xl text-white/90 leading-relaxed font-medium">
-                      Your data security is our top priority. Learn how we protect your Amazon Seller Central data with enterprise-grade security measures.
+                      Your data security is our top priority. Learn how we protect your Amazon Seller Central data with enterprise-grade security measures, 
+                      AWS infrastructure, and full compliance with Amazon SP-API security requirements.
                     </p>
                   </div>
                 </div>
@@ -213,18 +215,45 @@ export default function Security() {
                     </div>
                     <div className="absolute -inset-1 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-2xl opacity-20 blur group-hover:opacity-40 transition-opacity -z-10"></div>
                   </div>
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">Infrastructure Security</h2>
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">Infrastructure Security (AWS-Based)</h2>
                 </div>
                 <div className="prose prose-lg prose-slate max-w-none">
-                  <p className="text-lg text-slate-700 leading-relaxed font-medium mb-8">
-                    Our platform runs on enterprise-grade infrastructure with multiple security layers:
+                  <p className="text-lg text-slate-700 leading-relaxed font-medium mb-6">
+                    <strong className="text-slate-900 font-bold">Our platform runs entirely on AWS (Amazon Web Services) infrastructure</strong>, 
+                    providing enterprise-grade security with multiple layers of protection. All Amazon seller data is stored and processed 
+                    on secure AWS cloud infrastructure with redundant data centers and automatic failover capabilities.
                   </p>
+                  <div className="p-6 bg-indigo-50 rounded-xl border-2 border-indigo-200 mb-8">
+                    <h3 className="text-xl font-black text-slate-900 mb-4">AWS Infrastructure Details</h3>
+                    <ul className="space-y-2 text-base text-slate-700 font-semibold">
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-600 font-black">✓</span>
+                        <span><strong className="text-slate-900">Cloud Provider:</strong> Amazon Web Services (AWS)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-600 font-black">✓</span>
+                        <span><strong className="text-slate-900">Database:</strong> AWS-managed database services with encryption at rest</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-600 font-black">✓</span>
+                        <span><strong className="text-slate-900">Compute:</strong> AWS compute services with automatic scaling and load balancing</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-600 font-black">✓</span>
+                        <span><strong className="text-slate-900">Storage:</strong> AWS storage services with encrypted backups</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-600 font-black">✓</span>
+                        <span><strong className="text-slate-900">Network:</strong> AWS network security groups, VPC isolation, and CloudFront CDN</span>
+                      </li>
+                    </ul>
+                  </div>
                   <div className="grid md:grid-cols-2 gap-6 mt-8">
                     {[
-                      { title: 'Cloud Infrastructure', desc: 'Hosted on AWS (Amazon Web Services) with redundant data centers and automatic failover capabilities', icon: '☁️' },
-                      { title: 'Network Security', desc: 'Firewalls, DDoS protection, and intrusion detection systems protect our network infrastructure', icon: '🛡️' },
-                      { title: 'Backup & Recovery', desc: 'Automated daily backups with point-in-time recovery capabilities. Data is backed up to multiple geographic locations', icon: '💾' },
-                      { title: 'Physical Security', desc: 'Data centers are protected with 24/7 security, biometric access controls, and environmental monitoring', icon: '🏢' },
+                      { title: 'AWS Cloud Infrastructure', desc: 'Hosted on AWS with redundant data centers, automatic failover, multi-AZ deployment, and 99.99% uptime SLA', icon: '☁️' },
+                      { title: 'Network Security', desc: 'AWS security groups, WAF (Web Application Firewall), DDoS protection via AWS Shield, and intrusion detection systems', icon: '🛡️' },
+                      { title: 'Backup & Recovery', desc: 'Automated daily AWS backups with point-in-time recovery. Data backed up to multiple AWS geographic regions with encrypted storage', icon: '💾' },
+                      { title: 'Physical Security', desc: 'AWS data centers with 24/7 security, biometric access controls, environmental monitoring, and compliance with SOC 1/2/3 standards', icon: '🏢' },
                     ].map((item, idx) => (
                       <div key={idx} className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 border-2 border-slate-200 hover:border-indigo-400 transition-all shadow-lg hover:shadow-xl">
                         <div className="text-4xl mb-4">{item.icon}</div>
@@ -283,14 +312,47 @@ export default function Security() {
                 </div>
                 <div className="prose prose-lg prose-slate max-w-none">
                   <p className="text-lg text-slate-700 leading-relaxed font-medium mb-8">
-                    We adhere to industry standards and best practices for data security:
+                    We adhere to industry standards, Amazon SP-API requirements, and best practices for data security:
                   </p>
+                  
+                  <div className="mb-8 p-8 bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl border-2 border-emerald-300 shadow-lg">
+                    <h3 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-3">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                      Amazon SP-API Compliance
+                    </h3>
+                    <p className="text-base text-slate-700 leading-relaxed font-semibold mb-4">
+                      <strong className="text-slate-900">Our Service is fully compliant with Amazon's Selling Partner API (SP-API) security requirements:</strong>
+                    </p>
+                    <ul className="space-y-2 text-base text-slate-700 font-semibold">
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-600 font-black">✓</span>
+                        <span>Follows Amazon SP-API OAuth 2.0 authentication flow and security best practices</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-600 font-black">✓</span>
+                        <span>Uses AWS IAM roles and STS (Security Token Service) for secure API request signing</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-600 font-black">✓</span>
+                        <span>Implements secure token storage and refresh token rotation as per Amazon guidelines</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-600 font-black">✓</span>
+                        <span>Respects Amazon's data usage policies and only accesses authorized API endpoints</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-emerald-600 font-black">✓</span>
+                        <span>Complies with Amazon's Terms of Service and SP-API Developer Agreement</span>
+                      </li>
+                    </ul>
+                  </div>
+
                   <div className="grid md:grid-cols-2 gap-6 mt-8">
                     {[
-                      { title: 'GDPR Compliant', desc: 'We comply with GDPR requirements for data protection and user privacy', icon: '🇪🇺' },
-                      { title: 'Amazon SP-API Compliant', desc: 'Our integration follows Amazon\'s SP-API security requirements and best practices', icon: '📦' },
-                      { title: 'SOC 2 Ready', desc: 'Our infrastructure and processes are designed to meet SOC 2 Type II requirements', icon: '✅' },
-                      { title: 'Data Residency', desc: 'We respect data residency requirements and can configure data storage based on your needs', icon: '🌍' },
+                      { title: 'GDPR Compliant', desc: 'We comply with GDPR requirements for data protection, user privacy rights, data portability, and right to deletion', icon: '🇪🇺' },
+                      { title: 'Amazon SP-API Compliant', desc: 'Fully compliant with Amazon SP-API security requirements, OAuth 2.0 standards, and AWS IAM role-based access', icon: '📦' },
+                      { title: 'AWS SOC 2 Compliant', desc: 'Our AWS infrastructure meets SOC 2 Type II requirements. AWS data centers are SOC 1/2/3 certified', icon: '✅' },
+                      { title: 'Data Residency Options', desc: 'We can configure data storage based on your geographic requirements and respect data residency regulations', icon: '🌍' },
                     ].map((item, idx) => (
                       <div key={idx} className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl p-6 border-2 border-emerald-200 hover:border-emerald-400 transition-all shadow-lg hover:shadow-xl">
                         <div className="text-4xl mb-4">{item.icon}</div>
@@ -377,6 +439,62 @@ export default function Security() {
                         <span className="text-slate-700 font-semibold text-base">{practice}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 9: Contact */}
+              <section id="contact" className="relative group bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl border-2 border-blue-400/30 shadow-2xl p-10 lg:p-14 scroll-mt-40 overflow-hidden">
+                <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="p-4 bg-white/20 backdrop-blur-lg rounded-2xl border-2 border-white/30 shadow-xl">
+                      <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-4xl font-black text-white tracking-tight">Security Contact Information</h2>
+                  </div>
+                  <div className="prose prose-lg prose-slate max-w-none">
+                    <p className="text-xl text-white/95 leading-relaxed font-semibold mb-10">
+                      For security concerns, incident reports, or questions about our security practices, please contact us:
+                    </p>
+                    <div className="bg-white/10 backdrop-blur-2xl rounded-3xl p-10 border-2 border-white/20 shadow-2xl">
+                      <div className="space-y-8">
+                        <div className="flex items-start gap-6">
+                          <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-xl">
+                            <Shield className="w-8 h-8 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Company Name</div>
+                            <div className="text-3xl font-black text-white mb-2">AMZDUDES</div>
+                            <p className="text-sm text-white/80 font-medium">Amazon Reimbursement Dashboard Service Provider</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-6">
+                          <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-xl">
+                            <FileText className="w-8 h-8 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Security & Privacy Contact Email</div>
+                            <a href="mailto:support@amzdudes.io" className="text-2xl font-black text-white hover:text-blue-200 transition-colors inline-flex items-center gap-3 group">
+                              support@amzdudes.io
+                            </a>
+                            <p className="text-sm text-white/80 font-medium mt-2">For security incidents, data breach reports, or security inquiries</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-6">
+                          <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-xl">
+                            <Server className="w-8 h-8 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-white/80 uppercase tracking-wider mb-2">Service Website</div>
+                            <a href="https://reimbursement.amzdudes.io" className="text-2xl font-black text-white hover:text-blue-200 transition-colors inline-flex items-center gap-3 group">
+                              https://reimbursement.amzdudes.io
+                            </a>
+                            <p className="text-sm text-white/80 font-medium mt-2">Security Page: https://reimbursement.amzdudes.io/security</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
