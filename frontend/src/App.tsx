@@ -16,6 +16,7 @@ import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Security from './pages/Security'
+import Support from './pages/Support'
 import { FbaFeesPage, WeightDimsAlertPage, WdSuccessfulCasesPage, ExportImportDimensionsPage, FeeCalculatorPage } from './pages/FbaTools'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
@@ -43,6 +44,7 @@ function Shell(){
             <a href="#how-it-works" className="hover:text-slate-900">How It Works</a>
             <Link to="/pricing" className="hover:text-slate-900">Pricing</Link>
             <Link to="/security" className="hover:text-slate-900">Security</Link>
+            <Link to="/support" className="hover:text-slate-900">Support</Link>
             <Link to="/contact" className="hover:text-slate-900">Contact</Link>
           </div>
           {token ? (
@@ -67,6 +69,7 @@ function Shell(){
           <Route path="/" element={<Home/>} />
           <Route path="/pricing" element={<Pricing/>} />
           <Route path="/contact" element={<Contact/>} />
+          <Route path="/support" element={<Support/>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
           <Route path="/security" element={<Security/>} />
           <Route path="/reimbursement-tool" element={<ReimbursementTool/>} />
