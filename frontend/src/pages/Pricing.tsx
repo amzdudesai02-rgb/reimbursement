@@ -27,6 +27,10 @@ export default function Pricing() {
       <header className="rounded-3xl border border-white/60 bg-gradient-to-br from-slate-900 via-indigo-900 to-indigo-700 p-10 text-white shadow-[0_40px_80px_rgba(15,23,42,0.4)]">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="max-w-2xl space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white">
+              <span>💰</span>
+              <span>PAID SERVICE - Subscription + Commission Model</span>
+            </div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/70">
               Pricing built for Amazon operators
             </p>
@@ -34,7 +38,7 @@ export default function Pricing() {
               Keep 93% of every reimbursement. Cancel anytime.
             </h1>
             <p className="text-sm text-white/80">
-              Transparent subscription + industry-low commission. Plans scale
+              <strong>This is a paid service.</strong> Transparent subscription + industry-low commission. Plans scale
               with your monthly recovery volume, and you can switch between
               monthly or annual billing in one click.
             </p>
@@ -237,6 +241,41 @@ export default function Pricing() {
         </div>
       </section>
 
+      <section className="rounded-3xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
+        <div className="text-center space-y-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-semibold">
+            Pricing Summary
+          </p>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Clear, Transparent Pricing
+          </h2>
+          <p className="text-sm text-slate-600 max-w-3xl mx-auto">
+            <strong>This is a paid service.</strong> All plans require a monthly or annual subscription fee plus a commission on recovered amounts. 
+            No hidden fees. Cancel anytime.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3 text-left max-w-4xl mx-auto">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Starter Plan</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">$29.99/month</p>
+              <p className="text-sm text-slate-600">+ 10% commission</p>
+              <p className="text-xs text-slate-500 mt-1">Up to $30,000/month</p>
+            </div>
+            <div className="rounded-2xl border-2 border-indigo-500 bg-white p-5 shadow-md">
+              <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Growth Plan ⭐</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">$69.99/month</p>
+              <p className="text-sm text-slate-600">+ 9% commission (8% annual)</p>
+              <p className="text-xs text-slate-500 mt-1">$30,001 - $100,000/month</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Enterprise Plan</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">$149.99/month</p>
+              <p className="text-sm text-slate-600">+ 7% commission</p>
+              <p className="text-xs text-slate-500 mt-1">$100,000+/month</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-3xl border border-white/60 bg-white p-8 shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
@@ -247,7 +286,7 @@ export default function Pricing() {
               Start with a free audit + action plan.
             </h2>
             <p className="text-sm text-slate-500">
-              We’ll surface every open reimbursement opportunity and model the
+              We'll surface every open reimbursement opportunity and model the
               ROI before you commit.
             </p>
           </div>
