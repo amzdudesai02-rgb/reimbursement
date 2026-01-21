@@ -16,10 +16,10 @@ const supportChannels = [
   {
     title: "WhatsApp Hotline",
     description: "Direct escalation channel for API outages and case appeals.",
-    value: "+1 (415) 231-8820",
+    value: "+1 (512) 543-0419",
     icon: Phone,
     action: "Message now",
-    href: "https://wa.me/14152318820",
+    href: "https://wa.me/15125430419",
     responseTime: "Immediate response",
   },
   {
