@@ -45,7 +45,7 @@ def _amount_cents(ev: Dict[str, Any]) -> Optional[float]:
 def _currency(ev: Dict[str, Any]) -> str:
     amt = ev.get("AdjustmentAmount") or ev.get("Amount") or ev.get("TotalAmount")
     if isinstance(amt, dict):
-        cc = amt.get("CurrencyCode") or (amt.get("Currency", {}) or {}
+        cc = amt.get("CurrencyCode") or (amt.get("Currency", {}) or {})
         if isinstance(cc, dict):
             return (cc.get("CurrencyCode") or "USD")[:8]
         return (str(cc) or "USD")[:8]
