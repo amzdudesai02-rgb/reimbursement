@@ -40,7 +40,15 @@ export default function AmazonAuthCallback() {
       .then((res) => {
         setStatus('success')
         setMessage(res.data.message ?? 'Amazon store connected successfully!')
-        setTimeout(() => navigate('/stores', { replace: true }), 2000)
+        if (window.opener) {
+          window.opener.postMessage(
+            { type: 'AMAZON_CONNECTED', store_id: res.data.store_id, store_name: res.data.store_name, message: res.data.message },
+            window.location.origin
+          )
+          window.close()
+        } else {
+          setTimeout(() => navigate('/stores', { replace: true }), 2000)
+        }
       })
       .catch((err: { response?: { data?: { detail?: string } }; message?: string }) => {
         setStatus('error')

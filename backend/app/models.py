@@ -134,5 +134,25 @@ class AmazonConnection(Base):
     store = relationship("Store", back_populates="amazon_connection")
 
 
+class FbaShipment(Base):
+    """Shipping Queue: Inventory → Shipping Queue (Fulfillment center / distribution center shipments)"""
+    __tablename__ = "fba_shipments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    shipment_id = Column(String(128), nullable=False, index=True)
+    reference_id = Column(String(128), nullable=True)
+    shipment_name = Column(String(255), nullable=True)  # Shipment name / display
+    created_at_utc = Column(DateTime(timezone=True), nullable=True)
+    updated_at_utc = Column(DateTime(timezone=True), nullable=True)
+    ship_to = Column(String(32), nullable=True)  # Destination fulfillment center
+    sku_count = Column(Integer, nullable=True)
+    expected_units = Column(Integer, nullable=True)
+    status = Column(String(32), nullable=True, index=True)  # WORKING, SHIPPED, RECEIVING, CLOSED, etc.
+    synced_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("ix_fba_shipments_store_status", "store_id", "status"),)
+
+
 # Alias for backward compatibility
 Reimbursement = AmazonReimbursement

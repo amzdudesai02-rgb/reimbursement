@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,7 +42,7 @@ from app.sp_api_client import (
     generate_authorization_url,
     SPAPIClient,
 )
-from app import finances_sync
+from app import finances_sync, reports_sync, inbound_sync
 from app.csv_ingest import map_and_clean
 
 # ✅ Create tables automatically when server starts
@@ -324,23 +324,20 @@ def contact(body: ContactIn, db: Session = Depends(get_db)):
 # ---------- AMAZON STORE & OAUTH ENDPOINTS ----------
 
 @app.get(f"{API_PREFIX}/auth/amazon/init", response_model=AmazonOAuthInitOut)
-def amazon_oauth_init(user=Depends(get_current_user)):
+def amazon_oauth_init(
+    user=Depends(get_current_user),
+    redirect_uri: str | None = Query(None, description="OAuth callback URL; use frontend URL for popup flow (e.g. https://yoursite.com/auth/amazon/callback)"),
+):
     """
     Initialize Amazon OAuth flow.
     Returns authorization URL for seller to visit.
+    For "Connect in new tab" + auto-close: pass redirect_uri = frontend callback URL.
     """
-    # Generate CSRF token
+    from app.sp_api_client import OAUTH_REDIRECT_URI
     state = secrets.token_urlsafe(32)
-    
-    # Store state in session/cache (in production, use Redis or similar)
-    # For now, we'll include it in the response and verify on callback
-    
-    authorization_url = generate_authorization_url(state)
-    
-    return AmazonOAuthInitOut(
-        authorization_url=authorization_url,
-        state=state
-    )
+    callback_url = redirect_uri or OAUTH_REDIRECT_URI
+    authorization_url = generate_authorization_url(state, redirect_uri=callback_url)
+    return AmazonOAuthInitOut(authorization_url=authorization_url, state=state)
 
 
 @app.post(f"{API_PREFIX}/auth/amazon/callback", response_model=AmazonOAuthCallbackOut)
@@ -492,12 +489,36 @@ async def list_items(skip: int = 0, limit: int = 100, user=Depends(get_current_u
         return [ReimbursementOut.from_amazon_reimbursement(i) for i in items]
 
 
+@app.get(f"{API_PREFIX}/shipping-queue")
+async def list_shipping_queue(skip: int = 0, limit: int = 100, user=Depends(get_current_user)):
+    """Inventory → Shipping Queue data (Fulfillment center shipments)."""
+    with get_session() as db:
+        store_ids = _user_store_ids(db, user)
+        rows = crud.list_shipments(db, store_ids=store_ids, skip=skip, limit=limit)
+        return [
+            {
+                "id": r.id,
+                "shipment_id": r.shipment_id,
+                "reference_id": r.reference_id,
+                "shipment_name": r.shipment_name,
+                "created_at": r.created_at_utc.isoformat() if r.created_at_utc else None,
+                "updated_at": r.updated_at_utc.isoformat() if r.updated_at_utc else None,
+                "ship_to": r.ship_to,
+                "sku_count": r.sku_count,
+                "expected_units": r.expected_units,
+                "status": r.status,
+            }
+            for r in rows
+        ]
+
+
 @app.post(f"{API_PREFIX}/sync")
 async def sync_reimbursements(user=Depends(get_current_user)):
-    """Sync reimbursement data from Amazon SP-API Finances for all connected stores. Data is displayed via this automation only."""
+    """Sync Reimbursement (Reports + Finances) and Shipping Queue for all connected stores."""
     errors: list[str] = []
     stores_synced = 0
     reimbursements_added = 0
+    shipments_updated = 0
     with get_session() as db:
         stores = (
             db.query(models.Store)
@@ -519,9 +540,24 @@ async def sync_reimbursements(user=Depends(get_current_user)):
                     selling_partner_id=conn.selling_partner_id,
                     marketplace_id=store.marketplace_id or "ATVPDKIKX0DER",
                 )
+                # Finances API (existing)
                 events = finances_sync.fetch_reimbursement_events(client, store.id)
                 n = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
                 reimbursements_added += n
+                # Reports → Fulfillment → Reimbursement (GET_FBA_REIMBURSEMENTS_DATA)
+                try:
+                    report_rows = reports_sync.fetch_reimbursements_report(
+                        client, store.id, store.marketplace_id or "ATVPDKIKX0DER"
+                    )
+                    reimbursements_added += crud.insert_or_ignore_reimbursements_from_financial_events(db, report_rows)
+                except Exception as report_err:
+                    errors.append(f"{store.store_name} (report): {report_err}")
+                # Inventory → Shipping Queue (Fulfillment Inbound)
+                try:
+                    ship_rows = inbound_sync.fetch_shipments(client, store.id)
+                    shipments_updated += crud.upsert_shipments(db, ship_rows)
+                except Exception as inbound_err:
+                    errors.append(f"{store.store_name} (inbound): {inbound_err}")
                 stores_synced += 1
                 conn.last_sync_at = datetime.utcnow()
                 conn.last_error = None
@@ -534,6 +570,7 @@ async def sync_reimbursements(user=Depends(get_current_user)):
         "synced": stores_synced > 0 and len(errors) == 0,
         "stores_synced": stores_synced,
         "reimbursements_added": reimbursements_added,
+        "shipments_updated": shipments_updated,
         "errors": errors,
     }
 

@@ -102,6 +102,14 @@ def insert_or_ignore_reimbursements_from_financial_events(db: Session, events: L
             asin=(ev.get("asin") or "")[:32] or None,
             product_name=ev.get("product_name"),
             fnsku=(ev.get("fnsku") or "")[:64] or None,
+            case_id=(ev.get("case_id") or "")[:64] or None,
+            condition=(ev.get("condition") or "")[:32] or None,
+            amount_per_unit=ev.get("amount_per_unit"),
+            quantity_reimbursed_cash=ev.get("quantity_reimbursed_cash"),
+            quantity_reimbursed_inventory=ev.get("quantity_reimbursed_inventory"),
+            quantity_reimbursed_total=ev.get("quantity_reimbursed_total"),
+            original_reimbursement_id=(ev.get("original_reimbursement_id") or "")[:64] or None,
+            original_reimbursement_type=(ev.get("original_reimbursement_type") or "")[:64] or None,
         )
         db.add(obj)
         existing_ids.add(ev["reimbursement_id"])
@@ -109,3 +117,55 @@ def insert_or_ignore_reimbursements_from_financial_events(db: Session, events: L
     if inserted:
         db.commit()
     return inserted
+
+
+def upsert_shipments(db: Session, rows: List[dict]) -> int:
+    """Insert or update fba_shipments from inbound sync. Returns count upserted."""
+    if not rows:
+        return 0
+    updated = 0
+    for r in rows:
+        store_id = r.get("store_id")
+        sid = (r.get("shipment_id") or "")[:128]
+        if not sid:
+            continue
+        existing = db.query(models.FbaShipment).filter(
+            models.FbaShipment.store_id == store_id,
+            models.FbaShipment.shipment_id == sid,
+        ).first()
+        if existing:
+            existing.reference_id = (r.get("reference_id") or "")[:128] or None
+            existing.shipment_name = (r.get("shipment_name") or "")[:255] or None
+            existing.created_at_utc = r.get("created_at_utc")
+            existing.updated_at_utc = r.get("updated_at_utc")
+            existing.ship_to = (r.get("ship_to") or "")[:32] or None
+            existing.sku_count = r.get("sku_count")
+            existing.expected_units = r.get("expected_units")
+            existing.status = (r.get("status") or "")[:32] or None
+            updated += 1
+        else:
+            obj = models.FbaShipment(
+                store_id=store_id,
+                shipment_id=sid,
+                reference_id=(r.get("reference_id") or "")[:128] or None,
+                shipment_name=(r.get("shipment_name") or "")[:255] or None,
+                created_at_utc=r.get("created_at_utc"),
+                updated_at_utc=r.get("updated_at_utc"),
+                ship_to=(r.get("ship_to") or "")[:32] or None,
+                sku_count=r.get("sku_count"),
+                expected_units=r.get("expected_units"),
+                status=(r.get("status") or "")[:32] or None,
+            )
+            db.add(obj)
+            updated += 1
+    if updated:
+        db.commit()
+    return updated
+
+
+def list_shipments(db: Session, store_ids: Optional[List[int]] = None, skip: int = 0, limit: int = 100):
+    """List fba_shipments for display (Shipping Queue)."""
+    q = db.query(models.FbaShipment)
+    if store_ids is not None and len(store_ids) > 0:
+        q = q.filter(models.FbaShipment.store_id.in_(store_ids))
+    return q.order_by(models.FbaShipment.updated_at_utc.desc()).offset(skip).limit(limit).all()

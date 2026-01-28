@@ -40,13 +40,28 @@ export default function ManageStores() {
     return () => { mounted = false }
   }, [])
 
+  // Listen for success from the Connect Amazon popup; refresh stores and trigger data sync
+  useEffect(() => {
+    const origin = window.location.origin
+    function onMessage(e: MessageEvent) {
+      if (e.origin !== origin || e.data?.type !== 'AMAZON_CONNECTED') return
+      api.get<StoreFromApi[]>('/stores').then((res) => setStores(res.data)).catch(() => {})
+      api.post('/sync').catch(() => {})
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+
   async function handleConnectAmazon() {
     setConnectError(null)
     setConnectLoading(true)
     try {
-      const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init')
+      const redirectUri = `${window.location.origin}/auth/amazon/callback`
+      const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init', {
+        params: { redirect_uri: redirectUri },
+      })
       if (data.authorization_url) {
-        window.location.href = data.authorization_url
+        window.open(data.authorization_url, 'amazon-connect', 'width=600,height=700,scrollbars=yes,noopener,noreferrer')
         return
       }
       setConnectError('Could not start Amazon connection.')

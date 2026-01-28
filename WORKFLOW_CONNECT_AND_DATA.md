@@ -23,9 +23,10 @@
 | 6 | Your **main app** listens for `message` and, when it receives `AMAZON_CONNECTED`, refreshes stores (and can start syncing reimbursement + shipping queue). |
 
 **Implementation notes:**
-- Backend unchanged: still `GET /api/auth/amazon/init` and `POST /api/auth/amazon/callback`.
-- Frontend: **ManageStores** uses `window.open()` instead of `window.location.href`, and the **AmazonAuthCallback** page runs inside the popup, then `postMessage` + `window.close()`.
-- Callback must run in the **same origin** as the opener so `postMessage` is allowed (no cross-origin issues if both are your domain).
+- Backend: `GET /api/auth/amazon/init` accepts optional `?redirect_uri=...` so the frontend can pass its callback URL (e.g. `https://yoursite.com/auth/amazon/callback`). Use this for the popup flow so Amazon redirects to your frontend.
+- Frontend: **ManageStores** calls init with `params: { redirect_uri: window.location.origin + '/auth/amazon/callback' }`, uses `window.open(authUrl)` for a new tab, and listens for `message` type `AMAZON_CONNECTED` to refresh stores and call `POST /api/sync`.
+- **AmazonAuthCallback**: On success, if `window.opener` exists it does `postMessage({ type: 'AMAZON_CONNECTED', ... })` and `window.close()`; otherwise redirects to `/stores`.
+- Callback must run on the **same origin** as the opener so `postMessage` is allowed.
 
 ---
 
