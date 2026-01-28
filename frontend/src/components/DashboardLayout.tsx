@@ -119,8 +119,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <div className="h-12 w-12 overflow-hidden rounded-full bg-white text-gray-900 font-semibold flex items-center justify-center shadow-md border border-gray-200">
                 {avatarUrl ? (
-                  // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                  <img src={avatarUrl} alt="Profile picture" className="h-full w-full object-cover" />
+                  <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
                   computedInitials
                 )}

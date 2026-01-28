@@ -20,6 +20,7 @@ class AmazonReimbursement(Base):
     __tablename__ = "amazon_reimbursements"
 
     id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
     approval_date = Column(DateTime(timezone=True), nullable=False, index=True)
     reimbursement_id = Column(String(64), nullable=False, unique=True)
     case_id = Column(String(64), nullable=True)

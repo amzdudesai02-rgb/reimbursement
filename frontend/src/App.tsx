@@ -12,6 +12,7 @@ import Orders from './pages/Orders'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
 import ManageStores from './pages/ManageStores'
+import AmazonAuthCallback from './pages/AmazonAuthCallback'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -103,7 +104,8 @@ export default function App(){
       <Route path="/weight-dims-alert" element={<Protected><WeightDimsAlertPage/></Protected>} />
       <Route path="/wd-successful-cases" element={<Protected><WdSuccessfulCasesPage/></Protected>} />
       <Route path="/export-import-dimensions" element={<Protected><ExportImportDimensionsPage/></Protected>} />
-      <Route path="/fee-calculator" element={<Protected><FeeCalculatorPage/></Protected>} />
+       <Route path="/fee-calculator" element={<Protected><FeeCalculatorPage/></Protected>} />
+       <Route path="/auth/amazon/callback" element={<AmazonAuthCallback />} />
        <Route path="/*" element={<Shell/>} />
      </Routes>
     </BrowserRouter>

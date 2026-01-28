@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 # ---------- USER SCHEMAS ----------
@@ -29,6 +29,19 @@ class ReimbursementCreate(BaseModel):
     reason: str
     amount: float
     status: str = "Pending"  # default if not provided
+
+
+class CsvReimbursementRow(BaseModel):
+    """One row from CSV upload; maps to amazon_reimbursements."""
+    order_id: Optional[str] = None
+    sku: Optional[str] = None
+    asin: Optional[str] = None
+    issue_type: Optional[str] = None
+    amount: float = 0
+    currency: str = "USD"
+    date: Optional[date] = None
+    notes: Optional[str] = None
+
 
 class SummaryOut(BaseModel):
     total_amount: float

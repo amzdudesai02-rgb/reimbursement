@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Info, Filter, XCircle } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { api } from "../lib/api";
 import {
   tableWrapperClass,
   tableClass,
@@ -11,7 +12,6 @@ import {
 } from "../styles/tableTheme";
 
 const currencyOptions = ["USD", "EUR", "GBP"];
-const stores = ["All", "Cowell's Beach N' Bikini"];
 const filterOptions = ["All", "Submitted", "Missing", "Pending"];
 
 type Filters = {
@@ -42,8 +42,11 @@ const filterConfig: FilterConfig[] = [
   { label: "PackingList Generator", key: "packingList", options: filterOptions },
 ];
 
+type StoreFromApi = { id: number; store_name: string };
+
 export default function Documents() {
   const [currency, setCurrency] = useState("USD");
+  const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [store, setStore] = useState("All");
   const [filters, setFilters] = useState<Filters>({
     claimType: "All",
@@ -57,6 +60,14 @@ export default function Documents() {
     newCaseNotes: false,
   });
   const [entriesToShow, setEntriesToShow] = useState(5);
+
+  useEffect(() => {
+    let mounted = true;
+    api.get<StoreFromApi[]>("/stores").then((r) => { if (mounted) setStores(r.data); }).catch(() => { if (mounted) setStores([]); });
+    return () => { mounted = false; };
+  }, []);
+
+  const storeOptions = useMemo(() => ["All", ...stores.map((s) => s.store_name)], [stores]);
 
   const hasFilters = useMemo(() => {
     return (
@@ -123,7 +134,7 @@ export default function Documents() {
               onChange={(e) => setStore(e.target.value)}
               className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              {stores.map((option) => (
+              {storeOptions.map((option) => (
                 <option key={option} value={option}>
                   Store: {option}
                 </option>

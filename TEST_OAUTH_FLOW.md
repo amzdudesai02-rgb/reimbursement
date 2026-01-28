@@ -13,6 +13,17 @@ Before testing, make sure:
 - [ ] You're logged into your application with a valid JWT token
 - [ ] Amazon app is configured with correct OAuth redirect URI
 
+### **Connect Amazon button (UI flow)**
+
+The in-app **Connect Amazon** button (Manage Stores) sends users to Amazon and back to a **frontend** callback URL. Set:
+
+- **Backend env** `AMAZON_OAUTH_REDIRECT_URI` to the **frontend** URL:
+  - Production: `https://reimbursement.amzdudes.io/auth/amazon/callback`
+  - Local: `http://localhost:5173/auth/amazon/callback`
+- **Amazon Seller Central** → Your app → OAuth configuration: add the **same** URL as the redirect URI.
+
+The frontend page at `/auth/amazon/callback` receives the code and POSTs it to the backend.
+
 ---
 
 ## **Method 1: Test via API (Using Postman/curl)**

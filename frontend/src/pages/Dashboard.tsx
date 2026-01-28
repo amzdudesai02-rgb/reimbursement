@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Info, Menu } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Info, Menu, Link2, RefreshCw } from "lucide-react";
 import { api } from "../lib/api";
-import type { Summary } from "../types";
+import type { Summary, Reimbursement } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
 
 const currencyFormatter = (currency = "USD") =>
@@ -11,296 +12,198 @@ const currencyFormatter = (currency = "USD") =>
     maximumFractionDigits: 0,
   });
 
-// Donut Chart Component
-function DonutChart({ value, label, color = "text-green-600" }: { value: string; label: string; color?: string }) {
-  const percentage = 75; // Mock percentage for the donut
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
-  const isGreen = color.includes('green');
-
-  return (
-    <div className="relative w-32 h-32 mx-auto mb-4">
-      <svg className="transform -rotate-90 w-32 h-32">
-        {/* Background circle */}
-        <circle
-          cx="64"
-          cy="64"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="10"
-          fill="none"
-          className="text-gray-200"
-        />
-        {/* Progress circle */}
-        <circle
-          cx="64"
-          cy="64"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="10"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className={isGreen ? 'text-green-500' : 'text-blue-500'}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`text-xl font-bold ${isGreen ? 'text-green-600' : 'text-blue-600'}`}>{value}</div>
-        <div className="text-xs text-gray-500 mt-1">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-type BreakdownRow = {
-  label: string;
-  amount: number;
-  cases: number;
-};
-
-type CardData = {
-  title: string;
-  amount: number;
-  cases: number;
-  rows: BreakdownRow[];
-  showChart: boolean;
-};
-
-const actionItems = [
-  { label: "Other Documents", cases: 0 },
-  { label: "Needed", cases: 0 },
-  { label: "Signature Needed", cases: 0 },
-  { label: "Invoice Needed", cases: 0 },
-  { label: "Permissions Revoked", cases: 0 },
-  { label: "Credit Card Issue", cases: 1 },
-  { label: "API Issue", cases: 0 },
-  { label: "API Scopes", cases: 1 },
-];
+type StoreFromApi = { id: number; store_name: string; is_connected: boolean };
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
+  const [stores, setStores] = useState<StoreFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [dateRange, setDateRange] = useState("All Time");
-  const [store, setStore] = useState("All");
-  const [showFilters, setShowFilters] = useState(false);
+  const [storeFilter, setStoreFilter] = useState("All");
+  const hasAutoSynced = useRef(false);
 
-  useEffect(() => {
-    async function bootstrap() {
-      try {
-        const summaryRes = await api.get<Summary>("/summary");
-        setSummary(summaryRes.data);
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-      }
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, r, st] = await Promise.all([
+        api.get<Summary>("/summary").then((res) => res.data),
+        api.get<Reimbursement[]>("/reimbursements?skip=0&limit=500").then((res) => res.data),
+        api.get<StoreFromApi[]>("/stores").then((res) => res.data),
+      ]);
+      setSummary(s);
+      setReimbursements(r);
+      setStores(st);
+    } catch {
+      setSummary(null);
+      setReimbursements([]);
+      setStores([]);
+    } finally {
+      setLoading(false);
     }
-    bootstrap();
   }, []);
 
   const currency = summary?.currency ?? "USD";
   const format = currencyFormatter(currency);
+  const totalAmount = summary?.total_amount ?? 0;
+  const totalCount = summary?.row_count ?? 0;
+  const hasStores = stores.length > 0;
 
-  // Create card data with state
-  const [dashboardCards, setDashboardCards] = useState<CardData[]>([
-    {
-      title: "Total Recovered",
-      amount: summary?.total_amount ?? 4792,
-      cases: summary?.row_count ?? 18,
-      showChart: true,
-      rows: [
-        { label: "Inbound", amount: 4392, cases: 2 },
-        { label: "Cancelled", amount: 0, cases: 0 },
-        { label: "Shipments", amount: 0, cases: 0 },
-        { label: "Lost", amount: 275, cases: 12 },
-        { label: "Damaged", amount: 125, cases: 4 },
-        { label: "Returns", amount: 0, cases: 0 },
-        { label: "Removal Orders", amount: 0, cases: 0 },
-        { label: "Overcharged Fee", amount: 0, cases: 0 },
-        { label: "Lost In Transit", amount: 0, cases: 0 },
-        { label: "Awd Inbound", amount: 0, cases: 0 },
-      ],
-    },
-    {
-      title: "Awaiting Amazon Decision",
-      amount: 0,
-      cases: 0,
-      showChart: false,
-      rows: [],
-    },
-    {
-      title: "In the Pipeline",
-      amount: 24533,
-      cases: 164,
-      showChart: true,
-      rows: [
-        { label: "Inbound", amount: 24327, cases: 152 },
-        { label: "Cancelled", amount: 0, cases: 9 },
-        { label: "Shipments", amount: 0, cases: 0 },
-        { label: "Lost", amount: 0, cases: 0 },
-        { label: "Damaged", amount: 206, cases: 3 },
-        { label: "Returns", amount: 0, cases: 0 },
-        { label: "Removal Orders", amount: 0, cases: 0 },
-        { label: "Overcharged Fee", amount: 0, cases: 0 },
-        { label: "Lost In Transit", amount: 0, cases: 0 },
-        { label: "Awd Inbound", amount: 0, cases: 0 },
-      ],
-    },
-  ]);
-
-  // Update card data when summary changes
-  useEffect(() => {
-    if (summary) {
-      setDashboardCards((prev) => {
-        const updated = [...prev];
-        updated[0] = {
-          ...updated[0],
-          amount: summary.total_amount,
-          cases: summary.row_count,
-        };
-        return updated;
-      });
+  const runSync = useCallback(async () => {
+    if (syncing || !hasStores) return;
+    setSyncing(true);
+    try {
+      await api.post("/sync");
+      await loadData();
+    } finally {
+      setSyncing(false);
     }
-  }, [summary]);
+  }, [syncing, hasStores, loadData]);
 
-  const totalActionItems = actionItems.reduce((sum, item) => sum + item.cases, 0);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleDateRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDateRange(e.target.value);
-    // Here you would typically refetch data with the new date range
-    console.log("Date range changed to:", e.target.value);
-  };
+  useEffect(() => {
+    if (loading || !hasStores || hasAutoSynced.current) return;
+    if (stores.length > 0 && (summary?.row_count ?? 0) === 0) {
+      hasAutoSynced.current = true;
+      api.post("/sync").then(() => loadData());
+    }
+  }, [loading, hasStores, stores.length, summary?.row_count, loadData]);
 
-  const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStore(e.target.value);
-    // Here you would typically refetch data with the new store filter
-    console.log("Store changed to:", e.target.value);
-  };
+  const breakdownByReason = useMemo(() => {
+    const map: Record<string, { amount: number; cases: number }> = {};
+    for (const r of reimbursements) {
+      const key = r.issue_type ?? "Other";
+      if (!map[key]) map[key] = { amount: 0, cases: 0 };
+      map[key].amount += r.amount;
+      map[key].cases += 1;
+    }
+    return Object.entries(map).sort((a, b) => b[1].amount - a[1].amount);
+  }, [reimbursements]);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Title and Filters */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+          {!hasStores && !loading && (
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-amber-900">Connect your Amazon account</p>
+                <p className="text-sm text-amber-800 mt-0.5">Link Seller Central to see your reimbursement data here.</p>
+              </div>
+              <Link
+                to="/stores"
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-600"
+              >
+                <Link2 className="h-4 w-4" />
+                Connect Amazon
+              </Link>
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-6">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm"
+            <button
+              type="button"
+              onClick={runSync}
+              disabled={!hasStores || syncing}
+              className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing…" : "Refresh data"}
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer shadow-sm"
             >
               <Menu className="h-4 w-4" />
               Filters
             </button>
-            <select 
+            <select
               value={dateRange}
-              onChange={handleDateRangeChange}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
+              onChange={(e) => setDateRange(e.target.value)}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
             >
               <option value="All Time">Date Range: All Time</option>
               <option value="Last 30 days">Last 30 days</option>
               <option value="Last 90 days">Last 90 days</option>
             </select>
-            <select 
-              value={store}
-              onChange={handleStoreChange}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-sm transition-all"
+            <select
+              value={storeFilter}
+              onChange={(e) => setStoreFilter(e.target.value)}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
             >
               <option value="All">Store: All</option>
-              <option value="Cowell's Beach N' Bikini">Cowell&apos;s Beach N&apos; Bikini</option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.store_name}>{s.store_name}</option>
+              ))}
             </select>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">NA Region</h2>
         </div>
 
-        {/* Main Cards Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Three Main Cards */}
-          {dashboardCards.map((card, index) => (
-            <div key={card.title} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow">
+        {loading ? (
+          <div className="rounded-xl border border-gray-100 bg-white p-12 text-center text-gray-500">
+            Loading…
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-semibold text-gray-800">{card.title}</h3>
-                <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help transition-colors" />
+                <h3 className="text-sm font-semibold text-gray-800">Total Recovered</h3>
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
               </div>
-
-              {card.showChart && card.amount > 0 ? (
-                <>
-                  <DonutChart
-                    value={format.format(card.amount)}
-                    label={`${card.cases} Cases`}
-                    color={index === 0 ? "text-green-600" : "text-blue-600"}
-                  />
-                  <div className="mt-5 space-y-2 max-h-64 overflow-y-auto">
-                    {card.rows.map((row) => (
-                      <div
-                        key={row.label}
-                        className="flex items-center justify-between text-xs py-2 px-2 rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        <span className="text-gray-600 font-medium">{row.label}</span>
-                        <div className="flex items-center gap-4 text-xs">
-                          <span className="text-gray-900 font-semibold w-20 text-right">{format.format(row.amount)}</span>
-                          <span className="text-gray-500 w-10 text-right">{row.cases}</span>
-                        </div>
+              <div className="text-center py-4">
+                <div className="text-3xl font-bold text-green-600">{format.format(totalAmount)}</div>
+                <div className="text-sm text-gray-500 mt-1">{totalCount} reimbursements</div>
+              </div>
+              {breakdownByReason.length > 0 && (
+                <div className="mt-5 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 pt-4">
+                  {breakdownByReason.map(([reason, { amount, cases }]) => (
+                    <div
+                      key={reason}
+                      className="flex items-center justify-between text-xs py-2 px-2 rounded-md hover:bg-gray-50"
+                    >
+                      <span className="text-gray-600 font-medium capitalize">{reason}</span>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="text-gray-900 font-semibold w-20 text-right">{format.format(amount)}</span>
+                        <span className="text-gray-500 w-10 text-right">{cases}</span>
                       </div>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => console.log("View Stores clicked for", card.title)}
-                    className="mt-5 w-full py-2.5 text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border-2 border-teal-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
-                  >
-                    View Stores
-                  </button>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-100">
-                    <div className="text-2xl font-bold text-gray-400">N/A</div>
-                  </div>
-                  <p className="text-sm text-gray-500 px-4">
-                    No cases are pending Amazon Decision for time period.
-                  </p>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          ))}
-
-          {/* Action Required Card */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between shadow-sm">
-              <h3 className="text-sm font-semibold text-white">Action Required</h3>
-              <Info className="h-4 w-4 text-white/90 hover:text-white cursor-help transition-colors" />
-            </div>
-            <div className="p-6">
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 mb-5 text-center border border-gray-200 shadow-inner">
-                <div className="text-5xl font-bold text-gray-900 mb-2">{totalActionItems}</div>
-                <div className="text-sm text-gray-600 font-medium">items require your attention</div>
-              </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {actionItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center justify-between text-sm py-2.5 px-3 rounded-lg transition-colors ${
-                      item.cases > 0 
-                        ? "bg-red-50 border border-red-100" 
-                        : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className={`font-medium ${item.cases > 0 ? "text-red-700" : "text-gray-600"}`}>
-                      {item.label}
-                    </span>
-                    <span className={`font-bold text-base ${item.cases > 0 ? "text-red-600" : "text-gray-400"}`}>
-                      {item.cases}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button 
-                onClick={() => console.log("View Actions clicked")}
-                className="mt-5 w-full py-2.5 text-sm font-semibold text-red-600 hover:text-white hover:bg-red-600 border-2 border-red-200 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow-md"
+              <Link
+                to="/cases"
+                className="mt-5 block w-full py-2.5 text-center text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border-2 border-teal-200 rounded-lg transition-all"
               >
-                View Actions
-              </button>
+                View reimbursements
+              </Link>
             </div>
+
+            {totalCount === 0 && hasStores && (
+              <div className="md:col-span-2 rounded-xl border border-gray-100 bg-white p-8">
+                <p className="text-gray-600 font-medium text-center">No reimbursement data yet</p>
+                <p className="text-sm text-gray-500 mt-1 text-center">Data is loaded automatically from Amazon. Use “Refresh data” to sync from your connected stores.</p>
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={runSync}
+                    disabled={syncing}
+                    className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                    {syncing ? "Syncing…" : "Sync from Amazon"}
+                  </button>
+                </div>
+                <Link to="/stores" className="inline-block mt-4 w-full text-center text-sm font-medium text-teal-600 hover:text-teal-700">
+                  Manage stores →
+                </Link>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

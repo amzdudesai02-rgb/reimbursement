@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List, Tuple
 from .utils import normalize_header, pick_column, parse_date
-from .schemas import ReimbursementCreate
+from .schemas import CsvReimbursementRow
 
 
 
@@ -11,7 +11,7 @@ EXPECTED = ["order_id","sku","asin","issue_type","amount","currency","date","not
 
 
 
-def map_and_clean(df: pd.DataFrame) -> Tuple[List[ReimbursementCreate], List[str]]:
+def map_and_clean(df: pd.DataFrame) -> Tuple[List[CsvReimbursementRow], List[str]]:
     # Normalize headers
     header_map = {col: normalize_header(col) for col in df.columns}
 
@@ -22,7 +22,7 @@ def map_and_clean(df: pd.DataFrame) -> Tuple[List[ReimbursementCreate], List[str
         colmap[key] = pick_column(header_map, key)
 
 
-    rows: List[ReimbursementCreate] = []
+    rows: List[CsvReimbursementRow] = []
     errors: List[str] = []
 
 
@@ -50,15 +50,15 @@ def map_and_clean(df: pd.DataFrame) -> Tuple[List[ReimbursementCreate], List[str
                        date_val = None
 
 
-            rc = ReimbursementCreate(
-                order_id=(str(r[colmap["order_id"]]).strip() if colmap["order_id"] else None),
-                sku=(str(r[colmap["sku"]]).strip() if colmap["sku"] else None),
-                asin=(str(r[colmap["asin"]]).strip() if colmap["asin"] else None),
-                issue_type=(str(r[colmap["issue_type"]]).strip() if colmap["issue_type"] else None),
+            rc = CsvReimbursementRow(
+                order_id=(str(r[colmap["order_id"]]).strip() if colmap["order_id"] else None) or None,
+                sku=(str(r[colmap["sku"]]).strip() if colmap["sku"] else None) or None,
+                asin=(str(r[colmap["asin"]]).strip() if colmap["asin"] else None) or None,
+                issue_type=(str(r[colmap["issue_type"]]).strip() if colmap["issue_type"] else None) or None,
                 amount=amount,
                 currency=currency,
                 date=date_val,
-                notes=(str(r[colmap["notes"]]).strip() if colmap["notes"] else None),
+                notes=(str(r[colmap["notes"]]).strip() if colmap["notes"] else None) or None,
             )
             rows.append(rc)
         except Exception as e:

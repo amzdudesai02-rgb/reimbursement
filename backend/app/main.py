@@ -1,12 +1,14 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
 from jose import jwt, JWTError
 from passlib.hash import bcrypt
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
+import io
 import secrets
 import os
 import json
@@ -40,9 +42,26 @@ from app.sp_api_client import (
     generate_authorization_url,
     SPAPIClient,
 )
+from app import finances_sync
+from app.csv_ingest import map_and_clean
 
 # ✅ Create tables automatically when server starts
 models.Base.metadata.create_all(bind=engine)
+
+
+def ensure_reimbursement_store_id():
+    try:
+        inspector = inspect(engine)
+        if "amazon_reimbursements" in inspector.get_table_names():
+            cols = {c["name"] for c in inspector.get_columns("amazon_reimbursements")}
+            if "store_id" not in cols:
+                with engine.connect() as conn:
+                    conn.execute(text(
+                        "ALTER TABLE amazon_reimbursements ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE SET NULL"
+                    ))
+                    conn.commit()
+    except Exception:
+        pass
 
 
 def ensure_user_columns():
@@ -68,6 +87,7 @@ def ensure_user_columns():
 
 
 ensure_user_columns()
+ensure_reimbursement_store_id()
 
 API_PREFIX = "/api"
 app = FastAPI(title="amzDUDES Reimbursement API")
@@ -451,16 +471,95 @@ def get_store_connection(
     )
 
 
+def _user_store_ids(db: Session, user) -> list:
+    return [s.id for s in db.query(models.Store).filter_by(user_id=user.id).all()]
+
+
 # Protect these endpoints if desired:
 @app.get(f"{API_PREFIX}/summary", response_model=SummaryOut)
 async def summary(user=Depends(get_current_user)):
     with get_session() as db:
-        s = crud.get_summary(db)
+        store_ids = _user_store_ids(db, user)
+        s = crud.get_summary(db, store_ids=store_ids)
         return SummaryOut(**s)
 
 
 @app.get(f"{API_PREFIX}/reimbursements", response_model=list[ReimbursementOut])
 async def list_items(skip: int = 0, limit: int = 100, user=Depends(get_current_user)):
     with get_session() as db:
-        items = crud.list_reimbursements(db, skip=skip, limit=limit)
+        store_ids = _user_store_ids(db, user)
+        items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids)
         return [ReimbursementOut.from_amazon_reimbursement(i) for i in items]
+
+
+@app.post(f"{API_PREFIX}/sync")
+async def sync_reimbursements(user=Depends(get_current_user)):
+    """Sync reimbursement data from Amazon SP-API Finances for all connected stores. Data is displayed via this automation only."""
+    errors: list[str] = []
+    stores_synced = 0
+    reimbursements_added = 0
+    with get_session() as db:
+        stores = (
+            db.query(models.Store)
+            .filter(models.Store.user_id == user.id)
+            .join(models.AmazonConnection, models.Store.id == models.AmazonConnection.store_id)
+            .filter(
+                models.AmazonConnection.is_connected == True,
+                models.AmazonConnection.lwa_refresh_token.isnot(None),
+            )
+            .all()
+        )
+        for store in stores:
+            conn = store.amazon_connection
+            if not conn or not conn.lwa_refresh_token:
+                continue
+            try:
+                client = SPAPIClient(
+                    refresh_token=conn.lwa_refresh_token,
+                    selling_partner_id=conn.selling_partner_id,
+                    marketplace_id=store.marketplace_id or "ATVPDKIKX0DER",
+                )
+                events = finances_sync.fetch_reimbursement_events(client, store.id)
+                n = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
+                reimbursements_added += n
+                stores_synced += 1
+                conn.last_sync_at = datetime.utcnow()
+                conn.last_error = None
+                db.commit()
+            except Exception as e:
+                conn.last_error = str(e)
+                db.commit()
+                errors.append(f"{store.store_name}: {e}")
+    return {
+        "synced": stores_synced > 0 and len(errors) == 0,
+        "stores_synced": stores_synced,
+        "reimbursements_added": reimbursements_added,
+        "errors": errors,
+    }
+
+
+@app.post(f"{API_PREFIX}/upload")
+async def upload_reimbursements_csv(
+    file: UploadFile = File(...),
+    user=Depends(get_current_user),
+):
+    """Upload a CSV/TSV of reimbursements; parses and inserts into amazon_reimbursements. Data shows automatically in Dashboard and Cases."""
+    if not file.filename or not (file.filename.lower().endswith(".csv") or file.filename.lower().endswith(".tsv")):
+        raise HTTPException(status_code=400, detail="File must be .csv or .tsv")
+    try:
+        raw = await file.read()
+        sep = "\t" if (file.filename or "").lower().endswith(".tsv") else ","
+        df = pd.read_csv(io.BytesIO(raw), sep=sep, dtype=str, keep_default_na=False)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse file: {e}")
+    rows, errors = map_and_clean(df)
+    inserted = 0
+    if rows:
+        with get_session() as db:
+            inserted = crud.insert_reimbursements_from_csv(db, rows)
+    return {
+        "total_rows": len(rows) + len(errors),
+        "inserted_rows": inserted,
+        "skipped_rows": len(errors),
+        "errors": errors[:50],
+    }
