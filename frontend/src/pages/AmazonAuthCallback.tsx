@@ -13,7 +13,7 @@ export default function AmazonAuthCallback() {
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState<string>('')
 
-  const code = searchParams.get('spapi_oauth_code')
+  const code = searchParams.get('spapi_oauth_code') || searchParams.get('code')
   const sellingPartnerId = searchParams.get('selling_partner_id')
   const state = searchParams.get('state')
 
@@ -47,7 +47,8 @@ export default function AmazonAuthCallback() {
           )
           window.close()
         } else {
-          setTimeout(() => navigate('/stores', { replace: true }), 2000)
+          // Same-tab flow: go to Manage Stores and trigger sync via query so data loads
+          setTimeout(() => navigate('/stores?amazon_connected=1', { replace: true }), 1500)
         }
       })
       .catch((err: { response?: { data?: { detail?: string } }; message?: string }) => {

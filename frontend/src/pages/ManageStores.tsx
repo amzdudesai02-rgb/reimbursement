@@ -40,7 +40,19 @@ export default function ManageStores() {
     return () => { mounted = false }
   }, [])
 
-  // Listen for success from the Connect Amazon popup; refresh stores and trigger data sync
+  // After same-tab Connect Amazon return: trigger sync and clean URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('amazon_connected') === '1') {
+      params.delete('amazon_connected')
+      const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+      api.get<StoreFromApi[]>('/stores').then((res) => setStores(res.data)).catch(() => {})
+      api.post('/sync').catch(() => {})
+    }
+  }, [])
+
+  // If we used popup: listen for AMAZON_CONNECTED and refresh. Same-tab redirect does not need this.
   useEffect(() => {
     const origin = window.location.origin
     function onMessage(e: MessageEvent) {
@@ -61,7 +73,9 @@ export default function ManageStores() {
         params: { redirect_uri: redirectUri },
       })
       if (data.authorization_url) {
-        window.open(data.authorization_url, 'amazon-connect', 'width=600,height=700,scrollbars=yes,noopener,noreferrer')
+        // Same-tab redirect: user goes to Amazon OAuth → approves → Amazon sends them back to our callback.
+        // No popup, no tab-close; "Amazon Connected" shows on our callback then we send them to /stores.
+        window.location.href = data.authorization_url
         return
       }
       setConnectError('Could not start Amazon connection.')
