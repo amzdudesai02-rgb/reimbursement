@@ -91,6 +91,8 @@ def ensure_user_columns():
         statements.append("ALTER TABLE users ADD COLUMN verification_sent_at TIMESTAMP")
     if "verified_at" not in cols:
         statements.append("ALTER TABLE users ADD COLUMN verified_at TIMESTAMP")
+    if "role" not in cols:
+        statements.append("ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'User'")
 
     if statements:
         with engine.connect() as conn:
@@ -435,6 +437,7 @@ def _do_oauth_exchange_and_connect(
 
 @app.get(f"{API_PREFIX}/auth/amazon/callback")
 def amazon_oauth_callback_get(
+    request: Request,
     code: str | None = Query(None),
     spapi_oauth_code: str | None = Query(None),
     state: str | None = Query(None),
@@ -468,17 +471,26 @@ def amazon_oauth_callback_get(
         raise
     except Exception as e:
         logger.exception("amazon_oauth_callback_get failed: %s", e)
+        ip = request.client.host if request.client else None
+        evt = models.SecurityEvent(user_id=user_id, ip=ip, event_type="amazon_connect_failed", detail=str(e)[:500])
+        db.add(evt)
+        db.commit()
         err = str(e)
         if "refresh_token" in err.lower():
             err = "Refresh token missing. Revoke and reconnect the app, then try again."
         elif "redirect" in err.lower() or "redirect_uri" in err.lower():
             err = f"Redirect URI mismatch. Use exactly: {redirect_uri}"
         raise HTTPException(status_code=400, detail=f"Failed to connect Amazon store: {err}")
+    ip = request.client.host if request.client else None
+    evt = models.SecurityEvent(user_id=user_id, ip=ip, event_type="amazon_connect_success", detail=f"store_id={store.id}")
+    db.add(evt)
+    db.commit()
     return RedirectResponse(url=f"{FRONTEND_ORIGIN}/stores?amazon_connected=1", status_code=302)
 
 
 @app.post(f"{API_PREFIX}/auth/amazon/callback", response_model=AmazonOAuthCallbackOut)
 def amazon_oauth_callback_post(
+    request: Request,
     body: AmazonOAuthCallbackIn,
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -519,12 +531,20 @@ def amazon_oauth_callback_post(
         raise
     except Exception as e:
         logger.exception("amazon_oauth_callback_post failed: %s", e)
+        ip = request.client.host if request.client else None
+        evt = models.SecurityEvent(user_id=user.id, ip=ip, event_type="amazon_connect_failed", detail=str(e)[:500])
+        db.add(evt)
+        db.commit()
         err = str(e)
         if "refresh_token" in err.lower():
             err = "Critical: refresh_token missing. Revoke and reconnect, then try again."
         elif "redirect" in err.lower() or "redirect_uri" in err.lower():
             err = f"Redirect URI mismatch. Use exactly: {redirect_uri}"
         raise HTTPException(status_code=400, detail=f"Failed to connect Amazon store: {err}")
+    ip = request.client.host if request.client else None
+    evt = models.SecurityEvent(user_id=user.id, ip=ip, event_type="amazon_connect_success", detail=f"store_id={store.id}")
+    db.add(evt)
+    db.commit()
     return AmazonOAuthCallbackOut(
         store_id=store.id,
         store_name=store.store_name,

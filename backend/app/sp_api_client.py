@@ -331,7 +331,7 @@ def generate_authorization_url(
     
     Args:
         state: CSRF token for security
-        redirect_uri: Must match the one registered in Seller Central
+        redirect_uri: Must match the one registered in Seller Central / Developer Central
     
     Returns:
         Full authorization URL
@@ -342,7 +342,10 @@ def generate_authorization_url(
         "return_url": redirect_uri,
         "state": state,
     }
-    
-    query_string = "&".join([f"{k}={quote(v)}" for k, v in params.items()])
+    # return_url must be fully encoded: https%3A%2F%2F... (slashes as %2F)
+    # Default quote leaves / unencoded; use safe='' for return_url.
+    def _enc(k: str, v: str) -> str:
+        return f"{k}={quote(v, safe='')}" if k == "return_url" else f"{k}={quote(v)}"
+    query_string = "&".join(_enc(k, v) for k, v in params.items())
     return f"https://sellercentral.amazon.com/apps/authorize/consent?{query_string}"
 

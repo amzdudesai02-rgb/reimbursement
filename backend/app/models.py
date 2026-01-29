@@ -57,6 +57,7 @@ class User(Base):
    verification_token = Column(String(255), unique=True, nullable=True, index=True)
    verification_sent_at = Column(DateTime, nullable=True)
    verified_at = Column(DateTime, nullable=True)
+   role = Column(String(32), nullable=True, server_default=text("'User'"))  # Admin | User
 
 
 class ContactMessage(Base):
@@ -152,6 +153,115 @@ class FbaShipment(Base):
     synced_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (Index("ix_fba_shipments_store_status", "store_id", "status"),)
+
+
+class UserStoreAccess(Base):
+    """User ↔ Store access (Users dashboard: Store Access column)"""
+    __tablename__ = "user_store_access"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("ix_user_store_access_user_store", "user_id", "store_id", unique=True),)
+
+
+class InboundDocument(Base):
+    """Documents dashboard: Inbound Documents table"""
+    __tablename__ = "inbound_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    fba_shipment_id = Column(String(128), nullable=True, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    total_potential_value = Column(Numeric(12, 2), nullable=True)
+    currency_unit = Column(String(8), nullable=True)
+    pod_bol_status = Column(String(32), nullable=True)       # All, Submitted, Missing, Pending
+    brand_registry_status = Column(String(32), nullable=True)
+    invoices_packing_list_status = Column(String(32), nullable=True)
+    packing_list_generator_status = Column(String(32), nullable=True)
+    case_action = Column(String(64), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class RemovalOrder(Base):
+    """Orders dashboard: Removal Orders table"""
+    __tablename__ = "removal_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    order_id = Column(String(128), nullable=True, index=True)
+    status = Column(String(32), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PaymentMethod(Base):
+    """Settings dashboard: Payment Methods table (Store Name, Actions)"""
+    __tablename__ = "payment_methods"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class FbaFee(Base):
+    """FBA Fees dashboard table"""
+    __tablename__ = "fba_fees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=True)
+    sku = Column(String(128), nullable=True)
+    asin = Column(String(32), nullable=True)
+    status = Column(String(64), nullable=True, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class WeightDimsAlert(Base):
+    """Weight & Dims Alert NA dashboard table"""
+    __tablename__ = "weight_dims_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=True)
+    sku = Column(String(128), nullable=True)
+    asin = Column(String(32), nullable=True)
+    status = Column(String(64), nullable=True, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class WdSuccessfulCase(Base):
+    """W&D Successful Cases dashboard table"""
+    __tablename__ = "wd_successful_cases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=True)
+    sku = Column(String(128), nullable=True)
+    asin = Column(String(32), nullable=True)
+    status = Column(String(64), nullable=True, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ExportImportDimension(Base):
+    """Export/Import Dimensions dashboard table"""
+    __tablename__ = "export_import_dimensions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=True)
+    sku = Column(String(128), nullable=True)
+    asin = Column(String(32), nullable=True)
+    status = Column(String(64), nullable=True, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 # Alias for backward compatibility

@@ -109,15 +109,22 @@ export default function ManageStores() {
     setConnectError(null)
     setConnectLoading(true)
     try {
-      // Backend GET callback: Amazon redirects to /api/auth/amazon/callback, backend exchanges code and redirects to /stores
-      const redirectUri = `${window.location.origin}/api/auth/amazon/callback`.replace(/\/$/, '')
+      // Popup flow: open Seller Central in new window. Callback page posts message and closes popup.
+      const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
       const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init', {
         params: { redirect_uri: redirectUri },
       })
       if (data.authorization_url) {
-        // Same-tab redirect: user goes to Amazon OAuth → approves → Amazon sends them back to our callback.
-        // No popup, no tab-close; "Amazon Connected" shows on our callback then we send them to /stores.
-        window.location.href = data.authorization_url
+        const w = window.open(
+          data.authorization_url,
+          'ConnectAmazon',
+          'width=620,height=700,scrollbars=yes,resizable=yes'
+        )
+        if (!w) {
+          setConnectError('Popup blocked. Please allow popups for this site, then try again.')
+          return
+        }
+        // Popup open; loading done. Listener will runSync when popup posts AMAZON_CONNECTED.
         return
       }
       setConnectError('Could not start Amazon connection.')

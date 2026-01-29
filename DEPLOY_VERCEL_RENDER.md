@@ -50,30 +50,26 @@ You should get a **backend** response: either a **302 redirect** to `/stores?ama
 
 ---
 
-## 4. Use one callback URL everywhere (backend GET callback)
+## 4. Callback URL (popup flow)
 
-The app uses a **backend GET** callback for OAuth:
+The app uses a **popup** for Connect Amazon:
 
-- **Amazon redirects the user to:**  
-  `https://reimbursement.amzdudes.io/api/auth/amazon/callback`  
-  (proxied to Render).
+- **Connect Amazon** opens Seller Central in a **new window**.
+- User signs in and approves → Amazon redirects the **popup** to the **frontend** callback.
+- Callback page POSTs the code to the backend, then **postMessage** to the opener, **closes the popup**, and the dashboard refreshes + runs sync.
 
-- The backend **exchanges** the code for tokens, stores them, then **redirects** to  
-  `https://reimbursement.amzdudes.io/stores?amazon_connected=1`.
-
-Use this **exact** callback URL everywhere:
+Use this **exact** callback URL for the popup flow:
 
 ```text
-https://reimbursement.amzdudes.io/api/auth/amazon/callback
+https://reimbursement.amzdudes.io/auth/amazon/callback
 ```
 
 | Where | What to set |
 |-------|-------------|
-| **Amazon Developer Central (LWA)** | Redirect / Return URL |
-| **Backend env** `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` (optional) |
-| **Consent URL `return_url`** | Same URL, **URL-encoded**: `https%3A%2F%2Freimbursement.amzdudes.io%2Fapi%2Fauth%2Famazon%2Fcallback` |
+| **Amazon LWA (Allowed Return URLs)** | `https://reimbursement.amzdudes.io/auth/amazon/callback` |
+| **Init `redirect_uri`** | Same (frontend sends it when opening the popup) |
 
-No trailing slash. The frontend sends this as `redirect_uri` when calling `/api/auth/amazon/init`.
+No trailing slash. The backend also supports **GET** `/api/auth/amazon/callback` (same-tab redirect); you can have both URLs allowed if you use that flow too.
 
 ---
 
@@ -103,12 +99,22 @@ Configure these in **Render** → Your Backend Service → Environment:
 |----------|---------|--------|
 | `CORS_ORIGINS` | `["https://reimbursement.amzdudes.io"]` | JSON array; add any other frontend origins you use |
 | `FRONTEND_ORIGIN` | `https://reimbursement.amzdudes.io` | Used for redirect after GET callback (no trailing slash) |
-| `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` | Optional; must match LWA redirect URL |
-| `AMAZON_LWA_CLIENT_ID` | (from Seller Central) | |
-| `AMAZON_LWA_CLIENT_SECRET` | (from Seller Central) | |
+| `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` | Must match redirect URL configured for the **same** app |
+| `AMAZON_LWA_CLIENT_ID` | Same as `application_id` in consent URL | See below |
+| `AMAZON_LWA_CLIENT_SECRET` | From the **same** app as Client ID | See below |
 | `AMAZON_AWS_IAM_ROLE_ARN` | (from SP-API setup) | |
 | `JWT_SECRET` | (strong secret) | |
 | … | (DB, etc.) | As in your current backend config |
+
+### LWA credentials (Client ID + Secret)
+
+Use the **same** app everywhere:
+
+- The consent URL uses `application_id=amzn1.application-oa2-client.XXXX...`. That **application_id** is the LWA Client ID.
+- Set `AMAZON_LWA_CLIENT_ID` = that same value, and `AMAZON_LWA_CLIENT_SECRET` = the secret from the **same** app (e.g. Developer Central “LWA credentials” popup for that app).
+- **Do not mix** different apps: e.g. if the consent URL uses `...6753...`, do not use `...9d97...` from another Security Profile.
+- Ensure the **redirect/return URL** `https://reimbursement.amzdudes.io/api/auth/amazon/callback` is configured for **that same app** (Developer Central or LWA Web Settings).
+- If you ever expose the client secret (screenshot, paste): **Rotate secret** in Developer Central, then update `AMAZON_LWA_CLIENT_SECRET` on Render and redeploy.
 
 ---
 
@@ -127,22 +133,21 @@ When using the **Vercel proxy** only (browser → `reimbursement.amzdudes.io/api
 - [ ] `vercel.json`: `/api/(.*)` → `https://api.reimbursement.amzdudes.io/api/$1`, then SPA fallback.
 - [ ] Redeploy frontend on Vercel.
 - [ ] Test: `https://reimbursement.amzdudes.io/api/auth/amazon/callback?code=test&state=test` returns backend JSON.
-- [ ] Amazon LWA redirect URL: `https://reimbursement.amzdudes.io/api/auth/amazon/callback` (exact, no trailing slash).
+- [ ] Amazon LWA **Allowed Return URLs**: `https://reimbursement.amzdudes.io/auth/amazon/callback` (popup flow; exact, no trailing slash).
 - [ ] Render: `FRONTEND_ORIGIN` = `https://reimbursement.amzdudes.io`; `AMAZON_OAUTH_REDIRECT_URI` matches (optional).
-- [ ] `return_url` in consent URL is URL-encoded.
+- [ ] `return_url` in consent URL is fully encoded (`https%3A%2F%2F...`); the backend does this.
 - [ ] Vercel: `VITE_API_BASE` = `/api`.
 - [ ] Render: `CORS_ORIGINS` includes `https://reimbursement.amzdudes.io`.
 
 ---
 
-## 10. Flow summary
+## 10. Flow summary (popup)
 
 1. User visits `https://reimbursement.amzdudes.io` (Vercel).
-2. "Connect Amazon" → frontend calls `GET /api/auth/amazon/init` (proxied to Render) with `redirect_uri=.../api/auth/amazon/callback` → redirects to Amazon consent.
-3. User signs in and approves → Amazon **GET**-redirects to  
-   `https://reimbursement.amzdudes.io/api/auth/amazon/callback?code=...&state=...&selling_partner_id=...`
-4. Backend **GET** handler exchanges code, stores tokens, then **302-redirects** to  
-   `https://reimbursement.amzdudes.io/stores?amazon_connected=1`.
-5. Manage Stores sees `amazon_connected=1`, refreshes stores, and runs `POST /api/sync` (proxied to Render).
+2. **Connect Amazon** → frontend calls `GET /api/auth/amazon/init` with `redirect_uri=.../auth/amazon/callback` → opens consent URL in a **new window** (popup).
+3. User signs in and approves in the popup → Amazon redirects the **popup** to  
+   `https://reimbursement.amzdudes.io/auth/amazon/callback?code=...&state=...&selling_partner_id=...`
+4. Callback page (in popup) POSTs code to `POST /api/auth/amazon/callback`, then **postMessage** to opener, **closes popup**.
+5. Manage Stores (opener) receives message, refreshes stores, runs `POST /api/sync` → data appears on dashboard.
 
 All `/api` requests go through Vercel to Render; the browser only talks to `reimbursement.amzdudes.io`.
