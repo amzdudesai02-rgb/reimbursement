@@ -31,7 +31,8 @@ export default function AmazonAuthCallback() {
     }
 
     setStatus('loading')
-    const redirectUri = `${window.location.origin}/auth/amazon/callback`
+    // Normalize redirect_uri (no trailing slash) to match backend and Amazon console exactly
+    const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
     api
       .post<{ store_id: number; store_name: string; message: string }>('/auth/amazon/callback', {
         spapi_oauth_code: code,

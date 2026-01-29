@@ -14,8 +14,14 @@ import secrets
 import os
 import json
 import time
+from typing import Dict
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
+
+# In-memory cache for OAuth state (CSRF protection)
+# In production, consider Redis or DB-backed storage for multi-server deployments
+_oauth_state_cache: Dict[str, datetime] = {}
 
 from .database import engine
 from . import models
@@ -337,9 +343,25 @@ def amazon_oauth_init(
     For "Connect in new tab" + auto-close: pass redirect_uri = frontend callback URL.
     """
     from app.sp_api_client import OAUTH_REDIRECT_URI
+    
+    # Generate CSRF state token
     state = secrets.token_urlsafe(32)
-    callback_url = redirect_uri or OAUTH_REDIRECT_URI
+    
+    # Normalize redirect_uri (remove trailing slash to avoid mismatch)
+    callback_url = (redirect_uri or OAUTH_REDIRECT_URI).rstrip('/')
+    
+    # Store state with 10-minute TTL for validation
+    _oauth_state_cache[state] = datetime.utcnow() + timedelta(minutes=10)
+    
+    # Clean up expired states (simple cleanup, in production use Redis TTL)
+    now = datetime.utcnow()
+    expired = [s for s, exp in _oauth_state_cache.items() if exp < now]
+    for s in expired:
+        _oauth_state_cache.pop(s, None)
+    
     authorization_url = generate_authorization_url(state, redirect_uri=callback_url)
+    logger.info("amazon_oauth_init: Generated state=%s for user_id=%s redirect_uri=%s", state[:8] + "...", user.id, callback_url)
+    
     return AmazonOAuthInitOut(authorization_url=authorization_url, state=state)
 
 
@@ -355,11 +377,37 @@ def amazon_oauth_callback(
     redirect_uri in body must match the URL used in the consent request, or token exchange will fail.
     """
     from app.sp_api_client import OAUTH_REDIRECT_URI
-    redirect_uri = body.redirect_uri or OAUTH_REDIRECT_URI
+    
+    # Validate required fields
+    if not body.spapi_oauth_code:
+        raise HTTPException(status_code=400, detail="Missing authorization code (spapi_oauth_code)")
+    if not body.selling_partner_id:
+        raise HTTPException(status_code=400, detail="Missing selling_partner_id")
+    if not body.state:
+        raise HTTPException(status_code=400, detail="Missing state parameter")
+    
+    # Validate state (CSRF protection)
+    if body.state not in _oauth_state_cache:
+        logger.warning("amazon_oauth_callback: Invalid or expired state=%s", body.state[:8] + "...")
+        raise HTTPException(status_code=400, detail="Invalid or expired state parameter. Please restart the OAuth flow.")
+    
+    # Check if state expired
+    if _oauth_state_cache[body.state] < datetime.utcnow():
+        _oauth_state_cache.pop(body.state, None)
+        logger.warning("amazon_oauth_callback: Expired state=%s", body.state[:8] + "...")
+        raise HTTPException(status_code=400, detail="State parameter expired. Please restart the OAuth flow.")
+    
+    # Remove used state (one-time use)
+    _oauth_state_cache.pop(body.state, None)
+    
+    # Normalize redirect_uri (remove trailing slash to match init)
+    redirect_uri = (body.redirect_uri or OAUTH_REDIRECT_URI).rstrip('/')
+    
     logger.info(
-        "amazon_oauth_callback received code=*** selling_partner_id=%s redirect_uri=%s",
+        "amazon_oauth_callback received code=*** selling_partner_id=%s redirect_uri=%s state=%s",
         body.selling_partner_id,
         redirect_uri,
+        body.state[:8] + "...",
     )
     try:
         # Step 1: Exchange authorization code for tokens (redirect_uri must match consent URL)
@@ -371,10 +419,16 @@ def amazon_oauth_callback(
             token_response.get("expires_in")
         )
         
-        # Step 2: Save tokens in DB (access_token & refresh_token)
+        # Step 2: Validate and extract tokens from response
         refresh_token = token_response.get("refresh_token")
+        access_token = token_response.get("access_token")
+        
         if not refresh_token:
-            raise ValueError("Amazon token response missing refresh_token")
+            logger.error("amazon_oauth_callback: Token response missing refresh_token - response keys: %s", list(token_response.keys()))
+            raise ValueError("Amazon token response missing refresh_token. This is critical - refresh_token is only provided on first authorization.")
+        
+        if not access_token:
+            logger.warning("amazon_oauth_callback: Token response missing access_token (may be optional)")
         
         selling_partner_id = body.selling_partner_id
         
@@ -386,13 +440,19 @@ def amazon_oauth_callback(
         if existing_conn:
             # Update existing connection
             existing_conn.lwa_refresh_token = refresh_token
-            existing_conn.lwa_access_token = token_response.get("access_token")
+            existing_conn.lwa_access_token = access_token
             expires_in = token_response.get("expires_in", 3600)
             existing_conn.lwa_token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
             existing_conn.is_connected = True
             existing_conn.last_error = None
             db.commit()
             
+            # Verify refresh_token was saved
+            db.refresh(existing_conn)
+            if not existing_conn.lwa_refresh_token:
+                raise Exception("Failed to save refresh_token to database")
+            
+            logger.info("amazon_oauth_callback: Updated existing connection - store_id=%s refresh_token_saved=%s", existing_conn.store_id, bool(existing_conn.lwa_refresh_token))
             store = existing_conn.store
         else:
             # Create new store and connection
@@ -415,12 +475,19 @@ def amazon_oauth_callback(
                 store_id=store.id,
                 selling_partner_id=selling_partner_id,
                 lwa_refresh_token=refresh_token,
-                lwa_access_token=token_response.get("access_token"),
+                lwa_access_token=access_token,
                 lwa_token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
                 is_connected=True,
             )
             db.add(connection)
             db.commit()
+            
+            # Verify refresh_token was saved
+            db.refresh(connection)
+            if not connection.lwa_refresh_token:
+                raise Exception("Failed to save refresh_token to database")
+            
+            logger.info("amazon_oauth_callback: Created new connection - store_id=%s selling_partner_id=%s refresh_token_saved=%s", store.id, selling_partner_id, bool(connection.lwa_refresh_token))
         
         return AmazonOAuthCallbackOut(
             store_id=store.id,
@@ -428,11 +495,22 @@ def amazon_oauth_callback(
             message="Amazon store connected successfully!"
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         logger.exception("amazon_oauth_callback failed for selling_partner_id=%s: %s", body.selling_partner_id, e)
+        error_msg = str(e)
+        
+        # Provide more helpful error messages
+        if "refresh_token" in error_msg.lower():
+            error_msg = "Critical: refresh_token missing. Amazon only provides this on first authorization. If you've tested multiple times, you may need to revoke and reconnect the app."
+        elif "redirect_uri" in error_msg.lower() or "redirect" in error_msg.lower():
+            error_msg = f"Redirect URI mismatch. Ensure the redirect_uri in your Amazon Developer Console exactly matches: {redirect_uri} (no trailing slash, exact match required)."
+        
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to connect Amazon store: {str(e)}"
+            detail=f"Failed to connect Amazon store: {error_msg}"
         )
 
 
