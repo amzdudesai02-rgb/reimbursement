@@ -109,8 +109,8 @@ export default function ManageStores() {
     setConnectError(null)
     setConnectLoading(true)
     try {
-      // Normalize redirect_uri (no trailing slash) to match backend and Amazon console exactly
-      const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
+      // Backend GET callback: Amazon redirects to /api/auth/amazon/callback, backend exchanges code and redirects to /stores
+      const redirectUri = `${window.location.origin}/api/auth/amazon/callback`.replace(/\/$/, '')
       const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init', {
         params: { redirect_uri: redirectUri },
       })

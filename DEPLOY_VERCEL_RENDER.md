@@ -46,51 +46,40 @@ After redeploy, open:
 https://reimbursement.amzdudes.io/api/auth/amazon/callback?code=test&state=test
 ```
 
-You should get a **backend** response (e.g. JSON error about missing/invalid code or auth), **not** the React app or a marketing page. If you see the app instead, the `/api` rewrite is not taking effect (e.g. wrong order or pattern).
+You should get a **backend** response: either a **302 redirect** to `/stores?amazon_connected=1` (backend GET callback) or a **JSON error** (e.g. invalid state/code). You must **not** see the React app or a marketing page. If you do, the `/api` rewrite is not taking effect.
 
 ---
 
-## 4. Use one callback URL everywhere
+## 4. Use one callback URL everywhere (backend GET callback)
 
-Your app uses a **frontend** callback route for OAuth:
+The app uses a **backend GET** callback for OAuth:
 
 - **Amazon redirects the user to:**  
-  `https://reimbursement.amzdudes.io/auth/amazon/callback`  
-  (no `/api` — this is the React app.)
-
-- The frontend then **POSTs** to  
   `https://reimbursement.amzdudes.io/api/auth/amazon/callback`  
   (proxied to Render).
 
-So the **return_url** you send to Amazon (and store in config) must be the **frontend** callback:
+- The backend **exchanges** the code for tokens, stores them, then **redirects** to  
+  `https://reimbursement.amzdudes.io/stores?amazon_connected=1`.
+
+Use this **exact** callback URL everywhere:
 
 ```text
-https://reimbursement.amzdudes.io/auth/amazon/callback
+https://reimbursement.amzdudes.io/api/auth/amazon/callback
 ```
-
-Use this **exact** URL in:
 
 | Where | What to set |
 |-------|-------------|
 | **Amazon Developer Central (LWA)** | Redirect / Return URL |
-| **Backend env** `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/auth/amazon/callback` (optional fallback; frontend sends `redirect_uri` in callback POST) |
-| **Consent URL `return_url`** | Same URL, **URL-encoded**: `https%3A%2F%2Freimbursement.amzdudes.io%2Fauth%2Famazon%2Fcallback` |
+| **Backend env** `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` (optional) |
+| **Consent URL `return_url`** | Same URL, **URL-encoded**: `https%3A%2F%2Freimbursement.amzdudes.io%2Fapi%2Fauth%2Famazon%2Fcallback` |
 
-No trailing slash. The backend already normalizes and uses the `redirect_uri` from the callback payload when present.
+No trailing slash. The frontend sends this as `redirect_uri` when calling `/api/auth/amazon/init`.
 
 ---
 
 ## 5. Generate the consent URL with encoded `return_url`
 
-When building the Amazon consent URL, the `return_url` parameter must be **URL-encoded**:
-
-- `https://` → `https%3A%2F%2F`
-- So  
-  `https://reimbursement.amzdudes.io/auth/amazon/callback`  
-  becomes  
-  `https%3A%2F%2Freimbursement.amzdudes.io%2Fauth%2Famazon%2Fcallback`
-
-Your `sp_api_client.generate_authorization_url` uses `urllib.parse.quote` on the full URL; that produces the correct encoding.
+When building the Amazon consent URL, the `return_url` parameter must be **URL-encoded** (e.g. `https://` → `https%3A%2F%2F`). Your `sp_api_client.generate_authorization_url` uses `urllib.parse.quote` on the full URL, which produces the correct encoding.
 
 ---
 
@@ -113,7 +102,8 @@ Configure these in **Render** → Your Backend Service → Environment:
 | Variable | Example | Notes |
 |----------|---------|--------|
 | `CORS_ORIGINS` | `["https://reimbursement.amzdudes.io"]` | JSON array; add any other frontend origins you use |
-| `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/auth/amazon/callback` | Optional; same as above, no trailing slash |
+| `FRONTEND_ORIGIN` | `https://reimbursement.amzdudes.io` | Used for redirect after GET callback (no trailing slash) |
+| `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` | Optional; must match LWA redirect URL |
 | `AMAZON_LWA_CLIENT_ID` | (from Seller Central) | |
 | `AMAZON_LWA_CLIENT_SECRET` | (from Seller Central) | |
 | `AMAZON_AWS_IAM_ROLE_ARN` | (from SP-API setup) | |
@@ -137,8 +127,8 @@ When using the **Vercel proxy** only (browser → `reimbursement.amzdudes.io/api
 - [ ] `vercel.json`: `/api/(.*)` → `https://api.reimbursement.amzdudes.io/api/$1`, then SPA fallback.
 - [ ] Redeploy frontend on Vercel.
 - [ ] Test: `https://reimbursement.amzdudes.io/api/auth/amazon/callback?code=test&state=test` returns backend JSON.
-- [ ] Amazon LWA redirect URL: `https://reimbursement.amzdudes.io/auth/amazon/callback` (exact, no trailing slash).
-- [ ] Backend `AMAZON_OAUTH_REDIRECT_URI` matches (optional).
+- [ ] Amazon LWA redirect URL: `https://reimbursement.amzdudes.io/api/auth/amazon/callback` (exact, no trailing slash).
+- [ ] Render: `FRONTEND_ORIGIN` = `https://reimbursement.amzdudes.io`; `AMAZON_OAUTH_REDIRECT_URI` matches (optional).
 - [ ] `return_url` in consent URL is URL-encoded.
 - [ ] Vercel: `VITE_API_BASE` = `/api`.
 - [ ] Render: `CORS_ORIGINS` includes `https://reimbursement.amzdudes.io`.
@@ -148,10 +138,11 @@ When using the **Vercel proxy** only (browser → `reimbursement.amzdudes.io/api
 ## 10. Flow summary
 
 1. User visits `https://reimbursement.amzdudes.io` (Vercel).
-2. "Connect Amazon" → frontend calls `GET /api/auth/amazon/init` (proxied to Render) → redirects to Amazon consent.
-3. User signs in and approves → Amazon redirects to  
-   `https://reimbursement.amzdudes.io/auth/amazon/callback?state=...&selling_partner_id=...&spapi_oauth_code=...`
-4. React callback page POSTs to `POST /api/auth/amazon/callback` (proxied to Render) with the code; backend exchanges code and stores tokens.
-5. Frontend redirects to `/stores?amazon_connected=1` and runs sync via `POST /api/sync` (proxied to Render).
+2. "Connect Amazon" → frontend calls `GET /api/auth/amazon/init` (proxied to Render) with `redirect_uri=.../api/auth/amazon/callback` → redirects to Amazon consent.
+3. User signs in and approves → Amazon **GET**-redirects to  
+   `https://reimbursement.amzdudes.io/api/auth/amazon/callback?code=...&state=...&selling_partner_id=...`
+4. Backend **GET** handler exchanges code, stores tokens, then **302-redirects** to  
+   `https://reimbursement.amzdudes.io/stores?amazon_connected=1`.
+5. Manage Stores sees `amazon_connected=1`, refreshes stores, and runs `POST /api/sync` (proxied to Render).
 
 All `/api` requests go through Vercel to Render; the browser only talks to `reimbursement.amzdudes.io`.
