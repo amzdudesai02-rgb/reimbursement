@@ -92,3 +92,46 @@ Once the user is correctly sent to
 - Your app shows “Amazon Connected” and can run **Refresh data / Sync** to pull Reimbursement (Reports + Finances) and Shipping Queue via SP-API.
 
 No data comes from the Seller Central UI; it all comes from SP-API after a successful OAuth callback.
+
+---
+
+## Step-by-step debug (when “no data / tab doesn’t close / not connected”)
+
+### 1) Check what Amazon returns after login
+
+- Open (or go to) your callback URL:  
+  `https://reimbursement.amzdudes.io/auth/amazon/callback`
+- Click **Connect Amazon** from Manage Stores, sign in on Amazon, then authorize the app.
+- After redirect, look at the **URL in the address bar**. You should see something like:  
+  `https://reimbursement.amzdudes.io/auth/amazon/callback?state=...&selling_partner_id=A1XXXXXX&spapi_oauth_code=ANxx...`  
+  (or `code=...` instead of `spapi_oauth_code`).
+- If you **don’t** see `code=` or `spapi_oauth_code=` in the URL, Amazon is not redirecting to your app → fix the **Redirect URI** in your app config to exactly  
+  `https://reimbursement.amzdudes.io/auth/amazon/callback`.
+
+### 2) Backend must receive the code and use the same redirect_uri
+
+- Your **frontend** callback page reads `spapi_oauth_code` (or `code`) and `selling_partner_id` from the URL and sends them to `POST /api/auth/amazon/callback` **with `redirect_uri`** set to  
+  `https://reimbursement.amzdudes.io/auth/amazon/callback`.
+- The **backend** must call Amazon’s token API with that **exact same** `redirect_uri`. If it used a different value (e.g. localhost), the token exchange fails and nothing is saved.
+- In this app, the callback body includes `redirect_uri` and the backend passes it into the token exchange. Backend logs:  
+  `amazon_oauth_callback received code=*** selling_partner_id=... redirect_uri=...`  
+  and on success:  
+  `amazon_oauth_callback token exchange OK for selling_partner_id=...`.
+
+### 3) Exchange code for token (must not be skipped)
+
+- The backend calls  
+  `POST https://api.amazon.com/auth/o2/token`  
+  with `client_id`, `client_secret`, `code`, `redirect_uri`, `grant_type=authorization_code`.
+- If this step is skipped or fails → no refresh token → “Amazon not connected.”  
+- If it fails, check backend logs for the exception; often it’s `redirect_uri` mismatch or invalid/expired code.
+
+### 4) Why the tab doesn’t close
+
+- With **same-tab redirect**, there is no extra tab to close: the same tab goes App → Amazon → back to App. That’s normal.
+- With a **popup**, only that popup can call `window.close()`; the Amazon page is not opened by your JS, so browser security prevents auto-close from elsewhere. So “tab doesn’t close” when using a popup is expected unless the popup itself runs your callback and then closes.
+
+### 5) Why “Amazon not showing connected”
+
+- “Connected” is set only when the backend **successfully** exchanges the code for tokens and **saves** `refresh_token` (and related fields) in the DB.
+- If the token exchange fails (wrong `redirect_uri`, bad code, etc.) or the callback never runs, nothing is stored → UI correctly shows “not connected.”

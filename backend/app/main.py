@@ -9,10 +9,13 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 import io
+import logging
 import secrets
 import os
 import json
 import time
+
+logger = logging.getLogger(__name__)
 
 from .database import engine
 from . import models
@@ -349,12 +352,30 @@ def amazon_oauth_callback(
     """
     Handle Amazon OAuth callback.
     Exchange authorization code for tokens and create/store connection.
+    redirect_uri in body must match the URL used in the consent request, or token exchange will fail.
     """
+    from app.sp_api_client import OAUTH_REDIRECT_URI
+    redirect_uri = body.redirect_uri or OAUTH_REDIRECT_URI
+    logger.info(
+        "amazon_oauth_callback received code=*** selling_partner_id=%s redirect_uri=%s",
+        body.selling_partner_id,
+        redirect_uri,
+    )
     try:
-        # Exchange authorization code for tokens
-        token_response = exchange_authorization_code(body.spapi_oauth_code)
+        # Step 1: Exchange authorization code for tokens (redirect_uri must match consent URL)
+        # This calls POST https://api.amazon.com/auth/o2/token with grant_type=authorization_code
+        token_response = exchange_authorization_code(body.spapi_oauth_code, redirect_uri=redirect_uri)
+        logger.info(
+            "amazon_oauth_callback: Token exchange successful - selling_partner_id=%s expires_in=%s",
+            body.selling_partner_id,
+            token_response.get("expires_in")
+        )
         
-        refresh_token = token_response["refresh_token"]
+        # Step 2: Save tokens in DB (access_token & refresh_token)
+        refresh_token = token_response.get("refresh_token")
+        if not refresh_token:
+            raise ValueError("Amazon token response missing refresh_token")
+        
         selling_partner_id = body.selling_partner_id
         
         # Check if connection already exists
@@ -408,6 +429,7 @@ def amazon_oauth_callback(
         )
         
     except Exception as e:
+        logger.exception("amazon_oauth_callback failed for selling_partner_id=%s: %s", body.selling_partner_id, e)
         raise HTTPException(
             status_code=400,
             detail=f"Failed to connect Amazon store: {str(e)}"

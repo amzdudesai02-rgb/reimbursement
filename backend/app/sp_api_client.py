@@ -5,6 +5,7 @@ Handles OAuth token exchange, AWS STS role assumption, and SP-API request signin
 """
 import os
 import json
+import logging
 import time
 import hmac
 import hashlib
@@ -16,6 +17,8 @@ from urllib.parse import urlparse, quote
 import httpx
 import boto3
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 LWA_CLIENT_ID = os.getenv("AMAZON_LWA_CLIENT_ID")
@@ -87,7 +90,10 @@ class SPAPIClient:
         return self._lwa_access_token
     
     def get_aws_credentials(self) -> Dict[str, str]:
-        """Get AWS credentials via STS AssumeRole"""
+        """
+        Get AWS credentials via STS AssumeRole (Step 3: Assume AWS Role).
+        Required for SP-API calls - obtains temporary AWS credentials.
+        """
         # Check if credentials are still valid (with 5 minute buffer)
         if (
             self._aws_credentials
@@ -101,6 +107,12 @@ class SPAPIClient:
         
         # Assume role using STS
         sts_client = boto3.client("sts", region_name=self.region)
+        
+        logger.info(
+            "get_aws_credentials: Assuming role %s for selling_partner_id=%s",
+            AWS_IAM_ROLE_ARN,
+            self.selling_partner_id
+        )
         
         try:
             # External ID is typically the selling_partner_id
@@ -119,10 +131,19 @@ class SPAPIClient:
             }
             self._aws_credentials_expire_at = creds["Expiration"].replace(tzinfo=None)
             
+            logger.info(
+                "get_aws_credentials: SUCCESS - expires_at=%s",
+                self._aws_credentials_expire_at
+            )
+            
             return self._aws_credentials
             
         except ClientError as e:
-            raise Exception(f"Failed to assume AWS role: {str(e)}")
+            logger.error(
+                "get_aws_credentials: FAILED - %s",
+                str(e)
+            )
+            raise Exception(f"Failed to assume AWS role: {str(e)}") from e
     
     def _sign_request(
         self,
@@ -131,7 +152,10 @@ class SPAPIClient:
         headers: Dict[str, str],
         body: Optional[str] = None
     ) -> Dict[str, str]:
-        """Sign SP-API request using AWS Signature Version 4"""
+        """
+        Sign SP-API request using AWS Signature Version 4 (AWS SigV4).
+        Amazon SP-API requires AWS Signature V4 for all requests.
+        """
         aws_creds = self.get_aws_credentials()
         
         parsed_url = urlparse(url)
@@ -235,6 +259,10 @@ def exchange_authorization_code(
     """
     Exchange Amazon authorization code for refresh token and access token.
     
+    Step 1: Exchange Code → Access Token (Mandatory)
+    POST https://api.amazon.com/auth/o2/token
+    Content-Type: application/x-www-form-urlencoded
+    
     Returns:
         {
             "access_token": "...",
@@ -251,10 +279,47 @@ def exchange_authorization_code(
         "redirect_uri": redirect_uri,
     }
     
-    response = httpx.post(LWA_TOKEN_URL, data=data, timeout=10.0)
-    response.raise_for_status()
+    logger.info(
+        "exchange_authorization_code: POST %s (redirect_uri=%s, code=***)",
+        LWA_TOKEN_URL,
+        redirect_uri
+    )
     
-    return response.json()
+    try:
+        response = httpx.post(LWA_TOKEN_URL, data=data, timeout=10.0)
+        response.raise_for_status()
+        
+        token_data = response.json()
+        
+        # Log success (without exposing secrets)
+        logger.info(
+            "exchange_authorization_code: SUCCESS - token_type=%s expires_in=%s (has access_token=%s, has refresh_token=%s)",
+            token_data.get("token_type"),
+            token_data.get("expires_in"),
+            "access_token" in token_data,
+            "refresh_token" in token_data
+        )
+        
+        return token_data
+        
+    except httpx.HTTPStatusError as e:
+        error_detail = None
+        try:
+            error_detail = e.response.json()
+        except Exception:
+            error_detail = e.response.text
+        
+        logger.error(
+            "exchange_authorization_code: FAILED - status=%d response=%s",
+            e.response.status_code,
+            error_detail
+        )
+        raise Exception(
+            f"Amazon token exchange failed (status {e.response.status_code}): {error_detail}"
+        ) from e
+    except Exception as e:
+        logger.exception("exchange_authorization_code: UNEXPECTED ERROR")
+        raise Exception(f"Failed to exchange authorization code: {str(e)}") from e
 
 
 def generate_authorization_url(

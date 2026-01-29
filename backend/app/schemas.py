@@ -140,6 +140,7 @@ class AmazonOAuthCallbackIn(BaseModel):
     spapi_oauth_code: str
     selling_partner_id: str
     state: str  # Must match the state from init
+    redirect_uri: str | None = None  # Must match the URL used in the consent request (e.g. frontend callback URL)
 
 
 class AmazonOAuthCallbackOut(BaseModel):

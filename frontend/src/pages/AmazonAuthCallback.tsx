@@ -31,11 +31,13 @@ export default function AmazonAuthCallback() {
     }
 
     setStatus('loading')
+    const redirectUri = `${window.location.origin}/auth/amazon/callback`
     api
       .post<{ store_id: number; store_name: string; message: string }>('/auth/amazon/callback', {
         spapi_oauth_code: code,
         selling_partner_id: sellingPartnerId,
         state,
+        redirect_uri: redirectUri,
       })
       .then((res) => {
         setStatus('success')
