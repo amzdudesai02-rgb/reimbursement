@@ -29,6 +29,9 @@ export default function ManageStores() {
   const [entries, setEntries] = useState(10)
   const [connectLoading, setConnectLoading] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
+  const [syncLoading, setSyncLoading] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncInfo, setSyncInfo] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -47,9 +50,13 @@ export default function ManageStores() {
       params.delete('amazon_connected')
       const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname
       window.history.replaceState({}, '', newUrl)
-      api.get<StoreFromApi[]>('/stores').then((res) => setStores(res.data)).catch(() => {})
-      api.post('/sync').catch(() => {})
+      api
+        .get<StoreFromApi[]>('/stores')
+        .then((res) => setStores(res.data))
+        .catch(() => {})
+      runSync()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // If we used popup: listen for AMAZON_CONNECTED and refresh. Same-tab redirect does not need this.
@@ -57,12 +64,46 @@ export default function ManageStores() {
     const origin = window.location.origin
     function onMessage(e: MessageEvent) {
       if (e.origin !== origin || e.data?.type !== 'AMAZON_CONNECTED') return
-      api.get<StoreFromApi[]>('/stores').then((res) => setStores(res.data)).catch(() => {})
-      api.post('/sync').catch(() => {})
+      api
+        .get<StoreFromApi[]>('/stores')
+        .then((res) => setStores(res.data))
+        .catch(() => {})
+      runSync()
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [])
+
+  async function runSync() {
+    setSyncError(null)
+    setSyncInfo(null)
+    setSyncLoading(true)
+    try {
+      const { data } = await api.post<{
+        synced: boolean
+        stores_synced: number
+        reimbursements_added: number
+        shipments_updated: number
+        errors: string[]
+      }>('/sync')
+      if (data.synced) {
+        setSyncInfo(
+          `Sync complete: ${data.reimbursements_added} reimbursements, ${data.shipments_updated} shipments updated across ${data.stores_synced} store(s).`
+        )
+      } else {
+        const firstError = data.errors?.[0]
+        setSyncError(firstError || 'Sync did not complete successfully. Please try again.')
+      }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null
+      setSyncError(typeof msg === 'string' ? msg : 'Failed to sync Amazon data. Please try again.')
+    } finally {
+      setSyncLoading(false)
+    }
+  }
 
   async function handleConnectAmazon() {
     setConnectError(null)
@@ -120,6 +161,22 @@ export default function ManageStores() {
         {connectError && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {connectError}
+          </div>
+        )}
+
+        {(syncLoading || syncError || syncInfo) && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm ${
+              syncLoading
+                ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                : syncError
+                ? 'border border-red-200 bg-red-50 text-red-800'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+            }`}
+          >
+            {syncLoading && 'Syncing your Amazon reimbursements and shipping queue…'}
+            {!syncLoading && syncError && <span>{syncError}</span>}
+            {!syncLoading && !syncError && syncInfo && <span>{syncInfo}</span>}
           </div>
         )}
 
