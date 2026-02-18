@@ -54,10 +54,12 @@ export default function AmazonAuthCallback() {
           setTimeout(() => navigate('/stores?amazon_connected=1', { replace: true }), 1500)
         }
       })
-      .catch((err: { response?: { data?: { detail?: string } }; message?: string }) => {
+      .catch((err: { response?: { status?: number; data?: { detail?: string } }; message?: string }) => {
         setStatus('error')
         const detail = err.response?.data?.detail
-        setMessage(typeof detail === 'string' ? detail : detail ?? err.message ?? 'Failed to connect Amazon account.')
+        const httpStatus = err.response?.status
+        const base = typeof detail === 'string' ? detail : detail ?? err.message ?? 'Failed to connect Amazon account.'
+        setMessage(httpStatus ? `(${httpStatus}) ${base}` : base)
       })
   }, [code, sellingPartnerId, state, token, status, navigate])
 
@@ -94,7 +96,10 @@ export default function AmazonAuthCallback() {
               <XCircle className="h-12 w-12" />
             </div>
             <h1 className="text-lg font-semibold text-slate-900 text-center mb-2">Connection failed</h1>
-            <p className="text-slate-600 text-center text-sm">{message}</p>
+            <p className="text-slate-600 text-center text-sm break-words">{message}</p>
+            <p className="text-slate-500 text-center text-xs mt-3">
+              Check Render logs for <code className="bg-slate-100 px-1 rounded">amazon_oauth_callback_post</code>. Return URL in Developer Central must match exactly.
+            </p>
             <div className="mt-6 flex flex-col gap-2">
               <Link
                 to="/stores"
@@ -130,8 +135,12 @@ export default function AmazonAuthCallback() {
         {status === 'no-code' && (
           <>
             <h1 className="text-lg font-semibold text-slate-900 text-center mb-2">No authorization data</h1>
-            <p className="text-slate-600 text-center text-sm mb-6">
+            <p className="text-slate-600 text-center text-sm mb-4">
               This page is used after you authorize the app on Amazon. Start from Manage Stores and click Connect Amazon.
+            </p>
+            <p className="text-slate-500 text-center text-xs mb-6">
+              If you were redirected here from Amazon, ensure the Allowed Return URL in Developer Central is exactly:{' '}
+              <code className="bg-slate-100 px-1 rounded">{window.location.origin}/auth/amazon/callback</code>
             </p>
             <Link
               to="/stores"

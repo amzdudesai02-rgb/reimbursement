@@ -43,10 +43,16 @@ export default function ManageStores() {
     return () => { mounted = false }
   }, [])
 
-  // After same-tab Connect Amazon return: trigger sync and clean URL
+  // After Connect Amazon: backend redirects here with ?amazon_connected=1
+  // If we're in a popup, postMessage to opener and close. Otherwise refresh and clean URL.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('amazon_connected') === '1') {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'AMAZON_CONNECTED' }, window.location.origin)
+        window.close()
+        return
+      }
       params.delete('amazon_connected')
       const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname
       window.history.replaceState({}, '', newUrl)
@@ -109,8 +115,8 @@ export default function ManageStores() {
     setConnectError(null)
     setConnectLoading(true)
     try {
-      // Popup flow: open Seller Central in new window. Callback page posts message and closes popup.
-      const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
+      // Backend callback: Amazon redirects to /api/auth/amazon/callback, backend exchanges code and redirects to /stores?amazon_connected=1
+      const redirectUri = `${window.location.origin}/api/auth/amazon/callback`.replace(/\/$/, '')
       const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init', {
         params: { redirect_uri: redirectUri },
       })

@@ -25,7 +25,10 @@ LWA_CLIENT_ID = os.getenv("AMAZON_LWA_CLIENT_ID")
 LWA_CLIENT_SECRET = os.getenv("AMAZON_LWA_CLIENT_SECRET")
 AWS_IAM_ROLE_ARN = os.getenv("AMAZON_AWS_IAM_ROLE_ARN")
 AWS_REGION = os.getenv("AMAZON_AWS_REGION", "us-east-1")
-OAUTH_REDIRECT_URI = os.getenv("AMAZON_OAUTH_REDIRECT_URI", "http://localhost:8000/api/auth/amazon/callback")
+OAUTH_REDIRECT_URI = os.getenv(
+    "AMAZON_OAUTH_REDIRECT_URI",
+    "https://reimbursement.amzdudes.io/api/auth/amazon/callback",
+)
 
 # SP-API endpoints
 SP_API_BASE_URL = "https://sellingpartnerapi-na.amazon.com"  # Default to North America
@@ -328,22 +331,18 @@ def generate_authorization_url(
 ) -> str:
     """
     Generate the Amazon authorization URL for OAuth flow.
-    
-    Args:
-        state: CSRF token for security
-        redirect_uri: Must match the one registered in Seller Central / Developer Central
-    
-    Returns:
-        Full authorization URL
+    No version=beta. return_url must be .../api/auth/amazon/callback.
     """
+    # Ensure backend callback path (/api/auth/amazon/callback), never /auth/amazon/callback
+    uri = redirect_uri.rstrip("/")
+    if "/auth/amazon/callback" in uri and "/api/auth/amazon/callback" not in uri:
+        uri = uri.replace("/auth/amazon/callback", "/api/auth/amazon/callback")
     params = {
         "application_id": LWA_CLIENT_ID,
-        "version": "beta",
-        "return_url": redirect_uri,
+        "return_url": uri,
         "state": state,
     }
     # return_url must be fully encoded: https%3A%2F%2F... (slashes as %2F)
-    # Default quote leaves / unencoded; use safe='' for return_url.
     def _enc(k: str, v: str) -> str:
         return f"{k}={quote(v, safe='')}" if k == "return_url" else f"{k}={quote(v)}"
     query_string = "&".join(_enc(k, v) for k, v in params.items())

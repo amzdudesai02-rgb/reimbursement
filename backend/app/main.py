@@ -91,8 +91,6 @@ def ensure_user_columns():
         statements.append("ALTER TABLE users ADD COLUMN verification_sent_at TIMESTAMP")
     if "verified_at" not in cols:
         statements.append("ALTER TABLE users ADD COLUMN verified_at TIMESTAMP")
-    if "role" not in cols:
-        statements.append("ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'User'")
 
     if statements:
         with engine.connect() as conn:
@@ -341,20 +339,15 @@ def contact(body: ContactIn, db: Session = Depends(get_db)):
 @app.get(f"{API_PREFIX}/auth/amazon/init", response_model=AmazonOAuthInitOut)
 def amazon_oauth_init(
     user=Depends(get_current_user),
-    redirect_uri: str | None = Query(None, description="OAuth callback URL; use frontend URL for popup flow (e.g. https://yoursite.com/auth/amazon/callback)"),
 ):
     """
     Initialize Amazon OAuth flow.
     Returns authorization URL for seller to visit.
-    For "Connect in new tab" + auto-close: pass redirect_uri = frontend callback URL.
+    Uses backend callback URL: /api/auth/amazon/callback (no version=beta).
     """
-    from app.sp_api_client import OAUTH_REDIRECT_URI
-    
-    # Generate CSRF state token
+    # Always use backend callback - must match Developer Central OAuth Redirect URI
+    callback_url = BACKEND_CALLBACK_URL.rstrip('/')
     state = secrets.token_urlsafe(32)
-    
-    # Normalize redirect_uri (remove trailing slash to avoid mismatch)
-    callback_url = (redirect_uri or OAUTH_REDIRECT_URI).rstrip('/')
     
     # Store state with 10-minute TTL and user_id (for GET callback)
     now = datetime.utcnow()
@@ -500,6 +493,8 @@ def amazon_oauth_callback_post(
     Exchange code for tokens, create/store connection, return JSON.
     """
     from app.sp_api_client import OAUTH_REDIRECT_URI
+
+    logger.info("amazon_oauth_callback_post: request received user_id=%s", user.id)
 
     if not body.spapi_oauth_code:
         raise HTTPException(status_code=400, detail="Missing authorization code (spapi_oauth_code)")
