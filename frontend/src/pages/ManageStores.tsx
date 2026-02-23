@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Filter, Link2, Search } from 'lucide-react'
+import { Filter, Link2, Search, Unplug } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
 import { api } from '../lib/api'
 import {
@@ -32,6 +32,7 @@ export default function ManageStores() {
   const [syncLoading, setSyncLoading] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
   const [syncInfo, setSyncInfo] = useState<string | null>(null)
+  const [disconnectStoreId, setDisconnectStoreId] = useState<number | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -108,6 +109,19 @@ export default function ManageStores() {
       setSyncError(typeof msg === 'string' ? msg : 'Failed to sync Amazon data. Please try again.')
     } finally {
       setSyncLoading(false)
+    }
+  }
+
+  async function handleDisconnect(storeId: number) {
+    setDisconnectStoreId(storeId)
+    try {
+      await api.post(`/stores/${storeId}/disconnect`)
+      const { data } = await api.get<StoreFromApi[]>('/stores')
+      setStores(data)
+    } catch {
+      // leave list as is
+    } finally {
+      setDisconnectStoreId(null)
     }
   }
 
@@ -239,18 +253,19 @@ export default function ManageStores() {
                       <th className="px-6 py-4">Region</th>
                       <th className="px-6 py-4">Marketplace</th>
                       <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody className={tableBodyClass}>
                     {loading ? (
                       <tr>
-                        <td colSpan={4} className={emptyStateCellClass}>
+                        <td colSpan={5} className={emptyStateCellClass}>
                           Loading…
                         </td>
                       </tr>
                     ) : filtered.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className={emptyStateCellClass}>
+                        <td colSpan={5} className={emptyStateCellClass}>
                           No stores match your search.
                         </td>
                       </tr>
@@ -269,6 +284,21 @@ export default function ManageStores() {
                               <span className={`h-2 w-2 rounded-full ${store.is_connected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                               {store.is_connected ? 'Connected' : 'Not connected'}
                             </span>
+                          </td>
+                          <td className={tableCellClass}>
+                            {store.is_connected ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDisconnect(store.id)}
+                                disabled={disconnectStoreId === store.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50"
+                              >
+                                <Unplug className="h-3.5 w-3.5" />
+                                {disconnectStoreId === store.id ? 'Disconnecting…' : 'Disconnect'}
+                              </button>
+                            ) : (
+                              <span className="text-white/40 text-xs">—</span>
+                            )}
                           </td>
                         </tr>
                       ))

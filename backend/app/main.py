@@ -601,6 +601,26 @@ def get_store_connection(
     )
 
 
+@app.post(f"{API_PREFIX}/stores/{{store_id}}/disconnect")
+def disconnect_store(
+    store_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Disconnect a connected Amazon account for this store. Store remains; connection is marked disconnected."""
+    store = db.query(models.Store).filter_by(id=store_id, user_id=user.id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    connection = store.amazon_connection
+    if not connection:
+        raise HTTPException(status_code=404, detail="No connection found for this store")
+    if not connection.is_connected:
+        return {"ok": True, "message": "Store was already disconnected"}
+    connection.is_connected = False
+    db.commit()
+    return {"ok": True, "message": "Store disconnected. You can connect again via Connect Amazon."}
+
+
 def _user_store_ids(db: Session, user) -> list:
     return [s.id for s in db.query(models.Store).filter_by(user_id=user.id).all()]
 
@@ -687,18 +707,26 @@ async def sync_reimbursements(user=Depends(get_current_user)):
                     selling_partner_id=conn.selling_partner_id,
                     marketplace_id=store.marketplace_id or "ATVPDKIKX0DER",
                 )
-                # Finances API (existing)
-                events = finances_sync.fetch_reimbursement_events(client, store.id)
-                n = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
-                reimbursements_added += n
-                # Reports → Fulfillment → Reimbursement (GET_FBA_REIMBURSEMENTS_DATA)
+                # Reports first (dedicated FBA reimbursements report, often more complete)
                 try:
                     report_rows = reports_sync.fetch_reimbursements_report(
                         client, store.id, store.marketplace_id or "ATVPDKIKX0DER"
                     )
-                    reimbursements_added += crud.insert_or_ignore_reimbursements_from_financial_events(db, report_rows)
+                    n_report = crud.insert_or_ignore_reimbursements_from_financial_events(db, report_rows)
+                    reimbursements_added += n_report
+                    logger.info("Sync store_id=%s report: %s rows added", store.id, n_report)
                 except Exception as report_err:
+                    logger.warning("Sync store_id=%s report failed: %s", store.id, report_err)
                     errors.append(f"{store.store_name} (report): {report_err}")
+                # Finances API (adjustments, SAFET, refunds)
+                try:
+                    events = finances_sync.fetch_reimbursement_events(client, store.id)
+                    n_fin = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
+                    reimbursements_added += n_fin
+                    logger.info("Sync store_id=%s finances: %s events, %s inserted", store.id, len(events), n_fin)
+                except Exception as fin_err:
+                    logger.warning("Sync store_id=%s finances failed: %s", store.id, fin_err)
+                    errors.append(f"{store.store_name} (finances): {fin_err}")
                 # Inventory → Shipping Queue (Fulfillment Inbound)
                 try:
                     ship_rows = inbound_sync.fetch_shipments(client, store.id)
@@ -713,12 +741,20 @@ async def sync_reimbursements(user=Depends(get_current_user)):
                 conn.last_error = str(e)
                 db.commit()
                 errors.append(f"{store.store_name}: {e}")
+    message = (
+        f"Synced {stores_synced} store(s). {reimbursements_added} reimbursements added, {shipments_updated} shipments updated."
+        if stores_synced > 0
+        else "No connected stores to sync."
+    )
+    if errors:
+        message += " Issues: " + "; ".join(errors[:3]) + ("..." if len(errors) > 3 else "")
     return {
         "synced": stores_synced > 0 and len(errors) == 0,
         "stores_synced": stores_synced,
         "reimbursements_added": reimbursements_added,
         "shipments_updated": shipments_updated,
         "errors": errors,
+        "message": message,
     }
 
 

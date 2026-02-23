@@ -51,7 +51,7 @@ def fetch_reimbursements_report(
     if data_end_time is None:
         data_end_time = datetime.now(timezone.utc)
     if data_start_time is None:
-        data_start_time = data_end_time - timedelta(days=90)
+        data_start_time = data_end_time - timedelta(days=180)
 
     body: Dict[str, Any] = {
         "reportType": REPORT_TYPE,

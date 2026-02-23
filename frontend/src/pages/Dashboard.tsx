@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [dateRange, setDateRange] = useState("All Time");
   const [storeFilter, setStoreFilter] = useState("All");
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const hasAutoSynced = useRef(false);
 
   const daysBackParam = useMemo(() => {
@@ -82,9 +83,22 @@ export default function Dashboard() {
   const runSync = useCallback(async () => {
     if (syncing || !hasStores) return;
     setSyncing(true);
+    setSyncMessage(null);
     try {
-      await api.post("/sync");
+      const { data } = await api.post<{
+        synced: boolean;
+        reimbursements_added: number;
+        stores_synced: number;
+        errors: string[];
+        message?: string;
+      }>("/sync");
+      setSyncMessage(data.message ?? (data.reimbursements_added > 0 ? `${data.reimbursements_added} reimbursements added.` : (data.errors?.[0] ?? "Sync finished.")));
       await loadData();
+    } catch (err: unknown) {
+      const msg = err && typeof err === "object" && "response" in err && err.response && typeof (err.response as { data?: { detail?: string } }).data?.detail === "string"
+        ? (err.response as { data: { detail: string } }).data.detail
+        : "Sync failed. Try again.";
+      setSyncMessage(msg);
     } finally {
       setSyncing(false);
     }
@@ -144,15 +158,20 @@ export default function Dashboard() {
             </div>
           )}
           <div className="flex items-center gap-3 mb-6">
-            <button
-              type="button"
-              onClick={runSync}
-              disabled={!hasStores || syncing}
-              className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing…" : "Refresh data"}
-            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={runSync}
+                disabled={!hasStores || syncing}
+                className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing…" : "Refresh data"}
+              </button>
+              {syncMessage && (
+                <p className="text-xs text-gray-500 max-w-md">{syncMessage}</p>
+              )}
+            </div>
             <button
               type="button"
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer shadow-sm"

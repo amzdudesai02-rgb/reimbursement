@@ -175,8 +175,9 @@ def fetch_reimbursement_events(
     Call SP-API Finances and return a list of row dicts suitable for
     insert_or_ignore_reimbursements_from_financial_events.
     """
+    # Use full 180-day window (API max) so we don't miss data
     if posted_after is None:
-        posted_after = datetime.now(timezone.utc) - timedelta(days=90)
+        posted_after = datetime.now(timezone.utc) - timedelta(days=180)
     if posted_before is None:
         posted_before = datetime.now(timezone.utc)
     after_str = posted_after.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -187,16 +188,21 @@ def fetch_reimbursement_events(
     pages = 0
 
     while pages < MAX_PAGES:
-        params: Dict[str, Any] = {"PostedAfter": after_str, "PostedBefore": before_str}
+        params: Dict[str, Any] = {"PostedAfter": after_str, "PostedBefore": before_str, "MaxResultsPerPage": 100}
         if next_token:
             params["NextToken"] = next_token
         try:
             data = client.request("GET", FINANCES_PATH, params=params)
-        except Exception:
-            break
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Finances API request failed for store_id=%s: %s", store_id, e)
+            raise
         payload = data.get("payload") or data
         next_token = payload.get("NextToken")
-        events = payload.get("FinancialEvents") or payload
+        # Support both payload.FinancialEvents and top-level FinancialEvents
+        events = payload.get("FinancialEvents") or data.get("FinancialEvents") or payload
+        if not isinstance(events, dict):
+            events = {}
 
         # AdjustmentEventList (FBA reimbursements, etc.)
         for i, adj in enumerate(events.get("AdjustmentEventList") or []):
