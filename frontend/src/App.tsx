@@ -12,6 +12,7 @@ import Orders from './pages/Orders'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
 import ManageStores from './pages/ManageStores'
+import DiscountAmazon from './pages/DiscountAmazon'
 import AmazonAuthCallback from './pages/AmazonAuthCallback'
 import ReimbursementTool from './pages/ReimbursementTool'
 import VerifyEmail from './pages/VerifyEmail'
@@ -98,6 +99,7 @@ export default function App(){
        <Route path="/documents" element={<Protected><Documents/></Protected>} />
        <Route path="/orders" element={<Protected><Orders/></Protected>} />
        <Route path="/stores" element={<Protected><ManageStores/></Protected>} />
+       <Route path="/discount-amazon" element={<Protected><DiscountAmazon/></Protected>} />
        <Route path="/users" element={<Protected><Users/></Protected>} />
        <Route path="/settings" element={<Protected><Settings/></Protected>} />
       <Route path="/fba-fees" element={<Protected><FbaFeesPage/></Protected>} />

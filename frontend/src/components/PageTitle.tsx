@@ -13,6 +13,7 @@ const routeTitles: Record<string, string> = {
   '/documents': 'Documents',
   '/orders': 'Orders',
   '/stores': 'Manage Stores',
+  '/discount-amazon': 'Discount Amazon',
   '/users': 'Users',
   '/settings': 'Settings',
   '/privacy-policy': 'Privacy Policy',

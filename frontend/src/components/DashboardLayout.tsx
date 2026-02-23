@@ -13,6 +13,7 @@ import {
   Upload,
   Boxes,
   Store,
+  Percent,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
@@ -33,6 +34,7 @@ const sidebarItems: SidebarItem[] = [
   { type: 'link', icon: FolderOpen, label: 'Cases', path: '/cases' },
   { type: 'link', icon: FileText, label: 'Documents', path: '/documents' },
   { type: 'link', icon: Store, label: 'Manage Stores', path: '/stores' },
+  { type: 'link', icon: Percent, label: 'Discount Amazon', path: '/discount-amazon' },
   { type: 'link', icon: Package, label: 'Orders', path: '/orders' },
   { type: 'fba' },
   { type: 'link', icon: Users, label: 'Users', path: '/users' },
