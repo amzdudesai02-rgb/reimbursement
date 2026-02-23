@@ -245,24 +245,23 @@ class SPAPIClient:
         if query_parts:
             url += "?" + "&".join(query_parts)
         
-        # Prepare headers
-        headers = {
-            "Content-Type": "application/json",
-            "x-amz-marketplace-id": self.marketplace_id,
-        }
-        
-        # Prepare body
-        body_str = json.dumps(body) if body else None
-        
+        # Prepare headers (GET/HEAD must not have Content-Type or body per SP-API to avoid 400)
+        headers: Dict[str, str] = {"x-amz-marketplace-id": self.marketplace_id}
+        body_str: Optional[str] = None
+        if body is not None:
+            body_str = json.dumps(body)
+            headers["Content-Type"] = "application/json"
+
         # Sign request
         headers = self._sign_request(method, url, headers, body_str)
-        
-        # Make request
+
+        # GET/HEAD: no body (SP-API returns 400 if GET has body or Content-Length)
+        send_content = body_str if method.upper() not in ("GET", "HEAD") else None
         response = httpx.request(
             method=method,
             url=url,
             headers=headers,
-            content=body_str,
+            content=send_content,
             timeout=30.0
         )
         
