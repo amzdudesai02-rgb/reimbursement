@@ -65,7 +65,10 @@ Once you deploy to Render, add these environment variables in **Render Dashboard
 ### **Amazon SP-API Credentials** (You have these now ✅)
 
 ```env
-# Amazon LWA Credentials (from LWA credentials modal)
+# Amazon App ID (for consent URL – required; use App ID, not LWA Client ID)
+AMAZON_APP_ID=amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d
+
+# Amazon LWA Credentials (from LWA credentials modal – for token exchange)
 AMAZON_LWA_CLIENT_ID=amzn1.application-oa2-client.67532553f3b542ceb2b5fe808ca057d8
 AMAZON_LWA_CLIENT_SECRET=amzn1.oa2-cs.v1.cd4caffe71f75cd208ca666142e1801af3f53a0b012af8b61527c98d38
 

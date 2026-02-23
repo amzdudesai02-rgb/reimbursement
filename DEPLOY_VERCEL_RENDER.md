@@ -100,17 +100,18 @@ Configure these in **Render** → Your Backend Service → Environment:
 | `CORS_ORIGINS` | `["https://reimbursement.amzdudes.io"]` | JSON array; add any other frontend origins you use |
 | `FRONTEND_ORIGIN` | `https://reimbursement.amzdudes.io` | Used for redirect after GET callback (no trailing slash) |
 | `AMAZON_OAUTH_REDIRECT_URI` | `https://reimbursement.amzdudes.io/api/auth/amazon/callback` | Must match redirect URL configured for the **same** app |
-| `AMAZON_LWA_CLIENT_ID` | Same as `application_id` in consent URL | See below |
+| **`AMAZON_APP_ID`** | `amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d` | **Required for consent URL.** Use App ID, NOT LWA Client ID. |
+| `AMAZON_LWA_CLIENT_ID` | `amzn1.application-oa2-client.xxxx...` | Used only for token exchange (LWA). Not used in consent URL. |
 | `AMAZON_LWA_CLIENT_SECRET` | From the **same** app as Client ID | See below |
 | `AMAZON_AWS_IAM_ROLE_ARN` | (from SP-API setup) | |
 | `JWT_SECRET` | (strong secret) | |
 | … | (DB, etc.) | As in your current backend config |
 
-### LWA credentials (Client ID + Secret)
+### Amazon consent URL vs LWA credentials
 
 Use the **same** app everywhere:
 
-- The consent URL uses `application_id=amzn1.application-oa2-client.XXXX...`. That **application_id** is the LWA Client ID.
+- **Consent URL** uses **`AMAZON_APP_ID`** (e.g. `amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d`). Do **not** use LWA Client ID there; Amazon requires the App ID. See [Website Authorization Workflow](https://developer-docs.amazon.com/sp-api/docs/website-authorization-workflow).
 - Set `AMAZON_LWA_CLIENT_ID` = that same value, and `AMAZON_LWA_CLIENT_SECRET` = the secret from the **same** app (e.g. Developer Central “LWA credentials” popup for that app).
 - **Do not mix** different apps: e.g. if the consent URL uses `...6753...`, do not use `...9d97...` from another Security Profile.
 - Ensure the **redirect/return URL** `https://reimbursement.amzdudes.io/api/auth/amazon/callback` is configured for **that same app** (Developer Central or LWA Web Settings).

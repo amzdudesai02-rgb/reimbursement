@@ -198,6 +198,8 @@ Create a `.env` file in your backend directory with:
 
 ```env
 # Amazon SP-API Credentials
+# App ID for consent URL (Seller Central) – use App ID, NOT LWA Client ID. Get from Solution Provider Portal.
+AMAZON_APP_ID=amzn1.sp.solution.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 AMAZON_LWA_CLIENT_ID=amzn1.application-oa2-client.xxxxxxxxxxxxx
 AMAZON_LWA_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AMAZON_AWS_IAM_ROLE_ARN=arn:aws:iam::123456789012:role/YourRoleName

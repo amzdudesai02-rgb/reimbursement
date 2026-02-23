@@ -165,7 +165,8 @@ Since you have to wait anyway, use this time to:
 **Have these ready for Render:**
 
 ```env
-# Amazon SP-API
+# Amazon SP-API (App ID for consent URL; LWA for token exchange)
+AMAZON_APP_ID=amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d
 AMAZON_LWA_CLIENT_ID=amzn1.application-oa2-client.67532553f3b542ceb2b5fe808ca057d8
 AMAZON_LWA_CLIENT_SECRET=amzn1.oa2-cs.v1.cd4caffe71f75cd208ca666142e1801af3f53a0b012af8b61527c98d38
 AMAZON_OAUTH_REDIRECT_URI=https://reimbursement.amzdudes.io/api/auth/amazon/callback

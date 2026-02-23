@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 LWA_CLIENT_ID = os.getenv("AMAZON_LWA_CLIENT_ID")
 LWA_CLIENT_SECRET = os.getenv("AMAZON_LWA_CLIENT_SECRET")
+# App ID for consent URL (Website Authorization Workflow). Do NOT use LWA Client ID here.
+# See: https://developer-docs.amazon.com/sp-api/docs/website-authorization-workflow
+AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
 AWS_IAM_ROLE_ARN = os.getenv("AMAZON_AWS_IAM_ROLE_ARN")
 AWS_REGION = os.getenv("AMAZON_AWS_REGION", "us-east-1")
 OAUTH_REDIRECT_URI = os.getenv(
@@ -331,14 +334,21 @@ def generate_authorization_url(
 ) -> str:
     """
     Generate the Amazon authorization URL for OAuth flow.
+    Uses AMAZON_APP_ID (app ID) in application_id, NOT LWA Client ID.
     No version=beta. return_url must be .../api/auth/amazon/callback.
     """
+    if not AMAZON_APP_ID:
+        raise ValueError(
+            "AMAZON_APP_ID is required for the consent URL (e.g. amzn1.sp.solution.xxx). "
+            "Do not use LWA Client ID in the consent URL. See: "
+            "https://developer-docs.amazon.com/sp-api/docs/website-authorization-workflow"
+        )
     # Ensure backend callback path (/api/auth/amazon/callback), never /auth/amazon/callback
     uri = redirect_uri.rstrip("/")
     if "/auth/amazon/callback" in uri and "/api/auth/amazon/callback" not in uri:
         uri = uri.replace("/auth/amazon/callback", "/api/auth/amazon/callback")
     params = {
-        "application_id": LWA_CLIENT_ID,
+        "application_id": AMAZON_APP_ID,
         "return_url": uri,
         "state": state,
     }

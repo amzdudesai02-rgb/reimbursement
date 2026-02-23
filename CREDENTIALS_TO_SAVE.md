@@ -6,6 +6,14 @@ Save all these values securely. You'll need them for Render deployment.
 
 ## ✅ 1. Amazon SP-API Credentials (You Already Have These)
 
+**App ID (for consent URL – required; do not use Client ID in consent URL):**
+```
+✅ AMAZON_APP_ID:
+   amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d
+```
+- Used in the Seller Central authorization/consent link. Get from Solution Provider Portal → Your app → App ID / Solution ID.
+
+**LWA credentials (for token exchange):**
 From the LWA credentials modal you saw earlier:
 
 ```
@@ -17,7 +25,7 @@ From the LWA credentials modal you saw earlier:
 ```
 
 **Where to find again:**
-- Solution Provider Portal → Your app "ReimbursementDash" → Click "View" under LWA credentials
+- Solution Provider Portal → Your app "ReimbursementDash" → App ID for consent URL; "View" under LWA credentials for Client ID/Secret
 
 ---
 
@@ -109,6 +117,8 @@ Copy this template and fill in the blanks:
 # ============================================
 # AMAZON SP-API CREDENTIALS
 # ============================================
+# App ID for consent URL (Seller Central) – do NOT use LWA Client ID in consent URL
+AMAZON_APP_ID=amzn1.sp.solution.5bbfb7da-4a1f-4ca0-bcf5-7bf10f30ec6d
 AMAZON_LWA_CLIENT_ID=amzn1.application-oa2-client.67532553f3b542ceb2b5fe808ca057d8
 AMAZON_LWA_CLIENT_SECRET=amzn1.oa2-cs.v1.cd4caffe71f75cd208ca666142e1801af3f53a0b012af8b61527c98d38
 

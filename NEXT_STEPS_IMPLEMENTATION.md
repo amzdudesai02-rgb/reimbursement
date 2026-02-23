@@ -46,7 +46,9 @@ Follow the guide in `SP_API_SETUP_GUIDE.md`:
 Add these to your `.env` file in the `backend/` directory:
 
 ```env
-# Amazon SP-API Credentials (from Seller Central)
+# Amazon SP-API Credentials (from Seller Central / Solution Provider Portal)
+# App ID for consent URL (use App ID, not LWA Client ID)
+AMAZON_APP_ID=amzn1.sp.solution.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 AMAZON_LWA_CLIENT_ID=amzn1.application-oa2-client.xxxxxxxxxxxxx
 AMAZON_LWA_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AMAZON_AWS_IAM_ROLE_ARN=arn:aws:iam::123456789012:role/YourRoleName
