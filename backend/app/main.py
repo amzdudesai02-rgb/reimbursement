@@ -105,21 +105,35 @@ ensure_reimbursement_store_id()
 API_PREFIX = "/api"
 app = FastAPI(title="amzDUDES Reimbursement API")
 def parse_origins(raw: str | None) -> list[str]:
-    if not raw:
-        return ["http://localhost:5173"]
+    """Parse CORS_ORIGINS env (JSON array or comma-separated). Always include FRONTEND_ORIGIN."""
+    defaults = [FRONTEND_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"]
+    if not raw or not raw.strip():
+        return [o for o in defaults if o]
+    raw = raw.strip().strip('"').strip()
+    origins: list[str] = []
     try:
         parsed = json.loads(raw)
         if isinstance(parsed, str):
-            return [parsed]
-        if isinstance(parsed, list):
-            return [str(x) for x in parsed]
+            origins = [parsed.strip()] if parsed.strip() else []
+        elif isinstance(parsed, list):
+            origins = [str(x).strip() for x in parsed if str(x).strip()]
     except json.JSONDecodeError:
-        pass
-    return [o.strip() for o in raw.split(",") if o.strip()]
+        # Fallback: strip [ ] and split by comma (handles "[\"a\",\"b\"]" or "a, b")
+        inner = raw.strip("[]").strip()
+        if inner:
+            for part in inner.split(","):
+                p = part.strip().strip('"').strip()
+                if p and p.startswith("http"):
+                    origins.append(p)
+    # Always include production frontend so signup/login never blocked by CORS
+    if FRONTEND_ORIGIN and FRONTEND_ORIGIN not in origins:
+        origins.insert(0, FRONTEND_ORIGIN)
+    return origins if origins else defaults
 
 
 cors_origins = parse_origins(os.getenv("CORS_ORIGINS"))
 allow_all = "*" in cors_origins or not cors_origins
+logger.info("CORS allow_origins: %s", cors_origins[:5] if cors_origins else "[]")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"] if allow_all else cors_origins,
@@ -237,8 +251,15 @@ def signup(body: SignupIn, db: Session = Depends(get_db)):
     )
     db.add(user)
     db.commit()
-    send_verification_email(body.name, body.email, token)
-    return MessageOut(ok=True, message="Verification email sent. Please check your inbox.")
+    try:
+        send_verification_email(body.name, body.email, token)
+        return MessageOut(ok=True, message="Verification email sent. Please check your inbox.")
+    except Exception as e:
+        logger.warning("Signup: verification email failed for %s: %s", body.email, e)
+        return MessageOut(
+            ok=True,
+            message="Account created. We couldn't send the verification email right now—please use 'Resend verification email' below.",
+        )
 
 
 @app.post(f"{API_PREFIX}/auth/resend-verification", response_model=MessageOut)
@@ -251,8 +272,15 @@ def resend_verification(body: ResendVerificationIn, db: Session = Depends(get_db
     user.verification_token = secrets.token_urlsafe(32)
     user.verification_sent_at = datetime.utcnow()
     db.commit()
-    send_verification_email(user.name or "", user.email, user.verification_token)
-    return MessageOut(ok=True, message="Verification email resent.")
+    try:
+        send_verification_email(user.name or "", user.email, user.verification_token)
+        return MessageOut(ok=True, message="Verification email resent.")
+    except Exception as e:
+        logger.warning("Resend verification email failed for %s: %s", user.email, e)
+        raise HTTPException(
+            status_code=503,
+            detail="Verification email could not be sent. Check that RESEND_API_KEY or SMTP is configured on the server.",
+        )
 
 
 @app.post(f"{API_PREFIX}/auth/verify", response_model=TokenOut)

@@ -1,9 +1,12 @@
+import logging
 import os
 import smtplib
 from email.message import EmailMessage
 from typing import Optional
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
@@ -15,7 +18,8 @@ SMTP_TLS = os.getenv("SMTP_TLS", "true").lower() not in {"0", "false", "no"}
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_FROM = os.getenv("RESEND_FROM", SMTP_FROM)
 
-FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
+# Verification link base URL (use FRONTEND_BASE_URL or FRONTEND_ORIGIN for production)
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL") or os.getenv("FRONTEND_ORIGIN") or "http://localhost:5173"
 
 
 def _send_via_resend(
@@ -75,7 +79,10 @@ def _send_email(to_email: str, subject: str, html_body: str, text_body: Optional
         _send_via_smtp(to_email, subject, html_body, text_body)
         return
 
-    print(f"[DEV EMAIL] → {to_email}\nSubject: {subject}\n{html_body}")
+    logger.warning(
+        "No email provider configured (RESEND_API_KEY or SMTP_HOST). Set one on the server for verification emails. Dev: %s",
+        to_email,
+    )
 
 
 def send_verification_email(name: str, email: str, token: str):
