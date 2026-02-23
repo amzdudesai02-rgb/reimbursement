@@ -109,8 +109,20 @@ class SPAPIClient:
             return self._aws_credentials
         
         # Get LWA access token first
-        lwa_token = self.get_lwa_access_token()
+        self.get_lwa_access_token()
         
+        # boto3 reads AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY; support AMAZON_ prefixed names (e.g. on Render)
+        access_key = os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("AMAZON_AWS_ACCESS_KEY_ID")
+        secret_key = os.getenv("AWS_SECRET_ACCESS_KEY") or os.getenv("AMAZON_AWS_SECRET_ACCESS_KEY")
+        if not access_key or not secret_key:
+            raise Exception(
+                "Unable to locate credentials. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY (or AMAZON_AWS_ACCESS_KEY_ID and AMAZON_AWS_SECRET_ACCESS_KEY) in the backend environment."
+            )
+        if not os.getenv("AWS_ACCESS_KEY_ID"):
+            os.environ["AWS_ACCESS_KEY_ID"] = access_key
+        if not os.getenv("AWS_SECRET_ACCESS_KEY"):
+            os.environ["AWS_SECRET_ACCESS_KEY"] = secret_key
+
         # Assume role using STS
         sts_client = boto3.client("sts", region_name=self.region)
         

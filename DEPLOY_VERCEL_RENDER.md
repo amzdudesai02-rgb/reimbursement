@@ -104,8 +104,22 @@ Configure these in **Render** → Your Backend Service → Environment:
 | `AMAZON_LWA_CLIENT_ID` | `amzn1.application-oa2-client.xxxx...` | Used only for token exchange (LWA). Not used in consent URL. |
 | `AMAZON_LWA_CLIENT_SECRET` | From the **same** app as Client ID | See below |
 | `AMAZON_AWS_IAM_ROLE_ARN` | (from SP-API setup) | |
+| **`AWS_ACCESS_KEY_ID`** | (IAM user access key) | **Required for sync.** IAM user that can assume the SP-API role above. |
+| **`AWS_SECRET_ACCESS_KEY`** | (IAM user secret key) | **Required for sync.** Without these, sync fails with "Unable to locate credentials" and tables stay empty. |
 | `JWT_SECRET` | (strong secret) | |
 | … | (DB, etc.) | As in your current backend config |
+
+### AWS credentials for sync (Reports + Finances)
+
+Sync uses Amazon SP-API, which requires the backend to **assume an AWS IAM role** via STS. On Render there is no attached IAM role, so you must provide credentials in the environment:
+
+1. In **AWS IAM**, create a user (or use an existing one) and attach a policy that allows `sts:AssumeRole` on your SP-API app’s role (the one in `AMAZON_AWS_IAM_ROLE_ARN`).  
+2. Create an **access key** for that user.  
+3. In **Render** → your backend service → Environment, set:
+   - `AWS_ACCESS_KEY_ID` = the access key ID  
+   - `AWS_SECRET_ACCESS_KEY` = the secret access key  
+
+Redeploy after adding them. Without these, Reports and Finances calls fail with "Unable to locate credentials" and reimbursements/shipments stay empty.
 
 ### Amazon consent URL vs LWA credentials
 
