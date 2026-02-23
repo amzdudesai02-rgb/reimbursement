@@ -170,20 +170,22 @@ def fetch_reimbursement_events(
     store_id: int,
     posted_after: Optional[datetime] = None,
     posted_before: Optional[datetime] = None,
+    max_posted_before: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     """
     Call SP-API Finances and return a list of row dicts suitable for
     insert_or_ignore_reimbursements_from_financial_events.
+    max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
     """
-    # Use full 180-day window (API max) so we don't miss data
+    # Use 180-day window (API max). Prefer client-provided time so server clock drift doesn't cause 400.
     now = datetime.now(timezone.utc)
+    cap = max_posted_before if max_posted_before is not None else now
     if posted_after is None:
-        posted_after = now - timedelta(days=180)
+        posted_after = cap - timedelta(days=180)
     if posted_before is None:
-        posted_before = now
-    # Clamp to now; SP-API returns 400 if PostedBefore is in the future
-    if posted_before > now:
-        posted_before = now
+        posted_before = cap
+    # SP-API returns 400 if PostedBefore is in the future; cap by client time and 180-day range
+    posted_before = min(posted_before, cap, posted_after + timedelta(days=180))
     after_str = posted_after.strftime("%Y-%m-%dT%H:%M:%SZ")
     before_str = posted_before.strftime("%Y-%m-%dT%H:%M:%SZ")
 

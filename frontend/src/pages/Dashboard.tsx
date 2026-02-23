@@ -91,7 +91,7 @@ export default function Dashboard() {
         stores_synced: number;
         errors: string[];
         message?: string;
-      }>("/sync");
+      }>("/sync", { client_time: new Date().toISOString() });
       setSyncMessage(data.message ?? (data.reimbursements_added > 0 ? `${data.reimbursements_added} reimbursements added.` : (data.errors?.[0] ?? "Sync finished.")));
       await loadData();
     } catch (err: unknown) {
@@ -112,7 +112,7 @@ export default function Dashboard() {
     if (loading || !hasStores || hasAutoSynced.current) return;
     if (stores.length > 0 && (summary?.row_count ?? 0) === 0) {
       hasAutoSynced.current = true;
-      api.post("/sync").then(() => loadData());
+      api.post("/sync", { client_time: new Date().toISOString() }).then(() => loadData());
     }
   }, [loading, hasStores, stores.length, summary?.row_count, loadData]);
 

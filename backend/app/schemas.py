@@ -150,6 +150,11 @@ class AmazonOAuthCallbackOut(BaseModel):
     message: str
 
 
+class SyncIn(BaseModel):
+    """Optional body for POST /sync; client_time avoids server clock drift for Finances API."""
+    client_time: Optional[str] = None  # ISO 8601, e.g. from new Date().toISOString()
+
+
 class ReimbursementOut(BaseModel):
     id: int
     order_id: Optional[str] = None

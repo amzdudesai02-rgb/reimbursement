@@ -1,11 +1,11 @@
-from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
+from fastapi import Body, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from jose import jwt, JWTError
 from passlib.hash import bcrypt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 import io
@@ -47,6 +47,7 @@ from app.schemas import (
     AmazonOAuthCallbackOut,
     StoreCreate,
     StoreOut,
+    SyncIn,
     AmazonConnectionOut,
     CurrentUserOut,
 )
@@ -707,9 +708,24 @@ async def list_shipping_queue(skip: int = 0, limit: int = 100, user=Depends(get_
         ]
 
 
+def _parse_client_time(s: str | None):
+    """Parse ISO 8601 client_time to timezone-aware datetime (UTC). Returns None if invalid."""
+    if not s or not s.strip():
+        return None
+    try:
+        dt = datetime.fromisoformat(s.strip().replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
 @app.post(f"{API_PREFIX}/sync")
-async def sync_reimbursements(user=Depends(get_current_user)):
+async def sync_reimbursements(
+    body: SyncIn | None = Body(None),
+    user=Depends(get_current_user),
+):
     """Sync Reimbursement (Reports + Finances) and Shipping Queue for all connected stores."""
+    max_posted_before = _parse_client_time(body.client_time if body else None)
     errors: list[str] = []
     stores_synced = 0
     reimbursements_added = 0
@@ -748,7 +764,9 @@ async def sync_reimbursements(user=Depends(get_current_user)):
                     errors.append(f"{store.store_name} (report): {report_err}")
                 # Finances API (adjustments, SAFET, refunds)
                 try:
-                    events = finances_sync.fetch_reimbursement_events(client, store.id)
+                    events = finances_sync.fetch_reimbursement_events(
+                        client, store.id, max_posted_before=max_posted_before
+                    )
                     n_fin = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
                     reimbursements_added += n_fin
                     logger.info("Sync store_id=%s finances: %s events, %s inserted", store.id, len(events), n_fin)

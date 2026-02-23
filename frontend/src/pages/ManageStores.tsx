@@ -92,7 +92,7 @@ export default function ManageStores() {
         reimbursements_added: number
         shipments_updated: number
         errors: string[]
-      }>('/sync')
+      }>('/sync', { client_time: new Date().toISOString() })
       if (data.synced) {
         setSyncInfo(
           `Sync complete: ${data.reimbursements_added} reimbursements, ${data.shipments_updated} shipments updated across ${data.stores_synced} store(s).`
