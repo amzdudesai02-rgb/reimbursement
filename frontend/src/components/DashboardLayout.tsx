@@ -107,10 +107,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Left Sidebar with Tabs */}
-      <aside className="relative w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 space-y-6">
-        {/* Logo */}
-        <div className="flex items-center justify-center">
+      {/* Left Sidebar with Tabs - scrollable nav, logout always visible at bottom */}
+      <aside className="relative w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 min-h-0">
+        {/* Logo - fixed at top */}
+        <div className="flex items-center justify-center flex-shrink-0">
           <div className="relative">
             <button
               type="button"
@@ -169,7 +169,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Navigation Tabs with Icons and Labels */}
-        <nav className="flex-1 flex flex-col items-center space-y-3">
+        <nav className="flex-1 min-h-0 flex flex-col items-center space-y-3 overflow-y-auto overflow-x-hidden w-full py-2">
           {sidebarItems.map((item, index) => {
             if (item.type === 'fba') {
               return (
@@ -262,9 +262,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="w-full flex items-center justify-center">
+        {/* Logout - always visible at bottom, never pushed off */}
+        <div className="w-full flex items-center justify-center flex-shrink-0 pt-2 mt-auto border-t border-gray-100">
           <button
+            type="button"
             onClick={logout}
             className="relative group flex items-center justify-center w-12 h-12 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
           >

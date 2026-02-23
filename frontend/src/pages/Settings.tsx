@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Edit3 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
+import { api } from '../lib/api'
 import {
   tableWrapperClass,
   tableClass,
@@ -19,10 +21,50 @@ const tabs: { key: SettingsTab; label: string }[] = [
   { key: 'reimbursement', label: 'Reimbursement Report' },
 ]
 
-const paymentMethods: { storeName: string }[] = []
+interface CurrentUser {
+  id: number
+  email: string
+  name: string | null
+}
+
+interface StoreFromApi {
+  id: number
+  store_name: string
+  region: string | null
+  marketplace_id: string | null
+  is_active: boolean
+  is_connected: boolean
+  created_at: string
+}
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
+  const [user, setUser] = useState<CurrentUser | null>(null)
+  const [stores, setStores] = useState<StoreFromApi[]>([])
+  const [loadingUser, setLoadingUser] = useState(true)
+  const [loadingStores, setLoadingStores] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    api
+      .get<CurrentUser>('/auth/me')
+      .then((res) => { if (mounted) setUser(res.data) })
+      .catch(() => { if (mounted) setUser(null) })
+      .finally(() => { if (mounted) setLoadingUser(false) })
+    return () => { mounted = false }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    api
+      .get<StoreFromApi[]>('/stores')
+      .then((res) => { if (mounted) setStores(res.data) })
+      .catch(() => { if (mounted) setStores([]) })
+      .finally(() => { if (mounted) setLoadingStores(false) })
+    return () => { mounted = false }
+  }, [])
+
+  const connectedStores = useMemo(() => stores.filter((s) => s.is_connected), [stores])
 
   const renderTabContent = useMemo(() => {
     if (activeTab === 'account') {
@@ -31,20 +73,22 @@ export default function Settings() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-3xl border border-slate-200 bg-[#f6f8fb] p-6 shadow-sm">
               <div className="flex items-center justify-between text-sm font-semibold text-slate-900">
-                <p>Account Owner: Prime Retail Solution</p>
+                <p>
+                  Account Owner: {loadingUser ? '…' : (user?.name || user?.email || 'Account')}
+                </p>
                 <button type="button" className="text-slate-400 transition hover:text-teal-700" aria-label="Edit account owner">
                   <Edit3 className="h-4 w-4" />
                 </button>
               </div>
               <div className="mt-4 space-y-2 text-sm text-slate-600">
                 <p>
-                  Email: <span className="text-slate-900">info@primeretailsolution.com</span>
+                  Email: <span className="text-slate-900">{loadingUser ? '…' : (user?.email ?? '—')}</span>
                 </p>
                 <p>
-                  Phone: <span className="text-slate-900">18313326237</span>
+                  Phone: <span className="text-slate-900">—</span>
                 </p>
                 <p>
-                  Billing Address: <span className="text-slate-900">95060</span>
+                  Billing Address: <span className="text-slate-900">—</span>
                 </p>
               </div>
             </div>
@@ -53,15 +97,15 @@ export default function Settings() {
               <div>
                 <p className="text-sm font-semibold text-slate-900">Contact Us</p>
                 <p className="mt-4 text-sm text-slate-600">
-                  Email us at <span className="text-teal-700">support@sellerinvestigators.com</span>
+                  Need help? Visit the Support page for FAQs and to get in touch.
                 </p>
               </div>
-              <button
-                type="button"
+              <Link
+                to="/support"
                 className="mt-6 inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-600 hover:text-teal-700"
               >
-                Book a Meeting
-              </button>
+                Go to Support
+              </Link>
             </div>
           </div>
 
@@ -71,10 +115,13 @@ export default function Settings() {
                 <p className="text-base font-semibold text-slate-900">Payment Methods</p>
                 <p className="text-sm text-slate-500">Manage your active stores</p>
               </div>
-              <button type="button" className="flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-800">
+              <Link
+                to="/stores"
+                className="flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-800"
+              >
                 <span className="text-xl leading-none">+</span>
                 Add new payment method
-              </button>
+              </Link>
             </div>
             <div className="mt-6">
               <div className={tableWrapperClass}>
@@ -82,21 +129,38 @@ export default function Settings() {
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="px-6 py-3">Store Name</th>
+                      <th className="px-6 py-3">Status</th>
                       <th className="px-6 py-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody className={tableBodyClass}>
-                    {!paymentMethods.length && (
+                    {loadingStores && (
                       <tr>
-                        <td colSpan={2} className={emptyStateCellClass}>
-                          No data available
+                        <td colSpan={3} className={emptyStateCellClass}>
+                          Loading…
                         </td>
                       </tr>
                     )}
-                    {paymentMethods.map((method) => (
-                      <tr key={method.storeName}>
-                        <td className={tableCellClass}>{method.storeName}</td>
-                        <td className={`${tableCellClass} text-right text-teal-200`}>Manage</td>
+                    {!loadingStores && !connectedStores.length && (
+                      <tr>
+                        <td colSpan={3} className={emptyStateCellClass}>
+                          No stores connected. Connect an Amazon account from Manage Stores.
+                        </td>
+                      </tr>
+                    )}
+                    {!loadingStores && connectedStores.map((store) => (
+                      <tr key={store.id}>
+                        <td className={tableCellClass}>{store.store_name}</td>
+                        <td className={tableCellClass}>
+                          <span className={store.is_connected ? 'text-teal-600' : 'text-slate-400'}>
+                            {store.is_connected ? 'Connected' : 'Disconnected'}
+                          </span>
+                        </td>
+                        <td className={`${tableCellClass} text-right`}>
+                          <Link to="/stores" className="text-teal-600 hover:text-teal-700 font-medium">
+                            Manage
+                          </Link>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -127,7 +191,7 @@ export default function Settings() {
         <p className="mt-4 text-sm">{placeholderCopy[key]}</p>
       </div>
     )
-  }, [activeTab])
+  }, [activeTab, user, loadingUser, connectedStores, loadingStores])
 
   return (
     <DashboardLayout>

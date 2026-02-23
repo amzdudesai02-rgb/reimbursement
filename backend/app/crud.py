@@ -48,8 +48,13 @@ def insert_reimbursements_from_csv(db: Session, rows: List[schemas.CsvReimbursem
 
 
 
-def get_summary(db: Session, store_ids: Optional[List[int]] = None):
+def get_summary(
+    db: Session,
+    store_ids: Optional[List[int]] = None,
+    days_back: Optional[int] = None,
+):
     from sqlalchemy import func
+    from datetime import datetime, timezone, timedelta
     if store_ids is not None and len(store_ids) == 0:
         return {"total_amount": 0.0, "row_count": 0, "currency": "USD"}
     q = db.query(
@@ -58,6 +63,9 @@ def get_summary(db: Session, store_ids: Optional[List[int]] = None):
     )
     if store_ids is not None and len(store_ids) > 0:
         q = q.filter(models.Reimbursement.store_id.in_(store_ids))
+    if days_back is not None and days_back > 0:
+        since = datetime.now(timezone.utc) - timedelta(days=days_back)
+        q = q.filter(models.Reimbursement.approval_date >= since)
     total, count = q.one()
     return {
         "total_amount": float(total or 0),
@@ -67,14 +75,22 @@ def get_summary(db: Session, store_ids: Optional[List[int]] = None):
 
 
 def list_reimbursements(
-    db: Session, skip: int = 0, limit: int = 100, store_ids: Optional[List[int]] = None
+    db: Session,
+    skip: int = 0,
+    limit: int = 500,
+    store_ids: Optional[List[int]] = None,
+    days_back: Optional[int] = None,
 ):
+    from datetime import datetime, timezone, timedelta
     if store_ids is not None and len(store_ids) == 0:
         return []
     q = db.query(models.Reimbursement)
     if store_ids is not None and len(store_ids) > 0:
         q = q.filter(models.Reimbursement.store_id.in_(store_ids))
-    return q.order_by(models.Reimbursement.approval_date.desc()).offset(skip).limit(limit).all()
+    if days_back is not None and days_back > 0:
+        since = datetime.now(timezone.utc) - timedelta(days=days_back)
+        q = q.filter(models.Reimbursement.approval_date >= since)
+    return q.order_by(models.Reimbursement.approval_date.desc()).offset(skip).limit(min(limit, 2000)).all()
 
 
 def insert_or_ignore_reimbursements_from_financial_events(db: Session, events: List[dict]) -> int:

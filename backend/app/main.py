@@ -607,18 +607,32 @@ def _user_store_ids(db: Session, user) -> list:
 
 # Protect these endpoints if desired:
 @app.get(f"{API_PREFIX}/summary", response_model=SummaryOut)
-async def summary(user=Depends(get_current_user)):
+async def summary(
+    days_back: int | None = Query(None, description="Filter to last N days (30, 90, etc.); omit for all time"),
+    store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
+    user=Depends(get_current_user),
+):
     with get_session() as db:
         store_ids = _user_store_ids(db, user)
-        s = crud.get_summary(db, store_ids=store_ids)
+        if store_id is not None:
+            store_ids = [store_id] if store_id in store_ids else []
+        s = crud.get_summary(db, store_ids=store_ids, days_back=days_back)
         return SummaryOut(**s)
 
 
 @app.get(f"{API_PREFIX}/reimbursements", response_model=list[ReimbursementOut])
-async def list_items(skip: int = 0, limit: int = 100, user=Depends(get_current_user)):
+async def list_items(
+    skip: int = 0,
+    limit: int = Query(500, le=2000),
+    days_back: int | None = Query(None, description="Filter to last N days; omit for all time"),
+    store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
+    user=Depends(get_current_user),
+):
     with get_session() as db:
         store_ids = _user_store_ids(db, user)
-        items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids)
+        if store_id is not None:
+            store_ids = [store_id] if store_id in store_ids else []
+        items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids, days_back=days_back)
         return [ReimbursementOut.from_amazon_reimbursement(i) for i in items]
 
 
