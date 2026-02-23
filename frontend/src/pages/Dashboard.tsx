@@ -10,7 +10,6 @@ import {
   tableHeadClass,
   tableBodyClass,
   tableCellClass,
-  emptyStateCellClass,
 } from "../styles/tableTheme";
 
 const currencyFormatter = (currency = "USD") =>
@@ -193,7 +192,9 @@ export default function Dashboard() {
               <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-sm font-semibold text-gray-800">Total Recovered</h3>
-                  <Info className="h-4 w-4 text-gray-400 cursor-help" title="Sum of all reimbursements from Amazon (Finances + FBA Reimbursements report)" />
+                  <span title="Sum of all reimbursements from Amazon (Finances + FBA Reimbursements report)">
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                </span>
                 </div>
                 <div className="text-center py-4">
                   <div className="text-3xl font-bold text-green-600">{format.format(totalAmount)}</div>
