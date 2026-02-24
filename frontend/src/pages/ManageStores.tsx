@@ -92,11 +92,14 @@ export default function ManageStores() {
         reimbursements_added: number
         shipments_updated: number
         errors: string[]
+        soft_errors?: string[]
       }>('/sync', { client_time: new Date().toISOString() })
       if (data.synced) {
-        setSyncInfo(
-          `Sync complete: ${data.reimbursements_added} reimbursements, ${data.shipments_updated} shipments updated across ${data.stores_synced} store(s).`
-        )
+        const base = `Sync complete: ${data.reimbursements_added} reimbursements, ${data.shipments_updated} shipments updated across ${data.stores_synced} store(s).`
+        const soft = data.soft_errors && data.soft_errors.length
+          ? ` However, Finances API could not be read for some stores: ${data.soft_errors.slice(0, 2).join('; ')}`
+          : ''
+        setSyncInfo(base + soft)
       } else {
         const firstError = data.errors?.[0]
         setSyncError(firstError || 'Sync did not complete successfully. Please try again.')

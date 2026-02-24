@@ -758,6 +758,7 @@ async def sync_reimbursements(
         or datetime.now(timezone.utc)
     )
     errors: list[str] = []
+    soft_errors: list[str] = []
     stores_synced = 0
     reimbursements_added = 0
     shipments_updated = 0
@@ -802,8 +803,9 @@ async def sync_reimbursements(
                     reimbursements_added += n_fin
                     logger.info("Sync store_id=%s finances: %s events, %s inserted", store.id, len(events), n_fin)
                 except Exception as fin_err:
+                    # Treat Finances failures as a soft warning so report data can still be used.
                     logger.warning("Sync store_id=%s finances failed: %s", store.id, fin_err)
-                    errors.append(f"{store.store_name} (finances): {fin_err}")
+                    soft_errors.append(f"{store.store_name} (finances): {fin_err}")
                 # Inventory → Shipping Queue (Fulfillment Inbound)
                 try:
                     ship_rows = inbound_sync.fetch_shipments(client, store.id)
@@ -823,14 +825,18 @@ async def sync_reimbursements(
         if stores_synced > 0
         else "No connected stores to sync."
     )
-    if errors:
-        message += " Issues: " + "; ".join(errors[:3]) + ("..." if len(errors) > 3 else "")
+    all_errors = errors + soft_errors
+    if all_errors:
+        message += " Issues: " + "; ".join(all_errors[:3]) + ("..." if len(all_errors) > 3 else "")
     return {
+        # Finances-only failures are treated as soft; hard errors (reports/inbound/top-level)
+        # determine the overall success flag.
         "synced": stores_synced > 0 and len(errors) == 0,
         "stores_synced": stores_synced,
         "reimbursements_added": reimbursements_added,
         "shipments_updated": shipments_updated,
-        "errors": errors,
+        "errors": all_errors,
+        "soft_errors": soft_errors,
         "message": message,
     }
 

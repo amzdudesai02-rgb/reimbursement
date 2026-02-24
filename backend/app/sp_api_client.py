@@ -246,7 +246,10 @@ class SPAPIClient:
             url += "?" + "&".join(query_parts)
         
         # Prepare headers (GET/HEAD must not have Content-Type or body per SP-API to avoid 400)
-        headers: Dict[str, str] = {"x-amz-marketplace-id": self.marketplace_id}
+        headers: Dict[str, str] = {
+            "x-amz-marketplace-id": self.marketplace_id,
+            "Accept": "application/json",
+        }
         body_str: Optional[str] = None
         if body is not None:
             body_str = json.dumps(body)
@@ -262,10 +265,47 @@ class SPAPIClient:
             url=url,
             headers=headers,
             content=send_content,
-            timeout=30.0
+            timeout=30.0,
         )
-        
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            # Log rich context so we can see why Amazon rejected the request
+            status = e.response.status_code
+            content_type = e.response.headers.get("Content-Type", "")
+            body_preview = ""
+            error_summary = ""
+            try:
+                if "application/json" in content_type:
+                    err_json = e.response.json()
+                    body_preview = json.dumps(err_json)[:500]
+                    # Standard SP-API error shape: {"errors": [{"code": "...", "message": "...", "details": "..."}]}
+                    if isinstance(err_json, dict) and isinstance(err_json.get("errors"), list) and err_json["errors"]:
+                        first = err_json["errors"][0] or {}
+                        code = first.get("code")
+                        msg = first.get("message")
+                        details = first.get("details")
+                        parts = [str(p) for p in (code, msg, details) if p]
+                        error_summary = " | ".join(parts)
+                else:
+                    body_preview = (e.response.text or "")[:500]
+            except Exception:
+                # If parsing the body fails, fall back to generic info only
+                pass
+
+            logger.warning(
+                "SP-API request failed: %s %s -> status=%s content_type=%s body=%s",
+                method,
+                url,
+                status,
+                content_type,
+                body_preview,
+            )
+
+            detail = error_summary or body_preview or str(e)
+            raise Exception(f"SP-API error {status}: {detail}") from e
+
         return response.json()
 
 

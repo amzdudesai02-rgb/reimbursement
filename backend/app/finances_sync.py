@@ -6,10 +6,12 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 import hashlib
 import json
+import logging
 
 from .sp_api_client import SPAPIClient
 
 
+logger = logging.getLogger(__name__)
 FINANCES_PATH = "/finances/v0/financialEvents"
 MAX_PAGES = 50
 
@@ -177,7 +179,7 @@ def fetch_reimbursement_events(
     insert_or_ignore_reimbursements_from_financial_events.
     max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
     """
-    # Use 180-day window (API max). Prefer client-provided time so server clock drift doesn't cause 400.
+    # Use 180-day window (API max). Prefer client-provided time (or external UTC) so server clock drift doesn't cause 400.
     now = datetime.now(timezone.utc)
     cap = max_posted_before if max_posted_before is not None else now
     if posted_after is None:
@@ -188,6 +190,13 @@ def fetch_reimbursement_events(
     posted_before = min(posted_before, cap, posted_after + timedelta(days=180))
     after_str = posted_after.strftime("%Y-%m-%dT%H:%M:%SZ")
     before_str = posted_before.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    logger.info(
+        "Finances window for store_id=%s: PostedAfter=%s PostedBefore=%s",
+        store_id,
+        after_str,
+        before_str,
+    )
 
     all_rows: List[Dict[str, Any]] = []
     next_token: Optional[str] = None
