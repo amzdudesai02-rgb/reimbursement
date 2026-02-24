@@ -751,12 +751,13 @@ async def sync_reimbursements(
     user=Depends(get_current_user),
 ):
     """Sync Reimbursement (Reports + Finances) and Shipping Queue for all connected stores."""
-    # Use client time, else external API, else server time — so PostedBefore is never in the future (avoids Finances 400)
+    # Use client time, else external API, else server time. Finances API requires PostedBefore "no later than 2 minutes from now" — subtract 5 min so we're safely in the past.
     max_posted_before = (
         _parse_client_time(body.client_time if body else None)
         or _get_utc_now_from_api()
         or datetime.now(timezone.utc)
     )
+    max_posted_before = max_posted_before - timedelta(minutes=5)
     errors: list[str] = []
     soft_errors: list[str] = []
     stores_synced = 0

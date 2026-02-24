@@ -179,14 +179,15 @@ def fetch_reimbursement_events(
     insert_or_ignore_reimbursements_from_financial_events.
     max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
     """
-    # Use 180-day window (API max). Prefer client-provided time (or external UTC) so server clock drift doesn't cause 400.
-    now = datetime.now(timezone.utc)
-    cap = max_posted_before if max_posted_before is not None else now
+    # Finances API: PostedBefore must be at least 2 minutes before current time. Use 5 min buffer (works for any timezone e.g. Karachi UTC+5).
+    now_utc = datetime.now(timezone.utc)
+    max_allowed_before = now_utc - timedelta(minutes=5)  # bulletproof: never closer than 5 min to now
+    cap = max_posted_before if max_posted_before is not None else max_allowed_before
+    cap = min(cap, max_allowed_before)  # clamp user/external time so we never exceed now - 5 min
     if posted_after is None:
-        posted_after = cap - timedelta(days=180)
+        posted_after = cap - timedelta(days=180)  # PostedAfter = PostedBefore - 180 days (or smaller)
     if posted_before is None:
         posted_before = cap
-    # SP-API returns 400 if PostedBefore is in the future; cap by client time and 180-day range
     posted_before = min(posted_before, cap, posted_after + timedelta(days=180))
     after_str = posted_after.strftime("%Y-%m-%dT%H:%M:%SZ")
     before_str = posted_before.strftime("%Y-%m-%dT%H:%M:%SZ")
