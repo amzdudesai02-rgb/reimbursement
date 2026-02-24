@@ -16,6 +16,8 @@ import json
 import time
 from typing import Any, Dict
 
+import httpx
+
 logger = logging.getLogger(__name__)
 
 # Frontend origin for redirects (backend GET callback redirects here)
@@ -719,13 +721,42 @@ def _parse_client_time(s: str | None):
         return None
 
 
+def _get_utc_now_from_api() -> datetime | None:
+    """Fetch current UTC from a public API so we don't rely on server clock (avoids Finances 400 when server time is wrong)."""
+    urls = [
+        "https://worldtimeapi.org/api/timezone/Etc/UTC",
+        "https://timeapi.io/api/Time/current/zone?timeZone=UTC",
+    ]
+    for url in urls:
+        try:
+            r = httpx.get(url, timeout=3.0)
+            r.raise_for_status()
+            data = r.json()
+            s = data.get("utc_datetime") or data.get("datetime") or data.get("currentTime") or data.get("dateTime") or data.get("iso8601")
+            if not s:
+                continue
+            dt = datetime.fromisoformat(str(s).replace("Z", "+00:00").split(".")[0])
+            if not dt.tzinfo:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except Exception as e:
+            logger.debug("UTC fetch failed %s: %s", url, e)
+            continue
+    return None
+
+
 @app.post(f"{API_PREFIX}/sync")
 async def sync_reimbursements(
     body: SyncIn | None = Body(None),
     user=Depends(get_current_user),
 ):
     """Sync Reimbursement (Reports + Finances) and Shipping Queue for all connected stores."""
-    max_posted_before = _parse_client_time(body.client_time if body else None)
+    # Use client time, else external API, else server time — so PostedBefore is never in the future (avoids Finances 400)
+    max_posted_before = (
+        _parse_client_time(body.client_time if body else None)
+        or _get_utc_now_from_api()
+        or datetime.now(timezone.utc)
+    )
     errors: list[str] = []
     stores_synced = 0
     reimbursements_added = 0
