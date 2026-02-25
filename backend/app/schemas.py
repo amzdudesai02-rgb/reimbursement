@@ -157,6 +157,7 @@ class SyncIn(BaseModel):
 
 class ReimbursementOut(BaseModel):
     id: int
+    store_id: Optional[int] = None
     # Friendly fields used by the UI table
     order_id: Optional[str] = None
     sku: Optional[str] = None
@@ -167,7 +168,7 @@ class ReimbursementOut(BaseModel):
     date: Optional[str] = None
     notes: Optional[str] = None
 
-    # Raw Amazon reimbursement fields for CSV export (match spreadsheet)
+    # All Amazon reimbursement columns (match spreadsheet)
     approval_date: Optional[str] = None
     reimbursement_id: Optional[str] = None
     case_id: Optional[str] = None
@@ -194,6 +195,7 @@ class ReimbursementOut(BaseModel):
         date_iso = item.approval_date.isoformat() if item.approval_date else None
         return cls(
             id=item.id,
+            store_id=item.store_id,
             order_id=item.amazon_order_id,
             sku=item.sku,
             asin=item.asin,

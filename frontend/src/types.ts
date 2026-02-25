@@ -15,6 +15,7 @@ export type Summary = {
 
 export type Reimbursement = {
    id: number
+   store_id?: number
    order_id?: string
    sku?: string
    asin?: string

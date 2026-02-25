@@ -118,7 +118,7 @@ def list_reimbursements(
     if days_back is not None and days_back > 0 and date_after is None and date_before is None:
         since = datetime.now(timezone.utc) - timedelta(days=days_back)
         q = q.filter(models.Reimbursement.approval_date >= since)
-    return q.order_by(models.Reimbursement.approval_date.desc()).offset(skip).limit(min(limit, 2000)).all()
+    return q.order_by(models.Reimbursement.approval_date.desc()).offset(skip).limit(min(limit, 10000)).all()
 
 
 def insert_or_ignore_reimbursements_from_financial_events(db: Session, events: List[dict]) -> int:

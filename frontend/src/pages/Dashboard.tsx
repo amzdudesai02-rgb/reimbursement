@@ -62,7 +62,7 @@ export default function Dashboard() {
       paramsSummary._ = String(Date.now()); // cache-bust so dashboard always gets fresh data
       const qsSummary = new URLSearchParams(paramsSummary).toString();
 
-      const paramsReimb: Record<string, string> = { skip: "0", limit: "2000" };
+      const paramsReimb: Record<string, string> = { skip: "0", limit: "10000" };
       if (augustSeptemberParams) {
         paramsReimb.date_after = augustSeptemberParams.date_after;
         paramsReimb.date_before = augustSeptemberParams.date_before;
@@ -145,6 +145,7 @@ export default function Dashboard() {
     if (reimbursements.length === 0) return;
     // Match the spreadsheet columns the user provided
     const headers = [
+      "store-id",
       "approval-date",
       "reimbursement-id",
       "case-id",
@@ -170,6 +171,7 @@ export default function Dashboard() {
     };
     const rows = reimbursements.map((r) =>
       [
+        r.store_id ?? "",
         r.approval_date ?? r.date ?? "",
         r.reimbursement_id ?? "",
         r.case_id ?? "",
@@ -268,8 +270,9 @@ export default function Dashboard() {
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
+              title="All Time = all synced data (Amazon provides up to 180 days)"
             >
-              <option value="All Time">Date Range: All Time</option>
+              <option value="All Time">Date Range: All Time (all synced data)</option>
               <option value="August & September">August & September (last year)</option>
               <option value="Last 30 days">Last 30 days</option>
               <option value="Last 90 days">Last 90 days</option>
@@ -373,6 +376,7 @@ export default function Dashboard() {
                   <table className={tableClass} style={{ minWidth: "max-content" }}>
                     <thead className={tableHeadClass}>
                       <tr>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Store ID</th>
                         <th className="px-4 py-3 text-left whitespace-nowrap">Approval date</th>
                         <th className="px-4 py-3 text-left whitespace-nowrap">Reimbursement ID</th>
                         <th className="px-4 py-3 text-left whitespace-nowrap">Case ID</th>
@@ -396,6 +400,7 @@ export default function Dashboard() {
                     <tbody className={tableBodyClass}>
                       {reimbursements.map((row) => (
                         <tr key={row.id} className="hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.store_id ?? "—"}</td>
                           <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.approval_date ?? row.date)}</td>
                           <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.reimbursement_id ?? "—"}</td>
                           <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.case_id ?? "—"}</td>
@@ -420,7 +425,7 @@ export default function Dashboard() {
                   </table>
                 </div>
                 <div className="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
-                  Data synced from Amazon SP-API (Finances + FBA Reimbursements report). Use “Refresh data” to sync again.
+                  Showing all synced reimbursement data (same columns as CSV). Amazon SP-API provides up to 180 days; use “Refresh data” to sync. Some fields (e.g. case-id, original-reim) may be empty when Amazon does not provide them.
                 </div>
               </div>
             )}
