@@ -157,6 +157,7 @@ class SyncIn(BaseModel):
 
 class ReimbursementOut(BaseModel):
     id: int
+    # Friendly fields used by the UI table
     order_id: Optional[str] = None
     sku: Optional[str] = None
     asin: Optional[str] = None
@@ -166,12 +167,31 @@ class ReimbursementOut(BaseModel):
     date: Optional[str] = None
     notes: Optional[str] = None
 
+    # Raw Amazon reimbursement fields for CSV export (match spreadsheet)
+    approval_date: Optional[str] = None
+    reimbursement_id: Optional[str] = None
+    case_id: Optional[str] = None
+    amazon_order_id: Optional[str] = None
+    reason: Optional[str] = None
+    fnsku: Optional[str] = None
+    product_name: Optional[str] = None
+    condition: Optional[str] = None
+    currency_unit: Optional[str] = None
+    amount_per_unit: Optional[float] = None
+    amount_total: Optional[float] = None
+    quantity_reimbursed_cash: Optional[float] = None
+    quantity_reimbursed_inventory: Optional[float] = None
+    quantity_reimbursed_total: Optional[float] = None
+    original_reimbursement_id: Optional[str] = None
+    original_reimbursement_type: Optional[str] = None
+
     class Config:
         from_attributes = True
 
     @classmethod
     def from_amazon_reimbursement(cls, item):
         """Map AmazonReimbursement model to ReimbursementOut schema"""
+        date_iso = item.approval_date.isoformat() if item.approval_date else None
         return cls(
             id=item.id,
             order_id=item.amazon_order_id,
@@ -180,6 +200,22 @@ class ReimbursementOut(BaseModel):
             issue_type=item.reason,
             amount=float(item.amount_total or 0),
             currency=item.currency_unit,
-            date=item.approval_date.isoformat() if item.approval_date else None,
+            date=date_iso,
             notes=item.product_name,
+            approval_date=date_iso,
+            reimbursement_id=item.reimbursement_id,
+            case_id=item.case_id,
+            amazon_order_id=item.amazon_order_id,
+            reason=item.reason,
+            fnsku=item.fnsku,
+            product_name=item.product_name,
+            condition=item.condition,
+            currency_unit=item.currency_unit,
+            amount_per_unit=float(item.amount_per_unit) if item.amount_per_unit is not None else None,
+            amount_total=float(item.amount_total) if item.amount_total is not None else None,
+            quantity_reimbursed_cash=float(item.quantity_reimbursed_cash) if item.quantity_reimbursed_cash is not None else None,
+            quantity_reimbursed_inventory=float(item.quantity_reimbursed_inventory) if item.quantity_reimbursed_inventory is not None else None,
+            quantity_reimbursed_total=float(item.quantity_reimbursed_total) if item.quantity_reimbursed_total is not None else None,
+            original_reimbursement_id=item.original_reimbursement_id,
+            original_reimbursement_type=item.original_reimbursement_type,
         )

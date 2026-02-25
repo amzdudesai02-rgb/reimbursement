@@ -141,21 +141,51 @@ export default function Dashboard() {
 
   const downloadCsv = useCallback(() => {
     if (reimbursements.length === 0) return;
-    const headers = ["Date", "Order ID", "SKU", "ASIN", "Issue Type", "Amount", "Currency", "Notes"];
+    // Match the spreadsheet columns the user provided
+    const headers = [
+      "approval-date",
+      "reimbursement-id",
+      "case-id",
+      "amazon-order-id",
+      "reason",
+      "sku",
+      "fnsku",
+      "asin",
+      "product-name",
+      "condition",
+      "currency-unit",
+      "amount-per-unit",
+      "amount-total",
+      "quantity-reimbursed-cash",
+      "quantity-reimbursed-inventory",
+      "quantity-reimbursed-total",
+      "original-reimbursement-id",
+      "original-reimbursement-type",
+    ];
     const escape = (v: string | number | undefined) => {
       const s = v == null ? "" : String(v);
       return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const rows = reimbursements.map((r) =>
       [
-        r.date ?? "",
-        r.order_id ?? "",
+        r.approval_date ?? r.date ?? "",
+        r.reimbursement_id ?? "",
+        r.case_id ?? "",
+        r.amazon_order_id ?? r.order_id ?? "",
+        r.reason ?? r.issue_type ?? "",
         r.sku ?? "",
+        r.fnsku ?? "",
         r.asin ?? "",
-        r.issue_type ?? "",
-        r.amount,
-        r.currency ?? "USD",
-        r.notes ?? "",
+        r.product_name ?? r.notes ?? "",
+        r.condition ?? "",
+        r.currency_unit ?? r.currency ?? "USD",
+        r.amount_per_unit ?? "",
+        r.amount_total ?? r.amount,
+        r.quantity_reimbursed_cash ?? "",
+        r.quantity_reimbursed_inventory ?? "",
+        r.quantity_reimbursed_total ?? "",
+        r.original_reimbursement_id ?? "",
+        r.original_reimbursement_type ?? "",
       ].map(escape).join(",")
     );
     const csv = [headers.join(","), ...rows].join("\n");

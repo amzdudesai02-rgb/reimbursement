@@ -23,4 +23,22 @@ export type Reimbursement = {
    currency?: string
    date?: string
    notes?: string
+
+  // Raw Amazon reimbursement fields for CSV export
+  approval_date?: string
+  reimbursement_id?: string
+  case_id?: string
+  amazon_order_id?: string
+  reason?: string
+  fnsku?: string
+  product_name?: string
+  condition?: string
+  currency_unit?: string
+  amount_per_unit?: number
+  amount_total?: number
+  quantity_reimbursed_cash?: number
+  quantity_reimbursed_inventory?: number
+  quantity_reimbursed_total?: number
+  original_reimbursement_id?: string
+  original_reimbursement_type?: string
 }

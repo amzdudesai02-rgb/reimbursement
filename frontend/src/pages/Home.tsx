@@ -18,6 +18,8 @@ import {
   Zap,
 } from "lucide-react";
 
+import { Link } from "react-router-dom";
+
 const heroStats = [
   { label: "Recovered for sellers", value: "$48M+" },
   { label: "Active users", value: "12K+" },
@@ -127,10 +129,13 @@ export default function Home() {
               Automated audits, verified claims, and the lowest commission in the market. AMZDudes finds money you didn’t know you were owed.
             </p>
             <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-              <button className="inline-flex items-center gap-2 rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]">
+              <Link
+                to="/signup"
+                className="inline-flex items-center gap-2 rounded-full bg-[#0B64FF] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#074cd3]"
+              >
                 Start Free Audit
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
               <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400">
                 <Play className="h-4 w-4" />
                 See Dashboard
