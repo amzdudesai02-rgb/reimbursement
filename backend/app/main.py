@@ -677,12 +677,13 @@ async def summary(
 async def list_items(
     skip: int = 0,
     limit: int = Query(10000, le=10000),
-    days_back: int | None = Query(None, description="Filter to last N days; omit for all time"),
+    days_back: int | None = Query(None, description="Filter to last N days; omit for all time (all synced data)"),
     date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
     date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
     store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
     user=Depends(get_current_user),
 ):
+    """List reimbursements for the current user's stores. No date params = all time (all rows in DB, up to limit)."""
     with get_session() as db:
         store_ids = _user_store_ids(db, user)
         if store_id is not None:

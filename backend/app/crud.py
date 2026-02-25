@@ -97,6 +97,7 @@ def list_reimbursements(
     date_after: Optional[str] = None,
     date_before: Optional[str] = None,
 ):
+    """List reimbursement rows. When days_back, date_after, date_before are all None = no date filter (all time)."""
     from datetime import datetime, timezone, timedelta
     if store_ids is not None and len(store_ids) == 0:
         return []

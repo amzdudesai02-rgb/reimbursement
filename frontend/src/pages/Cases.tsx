@@ -32,35 +32,39 @@ export default function Cases() {
   const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
   const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [storeFilter, setStoreFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(25);
 
-  useEffect(() => {
-    let mounted = true;
-    // All time: no date filter; fetch up to 10k rows (backend max)
+  const loadData = useCallback(() => {
+    setFetchError(null);
+    setLoading(true);
+    // All time: no date filter (no days_back, date_after, date_before); all stores; up to 10k rows
+    const reimbursementsUrl = "/reimbursements?skip=0&limit=10000";
     Promise.all([
-      api.get<Reimbursement[]>("/reimbursements?skip=0&limit=10000").then((r) => r.data),
+      api.get<Reimbursement[]>(reimbursementsUrl).then((r) => r.data),
       api.get<StoreFromApi[]>("/stores").then((r) => r.data),
     ])
       .then(([r, s]) => {
-        if (mounted) {
-          setReimbursements(r);
-          setStores(s);
-        }
+        setReimbursements(Array.isArray(r) ? r : []);
+        setStores(Array.isArray(s) ? s : []);
       })
-      .catch(() => {
-        if (mounted) {
-          setReimbursements([]);
-          setStores([]);
-        }
+      .catch((err) => {
+        const message = err?.response?.status === 401
+          ? "Session expired. Please log in again."
+          : err?.response?.data?.detail || err?.message || "Failed to load reimbursements.";
+        setFetchError(message);
+        setReimbursements([]);
+        setStores([]);
       })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => { mounted = false; };
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const downloadCsv = useCallback(() => {
     if (reimbursements.length === 0) return;
@@ -156,6 +160,19 @@ export default function Cases() {
           )}
         </div>
 
+        {fetchError && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-red-800 font-medium">{fetchError}</p>
+            <button
+              type="button"
+              onClick={loadData}
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {hasStores && (
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div className="flex flex-wrap items-center gap-4">
@@ -229,7 +246,9 @@ export default function Cases() {
                   <tr>
                     <td colSpan={COLUMN_COUNT} className={emptyStateCellClass}>
                       {filtered.length === 0 && reimbursements.length === 0
-                        ? "No reimbursement data yet. Connect Amazon and sync your stores to see data here."
+                        ? (hasStores
+                            ? "No reimbursement records yet. Go to Dashboard and use “Refresh data” to sync from Amazon (up to 180 days). Then return here to see all rows."
+                            : "Connect your Amazon account in Stores, then sync from the Dashboard to see data here.")
                         : "No results match your search."}
                     </td>
                   </tr>
