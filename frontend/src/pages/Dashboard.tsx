@@ -59,6 +59,7 @@ export default function Dashboard() {
         paramsSummary.date_before = augustSeptemberParams.date_before;
       } else if (daysBackParam != null) paramsSummary.days_back = String(daysBackParam);
       if (storeIdParam != null) paramsSummary.store_id = String(storeIdParam);
+      paramsSummary._ = String(Date.now()); // cache-bust so dashboard always gets fresh data
       const qsSummary = new URLSearchParams(paramsSummary).toString();
 
       const paramsReimb: Record<string, string> = { skip: "0", limit: "2000" };
@@ -67,12 +68,13 @@ export default function Dashboard() {
         paramsReimb.date_before = augustSeptemberParams.date_before;
       } else if (daysBackParam != null) paramsReimb.days_back = String(daysBackParam);
       if (storeIdParam != null) paramsReimb.store_id = String(storeIdParam);
+      paramsReimb._ = String(Date.now()); // cache-bust
       const qsReimb = new URLSearchParams(paramsReimb).toString();
 
       const [s, r, st] = await Promise.all([
-        api.get<Summary>(`/summary${qsSummary ? `?${qsSummary}` : ""}`).then((res) => res.data),
+        api.get<Summary>(`/summary?${qsSummary}`).then((res) => res.data),
         api.get<Reimbursement[]>(`/reimbursements?${qsReimb}`).then((res) => res.data),
-        api.get<StoreFromApi[]>("/stores").then((res) => res.data),
+        api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((res) => res.data),
       ]);
       setSummary(s);
       setReimbursements(r);
@@ -230,15 +232,27 @@ export default function Dashboard() {
           )}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={runSync}
-                disabled={!hasStores || syncing}
-                className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing…" : "Refresh data"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={runSync}
+                  disabled={!hasStores || syncing}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                  {syncing ? "Syncing…" : "Refresh data"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadData()}
+                  disabled={loading || !hasStores}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Re-fetch data from server to update the table"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                  Update dashboard
+                </button>
+              </div>
               {syncMessage && (
                 <p className="text-xs text-gray-500 max-w-md">{syncMessage}</p>
               )}
