@@ -676,7 +676,7 @@ async def summary(
 @app.get(f"{API_PREFIX}/reimbursements", response_model=list[ReimbursementOut])
 async def list_items(
     skip: int = 0,
-    limit: int = Query(5000, le=10000),
+    limit: int = Query(10000, le=10000),
     days_back: int | None = Query(None, description="Filter to last N days; omit for all time"),
     date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
     date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
