@@ -15,6 +15,10 @@ from typing import Optional, Dict, Any
 from urllib.parse import urlparse, quote
 
 import httpx
+
+# 429 retry: exponential backoff (1s, 2s, 4s, 8s, 16s)
+MAX_RETRIES_429 = 5
+RETRY_BASE_SECONDS = 1
 import boto3
 from botocore.exceptions import ClientError
 
@@ -260,14 +264,31 @@ class SPAPIClient:
 
         # GET/HEAD: no body (SP-API returns 400 if GET has body or Content-Length)
         send_content = body_str if method.upper() not in ("GET", "HEAD") else None
-        response = httpx.request(
-            method=method,
-            url=url,
-            headers=headers,
-            content=send_content,
-            timeout=30.0,
-        )
+        last_response = None
+        for attempt in range(MAX_RETRIES_429):
+            response = httpx.request(
+                method=method,
+                url=url,
+                headers=headers,
+                content=send_content,
+                timeout=30.0,
+            )
+            last_response = response
+            if response.status_code == 429 and attempt < MAX_RETRIES_429 - 1:
+                wait_sec = RETRY_BASE_SECONDS ** (attempt + 1)
+                logger.warning(
+                    "SP-API 429 QuotaExceeded for %s %s, retry %s/%s in %s seconds",
+                    method,
+                    path,
+                    attempt + 1,
+                    MAX_RETRIES_429,
+                    wait_sec,
+                )
+                time.sleep(wait_sec)
+                continue
+            break
 
+        response = last_response
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:

@@ -1,6 +1,10 @@
 """
 Sync reimbursement-related data from Amazon SP-API Finances into amazon_reimbursements.
 Data is displayed in the app only via this automation (no CSV).
+
+Fetches in 30-day windows (API returns empty if PostedAfter–PostedBefore > 180 days),
+follows NextToken for full pagination, parses multiple event lists, and applies
+negative amount for reversals.
 """
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
@@ -14,6 +18,7 @@ from .sp_api_client import SPAPIClient
 logger = logging.getLogger(__name__)
 FINANCES_PATH = "/finances/v0/financialEvents"
 MAX_PAGES = 50
+DAYS_PER_WINDOW = 30  # Fetch in 30-day chunks to avoid incomplete results
 
 
 def _parse_iso(s: Optional[str]) -> Optional[datetime]:
@@ -32,7 +37,13 @@ def _stable_id(parts: List[Any]) -> str:
 
 
 def _amount_cents(ev: Dict[str, Any]) -> Optional[float]:
-    amt = ev.get("AdjustmentAmount") or ev.get("Amount") or ev.get("TotalAmount")
+    amt = (
+        ev.get("AdjustmentAmount")
+        or ev.get("Amount")
+        or ev.get("TotalAmount")
+        or ev.get("ReimbursedAmount")
+        or ev.get("ReimbursementAmount")
+    )
     if amt is None:
         return None
     if isinstance(amt, (int, float)):
@@ -45,13 +56,29 @@ def _amount_cents(ev: Dict[str, Any]) -> Optional[float]:
 
 
 def _currency(ev: Dict[str, Any]) -> str:
-    amt = ev.get("AdjustmentAmount") or ev.get("Amount") or ev.get("TotalAmount")
+    amt = (
+        ev.get("AdjustmentAmount")
+        or ev.get("Amount")
+        or ev.get("TotalAmount")
+        or ev.get("ReimbursedAmount")
+        or ev.get("ReimbursementAmount")
+    )
     if isinstance(amt, dict):
         cc = amt.get("CurrencyCode") or (amt.get("Currency", {}) or {})
         if isinstance(cc, dict):
             return (cc.get("CurrencyCode") or "USD")[:8]
         return (str(cc) or "USD")[:8]
     return "USD"
+
+
+def _apply_reversal(amount: float, reason: str, event_type: str = "") -> float:
+    """Reversals should reduce totals: use negative amount."""
+    if not reason and not event_type:
+        return amount
+    combined = f"{reason} {event_type}".upper()
+    if "REVERSAL" in combined:
+        return -abs(amount) if amount != 0 else 0.0
+    return amount
 
 
 def _extract_from_adjustment(adj: Dict[str, Any], store_id: int, index: int) -> Optional[Dict[str, Any]]:
@@ -62,6 +89,7 @@ def _extract_from_adjustment(adj: Dict[str, Any], store_id: int, index: int) -> 
     if amount is None:
         amount = 0.0
     reason = (adj.get("AdjustmentType") or adj.get("AdjustmentItemList", [{}])[0].get("AdjustmentType") or "Adjustment")[:64]
+    amount = _apply_reversal(amount, reason)
     items = adj.get("AdjustmentItemList") or []
     if not items:
         reimb_id = _stable_id([store_id, "adj", posted.isoformat(), reason, amount, index])
@@ -97,6 +125,7 @@ def _extract_from_adjustment(adj: Dict[str, Any], store_id: int, index: int) -> 
         if item_amount is None and len(items) == 1:
             item_amount = amount
         amt = float(item_amount) if item_amount is not None else amount
+        amt = _apply_reversal(amt, reason)
         rows.append({
             "store_id": store_id,
             "approval_date": posted,
@@ -120,12 +149,14 @@ def _extract_safet(ev: Dict[str, Any], store_id: int, index: int) -> Optional[Di
     amount = _amount_cents(ev)
     if amount is None:
         amount = 0.0
+    reason = "SAFETReimbursement"
+    amount = _apply_reversal(amount, reason, ev.get("ReimbursementEventType") or "")
     reimb_id = _stable_id([store_id, "safet", posted.isoformat(), ev.get("SAFETClaimId"), index])
     return {
         "store_id": store_id,
         "approval_date": posted,
         "reimbursement_id": reimb_id,
-        "reason": "SAFETReimbursement"[:64],
+        "reason": reason[:64],
         "currency_unit": _currency(ev),
         "amount_total": amount,
         "amazon_order_id": ev.get("AmazonOrderId"),
@@ -142,6 +173,7 @@ def _extract_refund(ev: Dict[str, Any], store_id: int, index: int) -> Optional[D
     amount = _amount_cents(ev)
     if amount is None:
         amount = 0.0
+    amount = _apply_reversal(amount, "Refund", ev.get("RefundEventType") or "")
     reimb_id = _stable_id([store_id, "refund", posted.isoformat(), ev.get("AmazonOrderId"), index])
     return {
         "store_id": store_id,
@@ -157,6 +189,41 @@ def _extract_refund(ev: Dict[str, Any], store_id: int, index: int) -> Optional[D
     }
 
 
+def _extract_reimbursement_event(ev: Dict[str, Any], store_id: int, index: int) -> Optional[Dict[str, Any]]:
+    """ReimbursementEventList from FinancialEvents (main FBA reimbursement list)."""
+    posted = _parse_iso(ev.get("PostedDate"))
+    if not posted:
+        return None
+    amount = _amount_cents(ev)
+    if amount is None:
+        amount = 0.0
+    event_type = (ev.get("ReimbursementEventType") or ev.get("ReimbursementType") or "")[:64]
+    reason = (ev.get("ReasonCode") or ev.get("AdjustmentReasonCode") or "Reimbursement")[:64]
+    amount = _apply_reversal(amount, reason, event_type)
+    reimb_id = _stable_id([
+        store_id,
+        "reimb",
+        posted.isoformat(),
+        ev.get("ReimbursementId") or ev.get("AmazonOrderId"),
+        ev.get("SellerSKU"),
+        ev.get("ASIN"),
+        index,
+    ])
+    return {
+        "store_id": store_id,
+        "approval_date": posted,
+        "reimbursement_id": reimb_id,
+        "reason": reason or "Reimbursement",
+        "currency_unit": _currency(ev),
+        "amount_total": amount,
+        "amazon_order_id": ev.get("AmazonOrderId"),
+        "sku": (ev.get("SellerSKU") or ev.get("FnSKU") or "")[:128] or None,
+        "asin": (ev.get("ASIN") or "")[:32] or None,
+        "product_name": ev.get("ProductDescription") or ev.get("Description"),
+        "fnsku": (ev.get("FnSKU") or "")[:64] or None,
+    }
+
+
 def _flatten(items: List[Any]) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for x in items:
@@ -167,38 +234,13 @@ def _flatten(items: List[Any]) -> List[Dict[str, Any]]:
     return out
 
 
-def fetch_reimbursement_events(
+def _fetch_one_window(
     client: SPAPIClient,
     store_id: int,
-    posted_after: Optional[datetime] = None,
-    posted_before: Optional[datetime] = None,
-    max_posted_before: Optional[datetime] = None,
+    after_str: str,
+    before_str: str,
 ) -> List[Dict[str, Any]]:
-    """
-    Call SP-API Finances and return a list of row dicts suitable for
-    insert_or_ignore_reimbursements_from_financial_events.
-    max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
-    """
-    # Finances API: PostedBefore must be at least 2 minutes before current time. Use 5 min buffer (works for any timezone e.g. Karachi UTC+5).
-    now_utc = datetime.now(timezone.utc)
-    max_allowed_before = now_utc - timedelta(minutes=5)  # bulletproof: never closer than 5 min to now
-    cap = max_posted_before if max_posted_before is not None else max_allowed_before
-    cap = min(cap, max_allowed_before)  # clamp user/external time so we never exceed now - 5 min
-    if posted_after is None:
-        posted_after = cap - timedelta(days=180)  # PostedAfter = PostedBefore - 180 days (or smaller)
-    if posted_before is None:
-        posted_before = cap
-    posted_before = min(posted_before, cap, posted_after + timedelta(days=180))
-    after_str = posted_after.strftime("%Y-%m-%dT%H:%M:%SZ")
-    before_str = posted_before.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    logger.info(
-        "Finances window for store_id=%s: PostedAfter=%s PostedBefore=%s",
-        store_id,
-        after_str,
-        before_str,
-    )
-
+    """Fetch one date window (all pages via NextToken) and return normalized rows."""
     all_rows: List[Dict[str, Any]] = []
     next_token: Optional[str] = None
     pages = 0
@@ -207,20 +249,20 @@ def fetch_reimbursement_events(
         params: Dict[str, Any] = {"PostedAfter": after_str, "PostedBefore": before_str, "MaxResultsPerPage": 100}
         if next_token:
             params["NextToken"] = next_token
-        try:
-            data = client.request("GET", FINANCES_PATH, params=params)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("Finances API request failed for store_id=%s: %s", store_id, e)
-            raise
+        data = client.request("GET", FINANCES_PATH, params=params)
         payload = data.get("payload") or data
         next_token = payload.get("NextToken")
-        # Support both payload.FinancialEvents and top-level FinancialEvents
         events = payload.get("FinancialEvents") or data.get("FinancialEvents") or payload
         if not isinstance(events, dict):
             events = {}
 
-        # AdjustmentEventList (FBA reimbursements, etc.)
+        # ReimbursementEventList (main FBA reimbursement list)
+        for i, ev in enumerate(events.get("ReimbursementEventList") or []):
+            row = _extract_reimbursement_event(ev, store_id, i)
+            if row:
+                all_rows.append(row)
+
+        # AdjustmentEventList (FBA reimbursements, adjustments, reversals)
         for i, adj in enumerate(events.get("AdjustmentEventList") or []):
             r = _extract_from_adjustment(adj, store_id, i)
             if isinstance(r, list):
@@ -234,7 +276,7 @@ def fetch_reimbursement_events(
             if row:
                 all_rows.append(row)
 
-        # RefundEventList (optional)
+        # RefundEventList
         for i, ev in enumerate(events.get("RefundEventList") or []):
             row = _extract_refund(ev, store_id, i)
             if row:
@@ -243,5 +285,50 @@ def fetch_reimbursement_events(
         pages += 1
         if not next_token:
             break
+
+    return all_rows
+
+
+def fetch_reimbursement_events(
+    client: SPAPIClient,
+    store_id: int,
+    posted_after: Optional[datetime] = None,
+    posted_before: Optional[datetime] = None,
+    max_posted_before: Optional[datetime] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Call SP-API Finances and return a list of row dicts suitable for
+    insert_or_ignore_reimbursements_from_financial_events.
+    Fetches in 30-day windows to avoid empty/incomplete responses (API limits range to 180 days).
+    PostedBefore is always at least 5 minutes before now.
+    max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
+    """
+    now_utc = datetime.now(timezone.utc)
+    max_allowed_before = now_utc - timedelta(minutes=5)
+    cap = max_posted_before if max_posted_before is not None else max_allowed_before
+    cap = min(cap, max_allowed_before)
+    window_end = posted_before if posted_before is not None else cap
+    window_end = min(window_end, cap)
+    window_start = posted_after if posted_after is not None else (cap - timedelta(days=180))
+    window_start = max(window_start, cap - timedelta(days=180))
+
+    all_rows: List[Dict[str, Any]] = []
+    while window_start < window_end:
+        chunk_end = min(window_start + timedelta(days=DAYS_PER_WINDOW), window_end)
+        after_str = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
+        before_str = chunk_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+        logger.info(
+            "Finances window store_id=%s: PostedAfter=%s PostedBefore=%s",
+            store_id,
+            after_str,
+            before_str,
+        )
+        try:
+            rows = _fetch_one_window(client, store_id, after_str, before_str)
+            all_rows.extend(rows)
+        except Exception as e:
+            logger.warning("Finances API request failed for store_id=%s window %s–%s: %s", store_id, after_str, before_str, e)
+            raise
+        window_start = chunk_end
 
     return all_rows

@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Info, Menu, Link2, RefreshCw, Download } from "lucide-react";
+import { Info, Menu, Link2, RefreshCw } from "lucide-react";
 import { api } from "../lib/api";
 import type { Summary, Reimbursement } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
-import {
-  tableWrapperClass,
-  tableClass,
-  tableHeadClass,
-  tableBodyClass,
-  tableCellClass,
-} from "../styles/tableTheme";
 
 const currencyFormatter = (currency = "USD") =>
   new Intl.NumberFormat("en-US", {
@@ -29,7 +22,6 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [dateRange, setDateRange] = useState("All Time");
   const [storeFilter, setStoreFilter] = useState("All");
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const hasAutoSynced = useRef(false);
 
   const daysBackParam = useMemo(() => {
@@ -97,22 +89,17 @@ export default function Dashboard() {
   const runSync = useCallback(async () => {
     if (syncing || !hasStores) return;
     setSyncing(true);
-    setSyncMessage(null);
     try {
-      const { data } = await api.post<{
+      await api.post<{
         synced: boolean;
         reimbursements_added: number;
         stores_synced: number;
         errors: string[];
         message?: string;
       }>("/sync", { client_time: new Date().toISOString() });
-      setSyncMessage(data.message ?? (data.reimbursements_added > 0 ? `${data.reimbursements_added} reimbursements added.` : (data.errors?.[0] ?? "Sync finished.")));
       await loadData();
-    } catch (err: unknown) {
-      const msg = err && typeof err === "object" && "response" in err && err.response && typeof (err.response as { data?: { detail?: string } }).data?.detail === "string"
-        ? (err.response as { data: { detail: string } }).data.detail
-        : "Sync failed. Try again.";
-      setSyncMessage(msg);
+    } catch {
+      // Do not show any update or error message
     } finally {
       setSyncing(false);
     }
@@ -141,77 +128,6 @@ export default function Dashboard() {
     return Object.entries(map).sort((a, b) => b[1].amount - a[1].amount);
   }, [reimbursements]);
 
-  const downloadCsv = useCallback(() => {
-    if (reimbursements.length === 0) return;
-    // Match the spreadsheet columns the user provided
-    const headers = [
-      "store-id",
-      "approval-date",
-      "reimbursement-id",
-      "case-id",
-      "amazon-order-id",
-      "reason",
-      "sku",
-      "fnsku",
-      "asin",
-      "product-name",
-      "condition",
-      "currency-unit",
-      "amount-per-unit",
-      "amount-total",
-      "quantity-reimbursed-cash",
-      "quantity-reimbursed-inventory",
-      "quantity-reimbursed-total",
-      "original-reimbursement-id",
-      "original-reimbursement-type",
-    ];
-    const escape = (v: string | number | undefined) => {
-      const s = v == null ? "" : String(v);
-      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const rows = reimbursements.map((r) =>
-      [
-        r.store_id ?? "",
-        r.approval_date ?? r.date ?? "",
-        r.reimbursement_id ?? "",
-        r.case_id ?? "",
-        r.amazon_order_id ?? r.order_id ?? "",
-        r.reason ?? r.issue_type ?? "",
-        r.sku ?? "",
-        r.fnsku ?? "",
-        r.asin ?? "",
-        r.product_name ?? r.notes ?? "",
-        r.condition ?? "",
-        r.currency_unit ?? r.currency ?? "USD",
-        r.amount_per_unit ?? "",
-        r.amount_total ?? r.amount,
-        r.quantity_reimbursed_cash ?? "",
-        r.quantity_reimbursed_inventory ?? "",
-        r.quantity_reimbursed_total ?? "",
-        r.original_reimbursement_id ?? "",
-        r.original_reimbursement_type ?? "",
-      ].map(escape).join(",")
-    );
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `reimbursements-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [reimbursements]);
-
-  const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return "—";
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-    } catch {
-      return dateStr;
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -234,30 +150,15 @@ export default function Dashboard() {
           )}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={runSync}
-                  disabled={!hasStores || syncing}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                  {syncing ? "Syncing…" : "Refresh data"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => loadData()}
-                  disabled={loading || !hasStores}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Re-fetch data from server to update the table"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                  Update dashboard
-                </button>
-              </div>
-              {syncMessage && (
-                <p className="text-xs text-gray-500 max-w-md">{syncMessage}</p>
-              )}
+              <button
+                type="button"
+                onClick={runSync}
+                disabled={!hasStores || syncing}
+                className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing…" : "Refresh data"}
+              </button>
             </div>
             <button
               type="button"
@@ -354,81 +255,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Reimbursement section: show all actual data in a table */}
-            {totalCount > 0 && (
-              <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-gray-900">Reimbursement details</h2>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500">{reimbursements.length} row{reimbursements.length !== 1 ? "s" : ""} (from Amazon)</span>
-                    <button
-                      type="button"
-                      onClick={downloadCsv}
-                      disabled={reimbursements.length === 0}
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download CSV
-                    </button>
-                  </div>
-                </div>
-                <div className={`${tableWrapperClass} overflow-x-auto`}>
-                  <table className={tableClass} style={{ minWidth: "max-content" }}>
-                    <thead className={tableHeadClass}>
-                      <tr>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Store ID</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Approval date</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Reimbursement ID</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Case ID</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Amazon Order ID</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Reason</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">SKU</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">FNSKU</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">ASIN</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap min-w-[140px]">Product name</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Condition</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Currency</th>
-                        <th className="px-4 py-3 text-right whitespace-nowrap">Amount per unit</th>
-                        <th className="px-4 py-3 text-right whitespace-nowrap">Amount total</th>
-                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty cash</th>
-                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty inventory</th>
-                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty total</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Original reimb. ID</th>
-                        <th className="px-4 py-3 text-left whitespace-nowrap">Original reimb. type</th>
-                      </tr>
-                    </thead>
-                    <tbody className={tableBodyClass}>
-                      {reimbursements.map((row) => (
-                        <tr key={row.id} className="hover:bg-white/5">
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.store_id ?? "—"}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.approval_date ?? row.date)}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.reimbursement_id ?? "—"}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.case_id ?? "—"}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.amazon_order_id ?? row.order_id ?? "—"}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap capitalize`}>{(row.reason ?? row.issue_type ?? "—").replace(/_/g, " ")}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.sku ?? "—"}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.fnsku ?? "—"}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.asin ?? "—"}</td>
-                          <td className={`${tableCellClass} max-w-[180px] truncate`} title={row.product_name ?? row.notes ?? ""}>{row.product_name ?? row.notes ?? "—"}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.condition ?? "—"}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.currency_unit ?? row.currency ?? "USD"}</td>
-                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.amount_per_unit != null ? format.format(row.amount_per_unit) : "—"}</td>
-                          <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>{format.format(row.amount_total ?? row.amount)}</td>
-                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_cash != null ? row.quantity_reimbursed_cash : "—"}</td>
-                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_inventory != null ? row.quantity_reimbursed_inventory : "—"}</td>
-                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_total != null ? row.quantity_reimbursed_total : "—"}</td>
-                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.original_reimbursement_id ?? "—"}</td>
-                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.original_reimbursement_type ?? "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
-                  Showing all synced reimbursement data (same columns as CSV). Amazon SP-API provides up to 180 days; use “Refresh data” to sync. Some fields (e.g. case-id, original-reim) may be empty when Amazon does not provide them.
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
