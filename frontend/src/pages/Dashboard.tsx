@@ -369,33 +369,51 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-                <div className={tableWrapperClass}>
-                  <table className={tableClass}>
+                <div className={`${tableWrapperClass} overflow-x-auto`}>
+                  <table className={tableClass} style={{ minWidth: "max-content" }}>
                     <thead className={tableHeadClass}>
                       <tr>
-                        <th className="px-6 py-3 text-left">Date</th>
-                        <th className="px-6 py-3 text-left">Order ID</th>
-                        <th className="px-6 py-3 text-left">SKU</th>
-                        <th className="px-6 py-3 text-left">Issue type</th>
-                        <th className="px-6 py-3 text-right">Amount</th>
-                        <th className="px-6 py-3 text-left">Notes</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Approval date</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Reimbursement ID</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Case ID</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Amazon Order ID</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Reason</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">SKU</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">FNSKU</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">ASIN</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap min-w-[140px]">Product name</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Condition</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Currency</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Amount per unit</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Amount total</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty cash</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty inventory</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Qty total</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Original reimb. ID</th>
+                        <th className="px-4 py-3 text-left whitespace-nowrap">Original reimb. type</th>
                       </tr>
                     </thead>
                     <tbody className={tableBodyClass}>
                       {reimbursements.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-50/50">
-                          <td className={tableCellClass}>{formatDate(row.date)}</td>
-                          <td className={`${tableCellClass} font-mono text-xs`}>{row.order_id ?? "—"}</td>
-                          <td className={tableCellClass}>{row.sku ?? "—"}</td>
-                          <td className={tableCellClass}>
-                            <span className="capitalize">{(row.issue_type ?? "—").replace(/_/g, " ")}</span>
-                          </td>
-                          <td className={`${tableCellClass} text-right font-semibold text-green-700`}>
-                            {format.format(row.amount)}
-                          </td>
-                          <td className={`${tableCellClass} max-w-[200px] truncate`} title={row.notes ?? ""}>
-                            {row.notes ?? "—"}
-                          </td>
+                        <tr key={row.id} className="hover:bg-white/5">
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.approval_date ?? row.date)}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.reimbursement_id ?? "—"}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.case_id ?? "—"}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.amazon_order_id ?? row.order_id ?? "—"}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap capitalize`}>{(row.reason ?? row.issue_type ?? "—").replace(/_/g, " ")}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.sku ?? "—"}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.fnsku ?? "—"}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.asin ?? "—"}</td>
+                          <td className={`${tableCellClass} max-w-[180px] truncate`} title={row.product_name ?? row.notes ?? ""}>{row.product_name ?? row.notes ?? "—"}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.condition ?? "—"}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.currency_unit ?? row.currency ?? "USD"}</td>
+                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.amount_per_unit != null ? format.format(row.amount_per_unit) : "—"}</td>
+                          <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>{format.format(row.amount_total ?? row.amount)}</td>
+                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_cash != null ? row.quantity_reimbursed_cash : "—"}</td>
+                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_inventory != null ? row.quantity_reimbursed_inventory : "—"}</td>
+                          <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.quantity_reimbursed_total != null ? row.quantity_reimbursed_total : "—"}</td>
+                          <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.original_reimbursement_id ?? "—"}</td>
+                          <td className={`${tableCellClass} whitespace-nowrap`}>{row.original_reimbursement_type ?? "—"}</td>
                         </tr>
                       ))}
                     </tbody>
