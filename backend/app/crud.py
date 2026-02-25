@@ -52,6 +52,8 @@ def get_summary(
     db: Session,
     store_ids: Optional[List[int]] = None,
     days_back: Optional[int] = None,
+    date_after: Optional[str] = None,
+    date_before: Optional[str] = None,
 ):
     from sqlalchemy import func
     from datetime import datetime, timezone, timedelta
@@ -63,7 +65,19 @@ def get_summary(
     )
     if store_ids is not None and len(store_ids) > 0:
         q = q.filter(models.Reimbursement.store_id.in_(store_ids))
-    if days_back is not None and days_back > 0:
+    if date_after is not None and date_after.strip():
+        try:
+            start = datetime.fromisoformat(date_after.strip() + "T00:00:00+00:00")
+            q = q.filter(models.Reimbursement.approval_date >= start)
+        except ValueError:
+            pass
+    if date_before is not None and date_before.strip():
+        try:
+            end = datetime.fromisoformat(date_before.strip() + "T23:59:59.999999+00:00")
+            q = q.filter(models.Reimbursement.approval_date <= end)
+        except ValueError:
+            pass
+    if days_back is not None and days_back > 0 and date_after is None and date_before is None:
         since = datetime.now(timezone.utc) - timedelta(days=days_back)
         q = q.filter(models.Reimbursement.approval_date >= since)
     total, count = q.one()
@@ -80,6 +94,8 @@ def list_reimbursements(
     limit: int = 500,
     store_ids: Optional[List[int]] = None,
     days_back: Optional[int] = None,
+    date_after: Optional[str] = None,
+    date_before: Optional[str] = None,
 ):
     from datetime import datetime, timezone, timedelta
     if store_ids is not None and len(store_ids) == 0:
@@ -87,7 +103,19 @@ def list_reimbursements(
     q = db.query(models.Reimbursement)
     if store_ids is not None and len(store_ids) > 0:
         q = q.filter(models.Reimbursement.store_id.in_(store_ids))
-    if days_back is not None and days_back > 0:
+    if date_after is not None and date_after.strip():
+        try:
+            start = datetime.fromisoformat(date_after.strip() + "T00:00:00+00:00")
+            q = q.filter(models.Reimbursement.approval_date >= start)
+        except ValueError:
+            pass
+    if date_before is not None and date_before.strip():
+        try:
+            end = datetime.fromisoformat(date_before.strip() + "T23:59:59.999999+00:00")
+            q = q.filter(models.Reimbursement.approval_date <= end)
+        except ValueError:
+            pass
+    if days_back is not None and days_back > 0 and date_after is None and date_before is None:
         since = datetime.now(timezone.utc) - timedelta(days=days_back)
         q = q.filter(models.Reimbursement.approval_date >= since)
     return q.order_by(models.Reimbursement.approval_date.desc()).offset(skip).limit(min(limit, 2000)).all()

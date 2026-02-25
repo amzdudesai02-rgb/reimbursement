@@ -660,6 +660,8 @@ def _user_store_ids(db: Session, user) -> list:
 @app.get(f"{API_PREFIX}/summary", response_model=SummaryOut)
 async def summary(
     days_back: int | None = Query(None, description="Filter to last N days (30, 90, etc.); omit for all time"),
+    date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD); e.g. 2025-08-01 for August & September"),
+    date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD); e.g. 2025-09-30"),
     store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
     user=Depends(get_current_user),
 ):
@@ -667,7 +669,7 @@ async def summary(
         store_ids = _user_store_ids(db, user)
         if store_id is not None:
             store_ids = [store_id] if store_id in store_ids else []
-        s = crud.get_summary(db, store_ids=store_ids, days_back=days_back)
+        s = crud.get_summary(db, store_ids=store_ids, days_back=days_back, date_after=date_after, date_before=date_before)
         return SummaryOut(**s)
 
 
@@ -676,6 +678,8 @@ async def list_items(
     skip: int = 0,
     limit: int = Query(500, le=2000),
     days_back: int | None = Query(None, description="Filter to last N days; omit for all time"),
+    date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
     store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
     user=Depends(get_current_user),
 ):
@@ -683,7 +687,7 @@ async def list_items(
         store_ids = _user_store_ids(db, user)
         if store_id is not None:
             store_ids = [store_id] if store_id in store_ids else []
-        items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids, days_back=days_back)
+        items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids, days_back=days_back, date_after=date_after, date_before=date_before)
         return [ReimbursementOut.from_amazon_reimbursement(i) for i in items]
 
 

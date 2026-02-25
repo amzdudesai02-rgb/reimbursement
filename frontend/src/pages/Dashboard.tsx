@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Info, Menu, Link2, RefreshCw } from "lucide-react";
+import { Info, Menu, Link2, RefreshCw, Download } from "lucide-react";
 import { api } from "../lib/api";
 import type { Summary, Reimbursement } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
@@ -38,6 +38,12 @@ export default function Dashboard() {
     return undefined;
   }, [dateRange]);
 
+  const augustSeptemberParams = useMemo(() => {
+    if (dateRange !== "August & September") return null;
+    const year = new Date().getFullYear() - 1;
+    return { date_after: `${year}-08-01`, date_before: `${year}-09-30` };
+  }, [dateRange]);
+
   const storeIdParam = useMemo(() => {
     if (storeFilter === "All") return undefined;
     const s = stores.find((x) => x.store_name === storeFilter);
@@ -48,12 +54,18 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const paramsSummary: Record<string, string> = {};
-      if (daysBackParam != null) paramsSummary.days_back = String(daysBackParam);
+      if (augustSeptemberParams) {
+        paramsSummary.date_after = augustSeptemberParams.date_after;
+        paramsSummary.date_before = augustSeptemberParams.date_before;
+      } else if (daysBackParam != null) paramsSummary.days_back = String(daysBackParam);
       if (storeIdParam != null) paramsSummary.store_id = String(storeIdParam);
       const qsSummary = new URLSearchParams(paramsSummary).toString();
 
       const paramsReimb: Record<string, string> = { skip: "0", limit: "2000" };
-      if (daysBackParam != null) paramsReimb.days_back = String(daysBackParam);
+      if (augustSeptemberParams) {
+        paramsReimb.date_after = augustSeptemberParams.date_after;
+        paramsReimb.date_before = augustSeptemberParams.date_before;
+      } else if (daysBackParam != null) paramsReimb.days_back = String(daysBackParam);
       if (storeIdParam != null) paramsReimb.store_id = String(storeIdParam);
       const qsReimb = new URLSearchParams(paramsReimb).toString();
 
@@ -72,7 +84,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [daysBackParam, storeIdParam]);
+  }, [daysBackParam, storeIdParam, augustSeptemberParams]);
 
   const currency = summary?.currency ?? "USD";
   const format = currencyFormatter(currency);
@@ -125,6 +137,35 @@ export default function Dashboard() {
       map[key].cases += 1;
     }
     return Object.entries(map).sort((a, b) => b[1].amount - a[1].amount);
+  }, [reimbursements]);
+
+  const downloadCsv = useCallback(() => {
+    if (reimbursements.length === 0) return;
+    const headers = ["Date", "Order ID", "SKU", "ASIN", "Issue Type", "Amount", "Currency", "Notes"];
+    const escape = (v: string | number | undefined) => {
+      const s = v == null ? "" : String(v);
+      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = reimbursements.map((r) =>
+      [
+        r.date ?? "",
+        r.order_id ?? "",
+        r.sku ?? "",
+        r.asin ?? "",
+        r.issue_type ?? "",
+        r.amount,
+        r.currency ?? "USD",
+        r.notes ?? "",
+      ].map(escape).join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reimbursements-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }, [reimbursements]);
 
   const formatDate = (dateStr: string | undefined) => {
@@ -185,6 +226,7 @@ export default function Dashboard() {
               className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
             >
               <option value="All Time">Date Range: All Time</option>
+              <option value="August & September">August & September (last year)</option>
               <option value="Last 30 days">Last 30 days</option>
               <option value="Last 90 days">Last 90 days</option>
             </select>
@@ -270,7 +312,18 @@ export default function Dashboard() {
               <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-lg font-semibold text-gray-900">Reimbursement details</h2>
-                  <span className="text-sm text-gray-500">{reimbursements.length} row{reimbursements.length !== 1 ? "s" : ""} (from Amazon)</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-500">{reimbursements.length} row{reimbursements.length !== 1 ? "s" : ""} (from Amazon)</span>
+                    <button
+                      type="button"
+                      onClick={downloadCsv}
+                      disabled={reimbursements.length === 0}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download CSV
+                    </button>
+                  </div>
                 </div>
                 <div className={tableWrapperClass}>
                   <table className={tableClass}>
