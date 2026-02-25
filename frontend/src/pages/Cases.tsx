@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Download, Link2 } from "lucide-react";
+import { Search, Download, Link2, RefreshCw } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { api } from "../lib/api";
 import type { Reimbursement } from "../types";
@@ -41,11 +41,11 @@ export default function Cases() {
   const loadData = useCallback(() => {
     setFetchError(null);
     setLoading(true);
-    // All time: no date filter (no days_back, date_after, date_before); all stores; up to 10k rows
-    const reimbursementsUrl = "/reimbursements?skip=0&limit=10000";
+    // All time: no date filter; cache-bust so we get fresh data after sync
+    const reimbursementsUrl = `/reimbursements?skip=0&limit=10000&_=${Date.now()}`;
     Promise.all([
       api.get<Reimbursement[]>(reimbursementsUrl).then((r) => r.data),
-      api.get<StoreFromApi[]>("/stores").then((r) => r.data),
+      api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((r) => r.data),
     ])
       .then(([r, s]) => {
         setReimbursements(Array.isArray(r) ? r : []);
@@ -197,6 +197,16 @@ export default function Cases() {
                     className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={loadData}
+                  disabled={loading}
+                  title="Reload data from server (use after syncing on Dashboard)"
+                  className="px-4 py-2 border border-gray-200 text-gray-700 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                  {loading ? "Loading…" : "Refresh"}
+                </button>
                 <button
                   type="button"
                   onClick={downloadCsv}
