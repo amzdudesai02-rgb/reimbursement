@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Download, Link2, RefreshCw } from "lucide-react";
+import { Search, Download, Link2, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { api } from "../lib/api";
 import type { Reimbursement } from "../types";
@@ -16,7 +16,15 @@ import {
 
 type StoreFromApi = { id: number; store_name: string };
 
-const COLUMN_COUNT = 19;
+const CASE_TABS = [
+  { id: "summary", label: "Summary" },
+  { id: "reimbursement", label: "Reimbursement Reports" },
+  { id: "shipment", label: "Shipment Detail Report" },
+  { id: "detected", label: "Detected Lost and Damaged" },
+] as const;
+
+const COLUMN_COUNT_CASE = 9;
+const COLUMN_COUNT_FULL = 19;
 
 function formatDate(dateStr: string | undefined) {
   if (!dateStr) return "—";
@@ -33,7 +41,11 @@ export default function Cases() {
   const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<(typeof CASE_TABS)[number]["id"]>("summary");
   const [storeFilter, setStoreFilter] = useState("All");
+  const [claimTypesFilter, setClaimTypesFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [caseIdFilter, setCaseIdFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(25);
@@ -112,8 +124,20 @@ export default function Cases() {
     URL.revokeObjectURL(url);
   }, [reimbursements]);
 
+  const [caseSortBy, setCaseSortBy] = useState<"id" | "store" | "created" | "filed" | "status" | "potential" | "recovered" | "caseId" | "reimbId">("id");
+  const [caseSortDir, setCaseSortDir] = useState<"asc" | "desc">("asc");
+
+  const storeIdFromName = useMemo(() => {
+    if (storeFilter === "All") return null;
+    const s = stores.find((x) => x.store_name === storeFilter);
+    return s?.id ?? null;
+  }, [stores, storeFilter]);
+
   const filtered = useMemo(() => {
     let list = reimbursements;
+    if (storeIdFromName != null) {
+      list = list.filter((r) => r.store_id === storeIdFromName);
+    }
     const q = searchQuery.toLowerCase().trim();
     if (q) {
       list = list.filter(
@@ -131,20 +155,64 @@ export default function Cases() {
       );
     }
     return list;
-  }, [reimbursements, searchQuery]);
+  }, [reimbursements, searchQuery, storeIdFromName]);
+
+  const getStoreName = useCallback((id: number | undefined) => {
+    if (id == null) return "—";
+    const s = stores.find((x) => x.id === id);
+    return s?.store_name ?? String(id);
+  }, [stores]);
+
+  const caseTableRows = useMemo(() => {
+    const rows = filtered.map((r) => ({
+      id: r.id,
+      storeName: getStoreName(r.store_id),
+      createdDate: r.approval_date ?? r.date,
+      filedDate: r.approval_date ?? r.date,
+      caseStatus: "Recovered",
+      potentialValue: r.amount_total ?? r.amount,
+      actualRecovered: r.amount_total ?? r.amount,
+      amazonCaseId: r.case_id,
+      reimbursementIds: r.reimbursement_id,
+    }));
+    const mult = caseSortDir === "asc" ? 1 : -1;
+    rows.sort((a, b) => {
+      switch (caseSortBy) {
+        case "id": return mult * (a.id - b.id);
+        case "store": return mult * (a.storeName.localeCompare(b.storeName));
+        case "created": return mult * ((a.createdDate ?? "").localeCompare(b.createdDate ?? ""));
+        case "filed": return mult * ((a.filedDate ?? "").localeCompare(b.filedDate ?? ""));
+        case "status": return mult * (a.caseStatus.localeCompare(b.caseStatus));
+        case "potential": return mult * ((a.potentialValue ?? 0) - (b.potentialValue ?? 0));
+        case "recovered": return mult * ((a.actualRecovered ?? 0) - (b.actualRecovered ?? 0));
+        case "caseId": return mult * ((a.amazonCaseId ?? "").localeCompare(b.amazonCaseId ?? ""));
+        case "reimbId": return mult * ((a.reimbursementIds ?? "").localeCompare(b.reimbursementIds ?? ""));
+        default: return 0;
+      }
+    });
+    return rows;
+  }, [filtered, getStoreName, caseSortBy, caseSortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / entriesPerPage));
   const start = (currentPage - 1) * entriesPerPage;
   const pageRows = filtered.slice(start, start + entriesPerPage);
+  const casePageRows = caseTableRows.slice(start, start + entriesPerPage);
   const hasStores = stores.length > 0;
+
+  const toggleCaseSort = (col: typeof caseSortBy) => {
+    if (caseSortBy === col) setCaseSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setCaseSortBy(col); setCaseSortDir("asc"); }
+  };
+  const SortIcon = ({ col }: { col: typeof caseSortBy }) =>
+    caseSortBy !== col ? null : caseSortDir === "asc" ? <ChevronUp className="h-4 w-4 inline" /> : <ChevronDown className="h-4 w-4 inline" />;
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Reimbursements</h1>
+      <div className="space-y-0">
+        <div className="bg-gray-100 border-b border-gray-200 -mx-4 px-4 py-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Cases</h1>
           {!hasStores && !loading && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="font-semibold text-amber-900">Connect your Amazon account</p>
                 <p className="text-sm text-amber-800 mt-0.5">Reimbursement data will appear here after you connect Seller Central.</p>
@@ -173,55 +241,136 @@ export default function Cases() {
           </div>
         )}
 
+        <div className="flex flex-wrap gap-1 mb-4">
+          {CASE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                  : "bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {hasStores && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <select
-                value={storeFilter}
-                onChange={(e) => setStoreFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-              >
-                <option value="All">Store: All</option>
-                {stores.map((s) => (
-                  <option key={s.id} value={s.store_name}>{s.store_name}</option>
-                ))}
-              </select>
-              <div className="flex-1 flex items-center gap-2 min-w-0">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search order, SKU, ASIN, reason..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={loadData}
-                  disabled={loading}
-                  title="Reload data from server (use after syncing on Dashboard)"
-                  className="px-4 py-2 border border-gray-200 text-gray-700 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 mb-6">
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Store</label>
+                <select
+                  value={storeFilter}
+                  onChange={(e) => setStoreFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer min-w-[140px]"
                 >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                  {loading ? "Loading…" : "Refresh"}
-                </button>
-                <button
-                  type="button"
-                  onClick={downloadCsv}
-                  disabled={reimbursements.length === 0}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download CSV
-                </button>
+                  <option value="All">All</option>
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.store_name}>{s.store_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Claim Types</label>
+                <select value={claimTypesFilter} onChange={(e) => setClaimTypesFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[100px]">
+                  <option value="All">All</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[100px]">
+                  <option value="All">All</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Case ID</label>
+                <select value={caseIdFilter} onChange={(e) => setCaseIdFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[100px]">
+                  <option value="All">All</option>
+                </select>
+              </div>
+              <div className="relative flex-1 min-w-[180px] max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+              </div>
+              <button type="button" onClick={downloadCsv} disabled={reimbursements.length === 0} title="Download CSV" className="p-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Download className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={loadData} disabled={loading} title="Refresh data" className="p-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 flex items-center gap-2">
+                <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "summary" && (
+          <div className={tableWrapperClass} style={{ overflowX: "auto" }}>
+            <table className={tableClass} style={{ minWidth: "max-content" }}>
+              <thead className={tableHeadClass}>
+                <tr>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("id")}>ID <SortIcon col="id" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("store")}>Store Name <SortIcon col="store" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("created")}>Created Date <SortIcon col="created" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("filed")}>Filed Date <SortIcon col="filed" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("status")}>Case Status <SortIcon col="status" /></th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("potential")}>Potential Value (net proceeds) <SortIcon col="potential" /></th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("recovered")}>Actual Recovered <SortIcon col="recovered" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("caseId")}>Amazon Case ID <SortIcon col="caseId" /></th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap cursor-pointer" onClick={() => toggleCaseSort("reimbId")}>Reimbursement ID(s) <SortIcon col="reimbId" /></th>
+                </tr>
+              </thead>
+              <tbody className={tableBodyClass}>
+                {loading ? (
+                  <tr><td colSpan={COLUMN_COUNT_CASE} className={emptyStateCellClass}>Loading…</td></tr>
+                ) : casePageRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={COLUMN_COUNT_CASE} className={emptyStateCellClass}>
+                      {filtered.length === 0 && reimbursements.length === 0 ? (hasStores ? "No case records yet. Sync from Dashboard then return here." : "Connect Amazon in Stores, then sync from Dashboard.") : "No results match your filters."}
+                    </td>
+                  </tr>
+                ) : (
+                  casePageRows.map((row) => (
+                    <tr key={row.id} className="transition-colors hover:bg-white/5">
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{row.id}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{row.storeName}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.createdDate)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.filedDate)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{row.caseStatus}</td>
+                      <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.potentialValue != null ? Number(row.potentialValue).toFixed(2) : "—"}</td>
+                      <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>{row.actualRecovered != null ? Number(row.actualRecovered).toFixed(2) : "—"}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.amazonCaseId ?? "—"}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.reimbursementIds ?? "—"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+              <div className="flex items-center gap-2">
+                <span>Show</span>
+                <select value={entriesPerPage} onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }} className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none">
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={500}>500</option>
+                  <option value={1000}>1000</option>
+                </select>
+                <span>Entries</span>
+              </div>
+              <div>Showing {filtered.length ? start + 1 : 0} to {Math.min(start + entriesPerPage, filtered.length)} of {filtered.length}</div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+                <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Same 19 columns as CSV; horizontal scroll so all columns are visible */}
+        {activeTab === "reimbursement" && (
         <div className={tableWrapperClass} style={{ overflowX: "auto", overflowY: "hidden" }}>
           <table className={tableClass} style={{ minWidth: "max-content" }}>
               <thead className={tableHeadClass}>
@@ -250,11 +399,11 @@ export default function Cases() {
               <tbody className={tableBodyClass}>
                 {loading ? (
                   <tr>
-                    <td colSpan={COLUMN_COUNT} className={emptyStateCellClass}>Loading…</td>
+                    <td colSpan={COLUMN_COUNT_FULL} className={emptyStateCellClass}>Loading…</td>
                   </tr>
                 ) : pageRows.length === 0 ? (
                   <tr>
-                    <td colSpan={COLUMN_COUNT} className={emptyStateCellClass}>
+                    <td colSpan={COLUMN_COUNT_FULL} className={emptyStateCellClass}>
                       {filtered.length === 0 && reimbursements.length === 0
                         ? (hasStores
                             ? "No reimbursement records yet. Go to Dashboard and use “Refresh data” to sync from Amazon (up to 180 days). Then return here to see all rows."
@@ -331,6 +480,13 @@ export default function Cases() {
             </div>
           </div>
         </div>
+        )}
+
+        {(activeTab === "shipment" || activeTab === "detected") && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center text-gray-500">
+            No data for this report yet.
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
