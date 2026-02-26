@@ -11,6 +11,11 @@ import {
   emptyStateCellClass,
 } from '../styles/tableTheme'
 
+function showText(val: string | number | undefined | null): string {
+  if (val == null) return "—";
+  const s = String(val).trim();
+  return s === "" ? "—" : s;
+}
 
 export default function DataTable(){
     const [rows, setRows] = useState<Reimbursement[]>([])
@@ -46,11 +51,11 @@ return (
             {rows.length ? (
               rows.map((r) => (
                 <tr key={r.id} className="transition hover:bg-white/5">
-                  <td className={tableCellClass}>{r.date ?? ''}</td>
-                  <td className={tableCellClass}>{r.order_id ?? ''}</td>
-                  <td className={tableCellClass}>{r.sku ?? ''}</td>
-                  <td className={tableCellClass}>{r.asin ?? ''}</td>
-                  <td className={tableCellClass}>{r.issue_type ?? ''}</td>
+                  <td className={tableCellClass}>{showText(r.date)}</td>
+                  <td className={tableCellClass}>{showText(r.order_id)}</td>
+                  <td className={tableCellClass}>{showText(r.sku)}</td>
+                  <td className={tableCellClass}>{showText(r.asin)}</td>
+                  <td className={tableCellClass}>{showText(r.issue_type)}</td>
                   <td className={`${tableCellClass} text-right font-semibold`}>
                     {r.currency ?? 'USD'} {r.amount.toFixed(2)}
                   </td>

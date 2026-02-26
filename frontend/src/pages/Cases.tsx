@@ -36,6 +36,13 @@ function formatDate(dateStr: string | undefined) {
   }
 }
 
+/** Show "—" when value is null, undefined, or empty/whitespace (so "no SKU" / "no ASIN" display clearly). */
+function showText(val: string | number | undefined | null): string {
+  if (val == null) return "—";
+  const s = String(val).trim();
+  return s === "" ? "—" : s;
+}
+
 export default function Cases() {
   const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
   const [stores, setStores] = useState<StoreFromApi[]>([]);
@@ -342,8 +349,8 @@ export default function Cases() {
                       <td className={`${tableCellClass} whitespace-nowrap`}>{row.caseStatus}</td>
                       <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.potentialValue != null ? Number(row.potentialValue).toFixed(2) : "—"}</td>
                       <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>{row.actualRecovered != null ? Number(row.actualRecovered).toFixed(2) : "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.amazonCaseId ?? "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{row.reimbursementIds ?? "—"}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(row.amazonCaseId)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(row.reimbursementIds)}</td>
                     </tr>
                   ))
                 )}
@@ -416,23 +423,23 @@ export default function Cases() {
                     <tr key={r.id} className="transition-colors hover:bg-white/5">
                       <td className={`${tableCellClass} whitespace-nowrap`}>{r.store_id ?? "—"}</td>
                       <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(r.approval_date ?? r.date)}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.reimbursement_id ?? "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.case_id ?? "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.amazon_order_id ?? r.order_id ?? "—"}</td>
-                      <td className={`${tableCellClass} whitespace-nowrap capitalize`}>{(r.reason ?? r.issue_type ?? "—").replace(/_/g, " ")}</td>
-                      <td className={`${tableCellClass} whitespace-nowrap`}>{r.sku ?? "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.fnsku ?? "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.asin ?? "—"}</td>
-                      <td className={`${tableCellClass} max-w-[180px] truncate`} title={r.product_name ?? r.notes ?? ""}>{r.product_name ?? r.notes ?? "—"}</td>
-                      <td className={`${tableCellClass} whitespace-nowrap`}>{r.condition ?? "—"}</td>
-                      <td className={`${tableCellClass} whitespace-nowrap`}>{r.currency_unit ?? r.currency ?? "USD"}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.reimbursement_id)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.case_id)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.amazon_order_id ?? r.order_id)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap capitalize`}>{showText(r.reason ?? r.issue_type).replace(/_/g, " ")}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{showText(r.sku)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.fnsku)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.asin)}</td>
+                      <td className={`${tableCellClass} max-w-[180px] truncate`} title={r.product_name ?? r.notes ?? ""}>{showText(r.product_name ?? r.notes)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{showText(r.condition)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{showText(r.currency_unit ?? r.currency) === "—" ? "USD" : showText(r.currency_unit ?? r.currency)}</td>
                       <td className={`${tableCellClass} text-right whitespace-nowrap`}>{r.amount_per_unit != null ? Number(r.amount_per_unit).toFixed(2) : "—"}</td>
                       <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>{r.amount_total != null ? Number(r.amount_total).toFixed(2) : (typeof r.amount === "number" ? r.amount.toFixed(2) : "—")}</td>
                       <td className={`${tableCellClass} text-right whitespace-nowrap`}>{r.quantity_reimbursed_cash != null ? r.quantity_reimbursed_cash : "—"}</td>
                       <td className={`${tableCellClass} text-right whitespace-nowrap`}>{r.quantity_reimbursed_inventory != null ? r.quantity_reimbursed_inventory : "—"}</td>
                       <td className={`${tableCellClass} text-right whitespace-nowrap`}>{r.quantity_reimbursed_total != null ? r.quantity_reimbursed_total : "—"}</td>
-                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{r.original_reimbursement_id ?? "—"}</td>
-                      <td className={`${tableCellClass} whitespace-nowrap`}>{r.original_reimbursement_type ?? "—"}</td>
+                      <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(r.original_reimbursement_id)}</td>
+                      <td className={`${tableCellClass} whitespace-nowrap`}>{showText(r.original_reimbursement_type)}</td>
                     </tr>
                   ))
                 )}
