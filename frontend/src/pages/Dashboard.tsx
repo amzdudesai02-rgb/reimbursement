@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Info, Menu, Link2, RefreshCw } from "lucide-react";
+import { Info, Menu, Link2, RefreshCw, LayoutGrid, BarChart3 } from "lucide-react";
 import { api } from "../lib/api";
 import type { Summary, Reimbursement } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [dateRange, setDateRange] = useState("All Time");
   const [storeFilter, setStoreFilter] = useState("All");
+  const [viewMode, setViewMode] = useState<"grid" | "bars">("grid");
   const hasAutoSynced = useRef(false);
 
   const daysBackParam = useMemo(() => {
@@ -188,7 +189,26 @@ export default function Dashboard() {
                 <option key={s.id} value={s.store_name}>{s.store_name}</option>
               ))}
             </select>
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-lg border transition-colors ${viewMode === "grid" ? "bg-teal-50 border-teal-300 text-teal-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                title="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("bars")}
+                className={`p-2 rounded-lg border transition-colors ${viewMode === "bars" ? "bg-teal-50 border-teal-300 text-teal-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                title="Chart view"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+          <p className="text-sm font-semibold text-gray-700 mb-4">NA Region</p>
         </div>
 
         {loading ? (
@@ -197,29 +217,26 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
               {/* 1. Total Recovered */}
-              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
+              <div className="bg-gray-50 rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col min-w-0">
                 <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   Total Recovered
                   <span title="Sum of all reimbursements from Amazon (Finances + FBA Reimbursements report)">
                     <Info className="h-4 w-4 text-gray-400 cursor-help" />
                   </span>
                 </h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative h-20 w-20 flex-shrink-0">
-                    <div className="absolute inset-0 rounded-full border-4 border-teal-200" />
+                <div className="flex flex-col items-center mb-4">
+                  <div className="relative h-24 w-24 flex-shrink-0 mb-2">
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-200" />
                     <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent -rotate-90" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-gray-700 text-center leading-tight">{format.format(totalAmount)}</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-sm font-bold text-teal-600 leading-tight">{format.format(totalAmount)}</span>
+                      <span className="text-xs text-gray-500">{totalCount} Cases</span>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">{format.format(totalAmount)}</div>
-                    <div className="text-sm text-gray-500">{totalCount} Cases</div>
-                  </div>
                 </div>
-                <div className="border-t border-gray-100 pt-3 mt-auto">
+                <div className="border-t border-gray-200 pt-3 mt-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-gray-500 font-medium">
@@ -230,7 +247,7 @@ export default function Dashboard() {
                     </thead>
                     <tbody className="text-gray-700">
                       {breakdownByReason.length > 0 ? breakdownByReason.slice(0, 10).map(([reason, { amount, cases }]) => (
-                        <tr key={reason} className="border-t border-gray-50 hover:bg-gray-50/50">
+                        <tr key={reason} className="border-t border-gray-100">
                           <td className="py-1.5 capitalize">{reason.replace(/_/g, " ")}</td>
                           <td className="text-right font-medium">{format.format(amount)}</td>
                           <td className="text-right text-gray-500">{cases}</td>
@@ -240,22 +257,25 @@ export default function Dashboard() {
                       )}
                     </tbody>
                   </table>
-                  <Link to="/cases" className="mt-4 block w-full py-2.5 text-center text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border border-teal-200 rounded-lg transition-all">
-                    View reimbursements
+                  <Link to="/cases" className="mt-4 block w-full py-2.5 text-center text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    View Stores
                   </Link>
                 </div>
               </div>
 
               {/* 2. Awaiting Amazon Decision */}
-              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
-                <h3 className="text-sm font-semibold text-gray-800 mb-4">Awaiting Amazon Decision</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-20 w-20 rounded-full border-4 border-gray-200 flex items-center justify-center flex-shrink-0">
+              <div className="bg-gray-50 rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col min-w-0">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  Awaiting Amazon Decision
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                </h3>
+                <div className="flex flex-col items-center mb-4">
+                  <div className="h-24 w-24 rounded-full border-4 border-gray-200 flex items-center justify-center flex-shrink-0 bg-white">
                     <span className="text-sm font-medium text-gray-400">N/A</span>
                   </div>
-                  <div className="text-sm text-gray-500">No cases are pending Amazon Decision for this time period.</div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">No cases are pending Amazon Decision for this time period.</p>
                 </div>
-                <div className="border-t border-gray-100 pt-3 mt-auto">
+                <div className="border-t border-gray-200 pt-3 mt-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-gray-500 font-medium">
@@ -266,22 +286,29 @@ export default function Dashboard() {
                     </thead>
                     <tbody><tr><td colSpan={3} className="py-2 text-gray-400">—</td></tr></tbody>
                   </table>
-                  <Link to="/cases" className="mt-4 block w-full py-2.5 text-center text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border border-teal-200 rounded-lg transition-all">
+                  <Link to="/stores" className="mt-4 block w-full py-2.5 text-center text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     View Stores
                   </Link>
                 </div>
               </div>
 
               {/* 3. In the Pipeline */}
-              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
-                <h3 className="text-sm font-semibold text-gray-800 mb-4">In the Pipeline</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-20 w-20 rounded-full border-4 border-gray-200 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-medium text-gray-400">N/A</span>
+              <div className="bg-gray-50 rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col min-w-0">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  In the Pipeline
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                </h3>
+                <div className="flex flex-col items-center mb-4">
+                  <div className="relative h-24 w-24 flex-shrink-0 mb-2">
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-200" />
+                    <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent -rotate-90" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-sm font-bold text-teal-600 leading-tight">{format.format(totalAmount)}</span>
+                      <span className="text-xs text-gray-500">{totalCount} Cases</span>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">Pipeline data is based on your synced reimbursements. Sync from Dashboard to update.</div>
                 </div>
-                <div className="border-t border-gray-100 pt-3 mt-auto">
+                <div className="border-t border-gray-200 pt-3 mt-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-gray-500 font-medium">
@@ -290,9 +317,9 @@ export default function Dashboard() {
                         <th className="text-right py-1.5 w-14">Cases</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {breakdownByReason.length > 0 ? breakdownByReason.slice(0, 5).map(([reason, { amount, cases }]) => (
-                        <tr key={reason} className="border-t border-gray-50 hover:bg-gray-50/50">
+                    <tbody className="text-gray-700">
+                      {breakdownByReason.length > 0 ? breakdownByReason.slice(0, 10).map(([reason, { amount, cases }]) => (
+                        <tr key={reason} className="border-t border-gray-100">
                           <td className="py-1.5 capitalize">{reason.replace(/_/g, " ")}</td>
                           <td className="text-right font-medium">{format.format(amount)}</td>
                           <td className="text-right text-gray-500">{cases}</td>
@@ -300,41 +327,51 @@ export default function Dashboard() {
                       )) : <tr><td colSpan={3} className="py-2 text-gray-400">—</td></tr>}
                     </tbody>
                   </table>
-                  <Link to="/cases" className="mt-4 block w-full py-2.5 text-center text-xs font-semibold text-teal-600 hover:text-white hover:bg-teal-600 border border-teal-200 rounded-lg transition-all">
+                  <Link to="/stores" className="mt-4 block w-full py-2.5 text-center text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     View Stores
                   </Link>
                 </div>
               </div>
 
               {/* 4. Action Required */}
-              <div className="bg-white rounded-xl shadow-md border-2 border-rose-200 p-6 flex flex-col">
-                <h3 className="text-sm font-semibold text-rose-800 mb-4">Action Required</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-20 w-20 rounded-full border-4 border-rose-200 flex items-center justify-center flex-shrink-0 bg-rose-50">
-                    <span className="text-lg font-bold text-rose-600">{!hasStores ? 1 : 0}</span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {!hasStores ? "1 item requires your attention: connect your Amazon store." : "0 items require your attention."}
-                  </div>
+              <div className="bg-gray-50 rounded-xl shadow-sm border-2 border-red-200 p-0 flex flex-col overflow-hidden min-w-0">
+                <div className="bg-red-600 text-white px-6 py-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">Action Required</h3>
+                  <Info className="h-4 w-4 text-white/80 cursor-help" />
                 </div>
-                <div className="border-t border-gray-100 pt-3 mt-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-gray-500 font-medium">
-                        <th className="text-left py-1.5">Type</th>
-                        <th className="text-right py-1.5">Amount</th>
-                        <th className="text-right py-1.5 w-14">Cases</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-gray-50"><td className="py-1.5">Other</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
-                      <tr className="border-t border-gray-50"><td className="py-1.5">Documents Needed</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
-                      <tr className="border-t border-gray-50"><td className="py-1.5">API / Permissions</td><td className="text-right">0</td><td className="text-right text-gray-500">{!hasStores ? "1" : "0"}</td></tr>
-                    </tbody>
-                  </table>
-                  <Link to={hasStores ? "/cases" : "/stores"} className="mt-4 block w-full py-2.5 text-center text-xs font-semibold text-rose-600 hover:text-white hover:bg-rose-500 border border-rose-200 rounded-lg transition-all">
-                    View Actions
-                  </Link>
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="h-24 w-24 rounded-full border-4 border-red-200 flex items-center justify-center flex-shrink-0 bg-red-50">
+                      <span className="text-2xl font-bold text-red-600">{!hasStores ? 2 : 0}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2 text-center font-medium">
+                      {!hasStores ? "2 items require your attention" : "0 items require your attention"}
+                    </p>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3 mt-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-gray-500 font-medium">
+                          <th className="text-left py-1.5">Type</th>
+                          <th className="text-right py-1.5">Amount</th>
+                          <th className="text-right py-1.5 w-14">Cases</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-gray-700">
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Other</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Documents Needed</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Signature Needed</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Invoice Needed</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Permissions Revoked</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">Credit Card Issue</td><td className="text-right">0</td><td className={`text-right ${!hasStores ? "text-red-600 font-semibold" : "text-gray-500"}`}>{!hasStores ? "1" : "0"}</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">API Issue</td><td className="text-right">0</td><td className="text-right text-gray-500">0</td></tr>
+                        <tr className="border-t border-gray-100"><td className="py-1.5">API Scopes</td><td className="text-right">0</td><td className={`text-right ${!hasStores ? "text-red-600 font-semibold" : "text-gray-500"}`}>{!hasStores ? "1" : "0"}</td></tr>
+                      </tbody>
+                    </table>
+                    <Link to={hasStores ? "/cases" : "/stores"} className="mt-4 block w-full py-2.5 text-center text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                      View Actions
+                    </Link>
+                  </div>
                 </div>
               </div>
 
