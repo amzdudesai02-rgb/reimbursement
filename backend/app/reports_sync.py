@@ -16,6 +16,9 @@ DOCUMENTS_PATH = "/documents/2021-06-30/documents"
 REPORT_TYPE = "GET_FBA_REIMBURSEMENTS_DATA"
 POLL_INTERVAL = 15
 MAX_WAIT_SEC = 600
+# Default lookback window for the FBA reimbursement report when no explicit dates are provided.
+# 365 days ensures we always request at least a year of data (more than the 180-day minimum requested).
+BACKFILL_DAYS = 365
 
 
 def _parse_approval_date(s: Optional[str]) -> Optional[datetime]:
@@ -51,7 +54,7 @@ def fetch_reimbursements_report(
     if data_end_time is None:
         data_end_time = datetime.now(timezone.utc)
     if data_start_time is None:
-        data_start_time = data_end_time - timedelta(days=180)
+        data_start_time = data_end_time - timedelta(days=BACKFILL_DAYS)
 
     body: Dict[str, Any] = {
         "reportType": REPORT_TYPE,

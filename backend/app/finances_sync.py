@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 FINANCES_PATH = "/finances/v0/financialEvents"
 MAX_PAGES = 50
 DAYS_PER_WINDOW = 30  # Fetch in 30-day chunks to avoid incomplete results
+# How far back to fetch when no explicit posted_after is given.
+# 365 days gives at least 1 year of history (more than the 180-day minimum the user requested)
+BACKFILL_DAYS = 365
 
 
 def _parse_iso(s: Optional[str]) -> Optional[datetime]:
@@ -299,7 +302,9 @@ def fetch_reimbursement_events(
     """
     Call SP-API Finances and return a list of row dicts suitable for
     insert_or_ignore_reimbursements_from_financial_events.
-    Fetches in 30-day windows to avoid empty/incomplete responses (API limits range to 180 days).
+    Fetches in 30-day windows to avoid empty/incomplete responses (API requires
+    PostedBefore to be close to "now", but allows historical backfill as long
+    as each window is <= 180 days wide).
     PostedBefore is always at least 5 minutes before now.
     max_posted_before: optional cap (e.g. client time) so PostedBefore is never in the future.
     """
@@ -309,8 +314,12 @@ def fetch_reimbursement_events(
     cap = min(cap, max_allowed_before)
     window_end = posted_before if posted_before is not None else cap
     window_end = min(window_end, cap)
-    window_start = posted_after if posted_after is not None else (cap - timedelta(days=180))
-    window_start = max(window_start, cap - timedelta(days=180))
+
+    # Backfill at least BACKFILL_DAYS worth of history when posted_after is not provided.
+    # This lets us fetch significantly more than 5–6 days of data (up to 1 year by default).
+    window_start = posted_after if posted_after is not None else (cap - timedelta(days=BACKFILL_DAYS))
+    # Never go further back than BACKFILL_DAYS below the cap unless caller explicitly passes posted_after.
+    window_start = max(window_start, cap - timedelta(days=BACKFILL_DAYS))
 
     all_rows: List[Dict[str, Any]] = []
     while window_start < window_end:
