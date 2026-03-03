@@ -18,23 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("token");
   };
 
-  // Clear token when the browser tab/window is closed or refreshed
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem("token");
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", handleBeforeUnload);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      }
-    };
-  }, []);
-
   // Automatic logout after a period of inactivity while logged in
   const idleTimerRef = useRef<number | null>(null);
 
