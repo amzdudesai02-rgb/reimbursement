@@ -652,8 +652,20 @@ def disconnect_store(
     return {"ok": True, "message": "Store disconnected. You can connect again via Connect Amazon."}
 
 
-def _user_store_ids(db: Session, user) -> list:
-    return [s.id for s in db.query(models.Store).filter_by(user_id=user.id).all()]
+def _user_store_ids(db: Session, user, connected_only: bool = True) -> list[int]:
+    """
+    Return store IDs for this user.
+    When connected_only=True (default), only include stores that currently have an active Amazon connection.
+    This ensures that after a store is disconnected, its historical reimbursements no longer appear in
+    dashboards or reimbursement tables unless the store is reconnected and synced again.
+    """
+    q = db.query(models.Store).filter(models.Store.user_id == user.id)
+    if connected_only:
+        q = (
+            q.join(models.AmazonConnection, models.Store.id == models.AmazonConnection.store_id, isouter=True)
+            .filter(models.AmazonConnection.is_connected == True)  # noqa: E712
+        )
+    return [s.id for s in q.all()]
 
 
 # Protect these endpoints if desired:
@@ -666,7 +678,7 @@ async def summary(
     user=Depends(get_current_user),
 ):
     with get_session() as db:
-        store_ids = _user_store_ids(db, user)
+        store_ids = _user_store_ids(db, user, connected_only=True)
         if store_id is not None:
             store_ids = [store_id] if store_id in store_ids else []
         s = crud.get_summary(db, store_ids=store_ids, days_back=days_back, date_after=date_after, date_before=date_before)
@@ -685,7 +697,7 @@ async def list_items(
 ):
     """List reimbursements for the current user's stores. No date params = all time (all rows in DB, up to limit)."""
     with get_session() as db:
-        store_ids = _user_store_ids(db, user)
+        store_ids = _user_store_ids(db, user, connected_only=True)
         if store_id is not None:
             store_ids = [store_id] if store_id in store_ids else []
         items = crud.list_reimbursements(db, skip=skip, limit=limit, store_ids=store_ids, days_back=days_back, date_after=date_after, date_before=date_before)
@@ -696,7 +708,7 @@ async def list_items(
 async def list_shipping_queue(skip: int = 0, limit: int = 100, user=Depends(get_current_user)):
     """Inventory → Shipping Queue data (Fulfillment center shipments)."""
     with get_session() as db:
-        store_ids = _user_store_ids(db, user)
+        store_ids = _user_store_ids(db, user, connected_only=True)
         rows = crud.list_shipments(db, store_ids=store_ids, skip=skip, limit=limit)
         return [
             {
