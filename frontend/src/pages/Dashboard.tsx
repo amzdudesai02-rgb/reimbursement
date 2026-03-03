@@ -88,7 +88,9 @@ export default function Dashboard() {
   const hasStores = stores.length > 0;
 
   const runSync = useCallback(async () => {
-    if (syncing || !hasStores) return;
+    // Always allow user to click Refresh, even if stores have not finished loading yet.
+    // Backend will respond with a helpful message when no stores are connected.
+    if (syncing) return;
     setSyncing(true);
     try {
       await api.post<{
@@ -104,7 +106,7 @@ export default function Dashboard() {
     } finally {
       setSyncing(false);
     }
-  }, [syncing, hasStores, loadData]);
+  }, [syncing, loadData]);
 
   useEffect(() => {
     loadData();
@@ -154,7 +156,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={runSync}
-                disabled={!hasStores || syncing}
+                disabled={syncing}
                 className="flex items-center gap-2 px-4 py-2.5 border border-teal-200 rounded-lg text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 hover:border-teal-300 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
