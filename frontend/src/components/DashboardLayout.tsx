@@ -13,7 +13,6 @@ import {
   Upload,
   Boxes,
   Store,
-  Percent,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
@@ -34,7 +33,6 @@ const sidebarItems: SidebarItem[] = [
   { type: 'link', icon: FolderOpen, label: 'Cases', path: '/cases' },
   { type: 'link', icon: FileText, label: 'Documents', path: '/documents' },
   { type: 'link', icon: Store, label: 'Manage Stores', path: '/stores' },
-  { type: 'link', icon: Percent, label: 'Discount Amazon', path: '/discount-amazon' },
   { type: 'link', icon: Package, label: 'Orders', path: '/orders' },
   { type: 'fba' },
   { type: 'link', icon: Users, label: 'Users', path: '/users' },
@@ -109,17 +107,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Left Sidebar with Tabs - scrollable nav, logout always visible at bottom */}
-      <aside className="relative w-20 bg-white border-r border-gray-100 flex flex-col items-center py-6 flex-shrink-0 min-h-0 overflow-visible">
-        {/* Logo - fixed at top */}
+      {/* Premium sidebar: dark slate, subtle shadow, professional nav */}
+      <aside className="relative w-20 flex flex-col items-center py-6 flex-shrink-0 min-h-0 overflow-visible bg-slate-800 border-r border-slate-700/80 shadow-xl">
+        {/* Profile avatar - top */}
         <div className="flex items-center justify-center flex-shrink-0">
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowProfileMenu((prev) => !prev)}
-              className="flex items-center justify-center focus:outline-none"
+              className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-800 rounded-full"
             >
-              <div className="h-12 w-12 overflow-hidden rounded-full bg-white text-gray-900 font-semibold flex items-center justify-center shadow-md border border-gray-200">
+              <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-700 text-slate-200 font-semibold flex items-center justify-center ring-2 ring-slate-600">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
@@ -129,7 +127,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
 
             {showProfileMenu && (
-              <div className="absolute left-16 top-1/2 z-30 w-56 -translate-y-1/2 rounded-xl border border-gray-100 bg-white p-3 text-xs shadow-xl">
+              <div className="absolute left-16 top-1/2 z-30 w-56 -translate-y-1/2 rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-2xl">
                 <div className="mb-3">
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.18em]">
                     Signed in as
@@ -208,7 +206,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                               }}
                             >
                               <subItem.icon className="h-5 w-5" />
-                              <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap">
+                              <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
                                 {subItem.label}
                               </span>
                             </button>
@@ -228,7 +226,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       type="button"
                       aria-expanded={showFbaPanel}
                       title="FBA"
-                      className="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                      className="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-colors text-slate-400 hover:bg-slate-700 hover:text-white"
                       onClick={() => {
                         navigate(fbaSubItems[0].path);
                         setIsFbaExpanded(true);
@@ -236,7 +234,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       }}
                     >
                       <Boxes className="h-5 w-5" />
-                      <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap">
+                      <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
                         FBA
                       </span>
                     </button>
@@ -255,16 +253,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 title={item.label}
               >
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all ${
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/40 ring-2 ring-teal-400/50'
+                      : 'text-slate-400 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
                 {item.label && (
-                  <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap">
+                  <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
                     {item.label}
                   </span>
                 )}
@@ -273,16 +271,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* Logout - always visible at bottom, never pushed off */}
-        <div className="w-full flex items-center justify-center flex-shrink-0 pt-2 mt-auto border-t border-gray-100">
+        {/* Logout - always visible at bottom */}
+        <div className="w-full flex items-center justify-center flex-shrink-0 pt-4 mt-auto border-t border-slate-700/80">
           <button
             type="button"
             onClick={logout}
             title="Logout"
-            className="relative group flex items-center justify-center w-12 h-12 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
+            className="relative group flex items-center justify-center w-12 h-12 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-all duration-200"
           >
             <LogOut className="h-5 w-5" />
-            <span className="pointer-events-none absolute left-full ml-2 bottom-1/2 translate-y-1/2 z-[100] rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap">
+            <span className="pointer-events-none absolute left-full ml-2 bottom-1/2 translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
               Logout
             </span>
           </button>
