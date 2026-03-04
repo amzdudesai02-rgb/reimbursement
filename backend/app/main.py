@@ -671,7 +671,7 @@ def _user_store_ids(db: Session, user, connected_only: bool = True) -> list[int]
 # Protect these endpoints if desired:
 @app.get(f"{API_PREFIX}/summary", response_model=SummaryOut)
 async def summary(
-    days_back: int | None = Query(None, description="Filter to last N days (30, 90, etc.); omit for all time"),
+    days_back: int | None = Query(None, description="Filter to last N days (e.g. 30, 90, 180); omit for all time"),
     date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD); e.g. 2025-08-01 for August & September"),
     date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD); e.g. 2025-09-30"),
     store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
@@ -689,7 +689,7 @@ async def summary(
 async def list_items(
     skip: int = 0,
     limit: int = Query(10000, le=10000),
-    days_back: int | None = Query(None, description="Filter to last N days; omit for all time (all synced data)"),
+    days_back: int | None = Query(None, description="Filter to last N days (e.g. 30, 90, 180); omit for all time"),
     date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
     date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
     store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),

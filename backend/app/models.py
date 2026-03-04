@@ -17,6 +17,29 @@ from .database import Base
 
 
 class AmazonReimbursement(Base):
+    """
+    Reimbursement table matching Amazon's report/spreadsheet format.
+    Amazon sends data with these columns; we persist them 1:1 (plus store_id, created_at).
+    Spreadsheet/Report column → DB column:
+      approval-date → approval_date
+      reimbursement-id → reimbursement_id
+      case-id → case_id
+      amazon-order-id → amazon_order_id
+      reason → reason
+      sku → sku
+      fnsku → fnsku
+      asin → asin
+      product-name → product_name
+      condition → condition
+      currency-unit → currency_unit
+      amount-per-unit → amount_per_unit
+      amount-total → amount_total
+      quantity-reimbursed-cash → quantity_reimbursed_cash
+      quantity-reimbursed-inventory → quantity_reimbursed_inventory
+      quantity-reimbursed-total → quantity_reimbursed_total
+      original-reimbursement-id → original_reimbursement_id
+      original-reimbursement-type → original_reimbursement_type
+    """
     __tablename__ = "amazon_reimbursements"
 
     id = Column(Integer, primary_key=True, index=True)

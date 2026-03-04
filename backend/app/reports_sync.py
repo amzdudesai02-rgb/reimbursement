@@ -103,7 +103,9 @@ def fetch_reimbursements_report(
     reader = csv.DictReader(io.StringIO(text), delimiter="\t")
     rows: List[Dict[str, Any]] = []
     for i, row in enumerate(reader):
-        reimb_id = (row.get("reimbursement-id") or row.get("reimbursement_id") or "").strip() or f"rpt-{report_id}-{i}"
+        # Amazon report may send reimbursement-id as number or string
+        raw_reimb = row.get("reimbursement-id") or row.get("reimbursement_id") or ""
+        reimb_id = (str(raw_reimb).strip() if raw_reimb else "") or f"rpt-{report_id}-{i}"
         reimb_id = reimb_id[:64]
         approval = _parse_approval_date(row.get("approval-date") or row.get("approval_date"))
         if not approval:
