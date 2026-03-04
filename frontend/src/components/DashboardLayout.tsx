@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const activeFbaIndex = fbaSubItems.findIndex((item) => location.pathname === item.path);
   const isFbaRoute = activeFbaIndex >= 0;
-  const fbaSlotHeight = 48; // 12 (h-12) * 4 px base spacing
+  const fbaSlotHeight = 40; // h-10 nav items
 
   useEffect(() => {
     if (isFbaRoute && !userCollapsedFba) {
@@ -108,16 +108,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Premium sidebar: dark slate, subtle shadow, professional nav */}
-      <aside className="relative w-20 flex flex-col items-center py-6 flex-shrink-0 min-h-0 overflow-visible bg-slate-800 border-r border-slate-700/80 shadow-xl">
+      <aside className="relative w-20 flex flex-col items-center py-4 flex-shrink-0 min-h-0 overflow-visible bg-slate-800 border-r border-slate-700/80 shadow-xl">
         {/* Profile avatar - top */}
-        <div className="flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center justify-center flex-shrink-0 mb-1">
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowProfileMenu((prev) => !prev)}
               className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-800 rounded-full"
             >
-              <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-700 text-slate-200 font-semibold flex items-center justify-center ring-2 ring-slate-600">
+              <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-700 text-slate-200 text-sm font-semibold flex items-center justify-center ring-2 ring-slate-600">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
@@ -168,8 +168,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
 
-        {/* Navigation Tabs with Icons and Labels */}
-        <nav className="flex-1 min-h-0 flex flex-col items-center space-y-3 overflow-y-auto overflow-x-visible w-full py-2">
+        {/* Navigation: all options visible, no visible scrollbar */}
+        <nav className="flex-1 min-h-0 flex flex-col items-center space-y-1.5 overflow-y-auto overflow-x-visible w-full py-1 scrollbar-hide">
           {sidebarItems.map((item, index) => {
             if (item.type === 'fba') {
               return (
@@ -182,9 +182,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                           setIsFbaExpanded(false);
                           setUserCollapsedFba(true);
                         }}
-                        className="h-12 flex items-center justify-center text-white/90 hover:bg-[#0C4A56]"
+                        className="h-10 flex items-center justify-center text-white/90 hover:bg-[#0C4A56]"
                       >
-                        <Boxes className="h-5 w-5" />
+                        <Boxes className="h-4 w-4" />
                       </button>
                       <div className="flex flex-col">
                         {fbaSubItems.map((subItem, idx) => {
@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                               key={subItem.path}
                               type="button"
                               title={subItem.label}
-                              className={`relative group h-12 flex items-center justify-center transition-colors ${
+                              className={`relative group h-10 flex items-center justify-center transition-colors ${
                                 isActive
                                   ? 'bg-[#CFE4EC] text-[#0E5A6A]'
                                   : 'bg-transparent text-white/90 hover:bg-[#0C4A56]'
@@ -205,7 +205,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                 setUserCollapsedFba(false);
                               }}
                             >
-                              <subItem.icon className="h-5 w-5" />
+                              <subItem.icon className="h-4 w-4" />
                               <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
                                 {subItem.label}
                               </span>
@@ -226,14 +226,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       type="button"
                       aria-expanded={showFbaPanel}
                       title="FBA"
-                      className="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-colors text-slate-400 hover:bg-slate-700 hover:text-white"
+                      className="relative group flex items-center justify-center w-10 h-10 rounded-xl transition-colors text-slate-400 hover:bg-slate-700 hover:text-white"
                       onClick={() => {
                         navigate(fbaSubItems[0].path);
                         setIsFbaExpanded(true);
                         setUserCollapsedFba(false);
                       }}
                     >
-                      <Boxes className="h-5 w-5" />
+                      <Boxes className="h-4 w-4" />
                       <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
                         FBA
                       </span>
@@ -253,13 +253,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 title={item.label}
               >
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200 ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/40 ring-2 ring-teal-400/50'
                       : 'text-slate-400 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </div>
                 {item.label && (
                   <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
@@ -272,14 +272,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* Logout - always visible at bottom */}
-        <div className="w-full flex items-center justify-center flex-shrink-0 pt-4 mt-auto border-t border-slate-700/80">
+        <div className="w-full flex items-center justify-center flex-shrink-0 pt-3 mt-auto border-t border-slate-700/80">
           <button
             type="button"
             onClick={logout}
             title="Logout"
-            className="relative group flex items-center justify-center w-12 h-12 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-all duration-200"
+            className="relative group flex items-center justify-center w-10 h-10 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-all duration-200"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             <span className="pointer-events-none absolute left-full ml-2 bottom-1/2 translate-y-1/2 z-[100] rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 whitespace-nowrap border border-slate-700">
               Logout
             </span>
