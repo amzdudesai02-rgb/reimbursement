@@ -33,14 +33,19 @@ export default function AmazonAuthCallback() {
     setStatus('loading')
     // Normalize redirect_uri (no trailing slash) to match backend and Amazon console exactly
     const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000)
+
     api
       .post<{ store_id: number; store_name: string; message: string }>('/auth/amazon/callback', {
         spapi_oauth_code: code,
         selling_partner_id: sellingPartnerId,
         state,
         redirect_uri: redirectUri,
-      })
+      }, { signal: controller.signal })
       .then((res) => {
+        window.clearTimeout(timeoutId)
         setStatus('success')
         setMessage(res.data.message ?? 'Amazon store connected successfully!')
         if (window.opener) {
@@ -55,6 +60,12 @@ export default function AmazonAuthCallback() {
         }
       })
       .catch((err: { response?: { status?: number; data?: { detail?: string } }; message?: string }) => {
+        window.clearTimeout(timeoutId)
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          setStatus('error')
+          setMessage('Connecting to Amazon is taking too long. Please close this tab and click Connect Amazon again.')
+          return
+        }
         setStatus('error')
         const detail = err.response?.data?.detail
         const httpStatus = err.response?.status

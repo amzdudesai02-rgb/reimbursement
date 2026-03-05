@@ -134,9 +134,14 @@ export default function ManageStores() {
     try {
       // Backend callback: Amazon redirects to /api/auth/amazon/callback, backend exchanges code and redirects to /stores?amazon_connected=1
       const redirectUri = `${window.location.origin}/api/auth/amazon/callback`.replace(/\/$/, '')
+      // Add a safety timeout so UI never stays stuck on "Connecting…" if network hangs
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 20000)
       const { data } = await api.get<{ authorization_url: string; state: string }>('/auth/amazon/init', {
         params: { redirect_uri: redirectUri },
+        signal: controller.signal,
       })
+      window.clearTimeout(timeoutId)
       if (data.authorization_url) {
         const w = window.open(
           data.authorization_url,
@@ -152,10 +157,15 @@ export default function ManageStores() {
       }
       setConnectError('Could not start Amazon connection.')
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : null
-      setConnectError(typeof msg === 'string' ? msg : 'Failed to connect. Please try again.')
+      const aborted = err instanceof DOMException && err.name === 'AbortError'
+      if (aborted) {
+        setConnectError('Connection is taking too long. Please check your internet connection and try again.')
+      } else {
+        const msg = err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null
+        setConnectError(typeof msg === 'string' ? msg : 'Failed to connect. Please try again.')
+      }
     } finally {
       setConnectLoading(false)
     }

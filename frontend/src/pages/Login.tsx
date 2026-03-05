@@ -43,15 +43,23 @@ export default function Login() {
     setShowResend(false)
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/login', { email, password })
+      // Add a defensive timeout so login never hangs forever if the network is stuck
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 20000)
+      const { data } = await api.post('/auth/login', { email, password }, { signal: controller.signal })
+      window.clearTimeout(timeoutId)
       login(data.access_token)
       nav('/dashboard')
     } catch (error) {
-      const axiosErr = error as AxiosError<ApiErrorResponse>
-      const detail = axiosErr.response?.data?.detail
-      setErr(detailToMessage(detail))
-      if (typeof detail === 'object' && detail?.code === 'EMAIL_NOT_VERIFIED') {
-        setShowResend(true)
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setErr('Login is taking too long. Please check your internet connection and try again.')
+      } else {
+        const axiosErr = error as AxiosError<ApiErrorResponse>
+        const detail = axiosErr.response?.data?.detail
+        setErr(detailToMessage(detail))
+        if (typeof detail === 'object' && detail?.code === 'EMAIL_NOT_VERIFIED') {
+          setShowResend(true)
+        }
       }
     } finally {
       setLoading(false)
