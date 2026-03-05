@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Filter, Link2, Search, Unplug } from 'lucide-react'
 import DashboardLayout from '../components/DashboardLayout'
 import { api } from '../lib/api'
+import { useAuth } from '../auth/useAuth'
 import {
   tableWrapperClass,
   tableClass,
@@ -23,6 +25,8 @@ interface StoreFromApi {
 }
 
 export default function ManageStores() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const [stores, setStores] = useState<StoreFromApi[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -160,11 +164,20 @@ export default function ManageStores() {
       const aborted = err instanceof DOMException && err.name === 'AbortError'
       if (aborted) {
         setConnectError('Connection is taking too long. Please check your internet connection and try again.')
+      } else if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { status?: number; data?: { detail?: string } } }).response
+        const status = res?.status
+        const detail = res?.data?.detail
+        if (status === 401 || status === 403) {
+          // Session is no longer valid – log out and send user to login so they can sign in again cleanly.
+          logout()
+          navigate('/login', { replace: true })
+          setConnectError('Your session has expired. Please sign in again, then click Connect Amazon.')
+        } else {
+          setConnectError(typeof detail === 'string' ? detail : 'Failed to connect. Please try again.')
+        }
       } else {
-        const msg = err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-          : null
-        setConnectError(typeof msg === 'string' ? msg : 'Failed to connect. Please try again.')
+        setConnectError('Failed to connect. Please try again.')
       }
     } finally {
       setConnectLoading(false)
