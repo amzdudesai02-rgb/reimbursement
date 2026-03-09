@@ -43,3 +43,17 @@ export type Reimbursement = {
   original_reimbursement_id?: string
   original_reimbursement_type?: string
 }
+
+export type ShipmentQueueRow = {
+  id: number
+  store_id?: number
+  shipment_id?: string
+  reference_id?: string
+  shipment_name?: string
+  created_at?: string
+  updated_at?: string
+  ship_to?: string
+  sku_count?: number
+  expected_units?: number
+  status?: string
+}

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Download, Link2, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { api } from "../lib/api";
-import type { Reimbursement } from "../types";
+import type { Reimbursement, ShipmentQueueRow } from "../types";
 import {
   tableWrapperClass,
   tableClass,
@@ -25,6 +25,8 @@ const CASE_TABS = [
 
 const COLUMN_COUNT_CASE = 9;
 const COLUMN_COUNT_FULL = 19;
+const COLUMN_COUNT_SHIPMENT = 8;
+const COLUMN_COUNT_DETECTED = 10;
 
 function formatDate(dateStr: string | undefined) {
   if (!dateStr) return "—";
@@ -45,6 +47,7 @@ function showText(val: string | number | undefined | null): string {
 
 export default function Cases() {
   const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
+  const [shipments, setShipments] = useState<ShipmentQueueRow[]>([]);
   const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -64,10 +67,12 @@ export default function Cases() {
     const reimbursementsUrl = `/reimbursements?skip=0&limit=50000&_=${Date.now()}`;
     Promise.all([
       api.get<Reimbursement[]>(reimbursementsUrl).then((r) => r.data),
+      api.get<ShipmentQueueRow[]>(`/shipping-queue?skip=0&limit=50000&_=${Date.now()}`).then((r) => r.data),
       api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((r) => r.data),
     ])
-      .then(([r, s]) => {
+      .then(([r, sh, s]) => {
         setReimbursements(Array.isArray(r) ? r : []);
+        setShipments(Array.isArray(sh) ? sh : []);
         setStores(Array.isArray(s) ? s : []);
       })
       .catch((err) => {
@@ -76,6 +81,7 @@ export default function Cases() {
           : err?.response?.data?.detail || err?.message || "Failed to load reimbursements.";
         setFetchError(message);
         setReimbursements([]);
+        setShipments([]);
         setStores([]);
       })
       .finally(() => setLoading(false));
@@ -170,6 +176,29 @@ export default function Cases() {
     return s?.store_name ?? String(id);
   }, [stores]);
 
+  const filteredShipments = useMemo(() => {
+    let list = shipments;
+    if (storeIdFromName != null) {
+      list = list.filter((row) => row.store_id === storeIdFromName);
+    }
+    if (statusFilter !== "All") {
+      list = list.filter((row) => (row.status ?? "").toLowerCase() === statusFilter.toLowerCase());
+    }
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (row) =>
+          (row.shipment_id ?? "").toLowerCase().includes(q) ||
+          (row.reference_id ?? "").toLowerCase().includes(q) ||
+          (row.shipment_name ?? "").toLowerCase().includes(q) ||
+          (row.ship_to ?? "").toLowerCase().includes(q) ||
+          (row.status ?? "").toLowerCase().includes(q) ||
+          getStoreName(row.store_id).toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [shipments, storeIdFromName, statusFilter, searchQuery, getStoreName]);
+
   const caseTableRows = useMemo(() => {
     const rows = filtered.map((r) => ({
       id: r.id,
@@ -200,10 +229,69 @@ export default function Cases() {
     return rows;
   }, [filtered, getStoreName, caseSortBy, caseSortDir]);
 
+  const detectedRows = useMemo(() => {
+    const rows = reimbursements
+      .filter((r) => {
+        const reason = (r.reason ?? r.issue_type ?? "").toLowerCase();
+        return (
+          reason.includes("lost") ||
+          reason.includes("damaged") ||
+          reason.includes("warehouse") ||
+          reason.includes("inbound")
+        );
+      })
+      .map((r) => ({
+        id: r.id,
+        storeName: getStoreName(r.store_id),
+        transactionId: r.reimbursement_id ?? r.original_reimbursement_id ?? r.case_id,
+        reason: r.reason ?? r.issue_type,
+        eventDate: r.approval_date ?? r.date,
+        asin: r.asin,
+        sellerSku: r.sku,
+        fnsku: r.fnsku,
+        itemName: r.product_name ?? r.notes,
+        totalUnits: r.quantity_reimbursed_total ?? r.quantity_reimbursed_cash ?? r.quantity_reimbursed_inventory,
+        potentialValue: r.amount_total ?? r.amount,
+      }));
+
+    if (storeIdFromName != null) {
+      return rows.filter((row) => {
+        const s = stores.find((x) => x.store_name === row.storeName);
+        return s?.id === storeIdFromName;
+      });
+    }
+    return rows;
+  }, [reimbursements, stores, storeIdFromName, getStoreName]);
+
+  const filteredDetectedRows = useMemo(() => {
+    let list = detectedRows;
+    if (claimTypesFilter !== "All") {
+      list = list.filter((row) =>
+        (row.reason ?? "").toLowerCase().includes(claimTypesFilter.toLowerCase())
+      );
+    }
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (row) =>
+          row.storeName.toLowerCase().includes(q) ||
+          (row.transactionId ?? "").toLowerCase().includes(q) ||
+          (row.reason ?? "").toLowerCase().includes(q) ||
+          (row.asin ?? "").toLowerCase().includes(q) ||
+          (row.sellerSku ?? "").toLowerCase().includes(q) ||
+          (row.fnsku ?? "").toLowerCase().includes(q) ||
+          (row.itemName ?? "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [detectedRows, claimTypesFilter, searchQuery]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / entriesPerPage));
   const start = (currentPage - 1) * entriesPerPage;
   const pageRows = filtered.slice(start, start + entriesPerPage);
   const casePageRows = caseTableRows.slice(start, start + entriesPerPage);
+  const shipmentPageRows = filteredShipments.slice(start, start + entriesPerPage);
+  const detectedPageRows = filteredDetectedRows.slice(start, start + entriesPerPage);
   const hasStores = stores.length > 0;
 
   const toggleCaseSort = (col: typeof caseSortBy) => {
@@ -284,7 +372,11 @@ export default function Cases() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Claim Types</label>
                 <select value={claimTypesFilter} onChange={(e) => setClaimTypesFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[100px]">
-                  <option value="All">All</option>
+                  <option value="All">{activeTab === "detected" ? "Select" : "All"}</option>
+                  <option value="Lost">Lost</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Warehouse">Warehouse</option>
+                  <option value="Inbound">Inbound</option>
                 </select>
               </div>
               <div>
@@ -489,9 +581,149 @@ export default function Cases() {
         </div>
         )}
 
-        {(activeTab === "shipment" || activeTab === "detected") && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center text-gray-500">
-            No data for this report yet.
+        {activeTab === "shipment" && (
+          <div className={tableWrapperClass} style={{ overflowX: "auto" }}>
+            <table className={tableClass} style={{ minWidth: "max-content" }}>
+              <thead className={tableHeadClass}>
+                <tr>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Store Name</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Shipment ID</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">ASIN</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Seller SKU</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Fulfillment Network SKU</th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap">Shipped</th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap">Received</th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap">Discrepancies</th>
+                </tr>
+              </thead>
+              <tbody className={tableBodyClass}>
+                {loading ? (
+                  <tr>
+                    <td colSpan={COLUMN_COUNT_SHIPMENT} className={emptyStateCellClass}>Loading…</td>
+                  </tr>
+                ) : shipmentPageRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={COLUMN_COUNT_SHIPMENT} className={emptyStateCellClass}>
+                      {filteredShipments.length === 0
+                        ? "No shipment detail rows yet. Sync from Dashboard or Reimbursement Tool to load shipping queue data."
+                        : "No shipment rows match your filters."}
+                    </td>
+                  </tr>
+                ) : (
+                  shipmentPageRows.map((row) => {
+                    const shipped = row.expected_units ?? row.sku_count ?? null;
+                    const received = row.expected_units ?? row.sku_count ?? null;
+                    const discrepancies =
+                      shipped != null && received != null ? Math.max(Number(shipped) - Number(received), 0) : null;
+
+                    return (
+                      <tr key={row.id} className="transition-colors hover:bg-white/5">
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{getStoreName(row.store_id)}</td>
+                        <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(row.shipment_id)}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>—</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{showText(row.reference_id)}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>—</td>
+                        <td className={`${tableCellClass} text-right whitespace-nowrap`}>{shipped ?? "—"}</td>
+                        <td className={`${tableCellClass} text-right whitespace-nowrap`}>{received ?? "—"}</td>
+                        <td className={`${tableCellClass} text-right whitespace-nowrap`}>{discrepancies ?? "--"}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+            <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+              <div className="flex items-center gap-2">
+                <span>Show</span>
+                <select value={entriesPerPage} onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }} className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none">
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={500}>500</option>
+                  <option value={1000}>1000</option>
+                </select>
+                <span>Entries</span>
+              </div>
+              <div>Showing {filteredShipments.length ? start + 1 : 0} to {Math.min(start + entriesPerPage, filteredShipments.length)} of {filteredShipments.length}</div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+                <button type="button" onClick={() => setCurrentPage((p) => Math.min(Math.max(1, Math.ceil(filteredShipments.length / entriesPerPage)), p + 1))} disabled={currentPage === Math.max(1, Math.ceil(filteredShipments.length / entriesPerPage))} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "detected" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white px-6 py-5 text-sm text-gray-600 shadow-sm">
+              These are transaction IDs proactively identified by Amazon. If they are in this list it means they have not yet been reimbursed. Seller Investigators will continue to monitor this queue and file a case on your behalf if no reimbursements are made in 15 business days from the event date.
+            </div>
+            <div className={tableWrapperClass} style={{ overflowX: "auto" }}>
+              <table className={tableClass} style={{ minWidth: "max-content" }}>
+                <thead className={tableHeadClass}>
+                  <tr>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Store Name</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Transaction ID</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Reason</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Event Date</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">ASIN</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Seller SKU</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Fulfillment Network SKU</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Item Name</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">Total Units</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">Potential Value (net proceeds)</th>
+                  </tr>
+                </thead>
+                <tbody className={tableBodyClass}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={COLUMN_COUNT_DETECTED} className={emptyStateCellClass}>Loading…</td>
+                    </tr>
+                  ) : detectedPageRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={COLUMN_COUNT_DETECTED} className={emptyStateCellClass}>
+                        No data available
+                      </td>
+                    </tr>
+                  ) : (
+                    detectedPageRows.map((row) => (
+                      <tr key={row.id} className="transition-colors hover:bg-white/5">
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{row.storeName}</td>
+                        <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(row.transactionId)}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{showText(row.reason).replace(/_/g, " ")}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{formatDate(row.eventDate)}</td>
+                        <td className={`${tableCellClass} font-mono text-xs whitespace-nowrap`}>{showText(row.asin)}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{showText(row.sellerSku)}</td>
+                        <td className={`${tableCellClass} whitespace-nowrap`}>{showText(row.fnsku)}</td>
+                        <td className={`${tableCellClass} max-w-[180px] truncate`} title={row.itemName ?? ""}>{showText(row.itemName)}</td>
+                        <td className={`${tableCellClass} text-right whitespace-nowrap`}>{row.totalUnits ?? "—"}</td>
+                        <td className={`${tableCellClass} text-right font-semibold text-teal-200 whitespace-nowrap`}>
+                          {row.potentialValue != null ? Number(row.potentialValue).toFixed(2) : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div className={`${tableFooterClass} flex flex-wrap items-center justify-between gap-3`}>
+                <div className="flex items-center gap-2">
+                  <span>Show</span>
+                  <select value={entriesPerPage} onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }} className="rounded-xl border border-white/20 bg-transparent px-3 py-1 text-white focus:border-teal-300 focus:outline-none">
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={500}>500</option>
+                    <option value={1000}>1000</option>
+                  </select>
+                  <span>Entries</span>
+                </div>
+                <div>Showing {filteredDetectedRows.length ? start + 1 : 0} to {Math.min(start + entriesPerPage, filteredDetectedRows.length)} of {filteredDetectedRows.length}</div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+                  <button type="button" onClick={() => setCurrentPage((p) => Math.min(Math.max(1, Math.ceil(filteredDetectedRows.length / entriesPerPage)), p + 1))} disabled={currentPage === Math.max(1, Math.ceil(filteredDetectedRows.length / entriesPerPage))} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

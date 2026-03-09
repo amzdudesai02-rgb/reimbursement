@@ -713,6 +713,7 @@ async def list_shipping_queue(skip: int = 0, limit: int = 100, user=Depends(get_
         return [
             {
                 "id": r.id,
+                "store_id": r.store_id,
                 "shipment_id": r.shipment_id,
                 "reference_id": r.reference_id,
                 "shipment_name": r.shipment_name,
