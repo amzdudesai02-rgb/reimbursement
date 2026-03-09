@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Info, Menu, Link2, RefreshCw, LayoutGrid, BarChart3 } from "lucide-react";
 import { api } from "../lib/api";
-import type { Summary, Reimbursement } from "../types";
+import type { Summary, SummaryBreakdown } from "../types";
 import DashboardLayout from "../components/DashboardLayout";
 
 const currencyFormatter = (currency = "USD") =>
@@ -16,7 +16,7 @@ type StoreFromApi = { id: number; store_name: string; is_connected: boolean };
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
+  const [breakdownRows, setBreakdownRows] = useState<SummaryBreakdown[]>([]);
   const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -59,26 +59,26 @@ export default function Dashboard() {
       paramsSummary._ = String(Date.now()); // cache-bust so dashboard always gets fresh data
       const qsSummary = new URLSearchParams(paramsSummary).toString();
 
-      const paramsReimb: Record<string, string> = { skip: "0", limit: "50000" };
+      const paramsBreakdown: Record<string, string> = {};
       if (augustSeptemberParams) {
-        paramsReimb.date_after = augustSeptemberParams.date_after;
-        paramsReimb.date_before = augustSeptemberParams.date_before;
-      } else if (daysBackParam != null) paramsReimb.days_back = String(daysBackParam);
-      if (storeIdParam != null) paramsReimb.store_id = String(storeIdParam);
-      paramsReimb._ = String(Date.now()); // cache-bust
-      const qsReimb = new URLSearchParams(paramsReimb).toString();
+        paramsBreakdown.date_after = augustSeptemberParams.date_after;
+        paramsBreakdown.date_before = augustSeptemberParams.date_before;
+      } else if (daysBackParam != null) paramsBreakdown.days_back = String(daysBackParam);
+      if (storeIdParam != null) paramsBreakdown.store_id = String(storeIdParam);
+      paramsBreakdown._ = String(Date.now());
+      const qsBreakdown = new URLSearchParams(paramsBreakdown).toString();
 
-      const [s, r, st] = await Promise.all([
+      const [s, b, st] = await Promise.all([
         api.get<Summary>(`/summary?${qsSummary}`).then((res) => res.data),
-        api.get<Reimbursement[]>(`/reimbursements?${qsReimb}`).then((res) => res.data),
+        api.get<SummaryBreakdown[]>(`/summary-breakdown?${qsBreakdown}`).then((res) => res.data),
         api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((res) => res.data),
       ]);
       setSummary(s);
-      setReimbursements(r);
+      setBreakdownRows(Array.isArray(b) ? b : []);
       setStores(st);
     } catch (error) {
       setSummary(null);
-      setReimbursements([]);
+      setBreakdownRows([]);
       setStores([]);
       const message =
         error && typeof error === "object" && "response" in error
@@ -140,15 +140,8 @@ export default function Dashboard() {
   }, [loading, hasStores, stores.length, summary?.row_count, loadData]);
 
   const breakdownByReason = useMemo(() => {
-    const map: Record<string, { amount: number; cases: number }> = {};
-    for (const r of reimbursements) {
-      const key = r.issue_type ?? "Other";
-      if (!map[key]) map[key] = { amount: 0, cases: 0 };
-      map[key].amount += r.amount;
-      map[key].cases += 1;
-    }
-    return Object.entries(map).sort((a, b) => b[1].amount - a[1].amount);
-  }, [reimbursements]);
+    return breakdownRows.map((row) => [row.reason, { amount: row.amount, cases: row.cases }] as const);
+  }, [breakdownRows]);
 
   return (
     <DashboardLayout>
@@ -242,7 +235,7 @@ export default function Dashboard() {
           </div>
           <p className="text-sm font-semibold text-gray-700 mb-4">NA Region</p>
           <p className="text-xs text-gray-500 mb-4">
-            Dashboard is loading up to 50,000 reimbursement rows for the selected range, with summary totals based on the full database query.
+            Dashboard is loading aggregated reimbursement totals for the selected range, so cards load faster and more reliably.
           </p>
         </div>
 

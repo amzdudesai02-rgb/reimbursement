@@ -51,6 +51,12 @@ class SummaryOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+class SummaryBreakdownOut(BaseModel):
+    reason: str
+    amount: float
+    cases: int
+
 class SignupIn(BaseModel):
    name: str
    email: EmailStr

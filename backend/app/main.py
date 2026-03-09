@@ -40,6 +40,7 @@ from app.schemas import (
     TokenOut,
     ContactIn,
     SummaryOut,
+    SummaryBreakdownOut,
     ReimbursementOut,
     MessageOut,
     VerifyTokenIn,
@@ -683,6 +684,28 @@ async def summary(
             store_ids = [store_id] if store_id in store_ids else []
         s = crud.get_summary(db, store_ids=store_ids, days_back=days_back, date_after=date_after, date_before=date_before)
         return SummaryOut(**s)
+
+
+@app.get(f"{API_PREFIX}/summary-breakdown", response_model=list[SummaryBreakdownOut])
+async def summary_breakdown(
+    days_back: int | None = Query(None, description="Filter to last N days (e.g. 30, 90, 180); omit for all time"),
+    date_after: str | None = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    date_before: str | None = Query(None, description="Filter to date (YYYY-MM-DD)"),
+    store_id: int | None = Query(None, description="Filter to one store; omit for all stores"),
+    user=Depends(get_current_user),
+):
+    with get_session() as db:
+        store_ids = _user_store_ids(db, user, connected_only=True)
+        if store_id is not None:
+            store_ids = [store_id] if store_id in store_ids else []
+        rows = crud.get_summary_breakdown(
+            db,
+            store_ids=store_ids,
+            days_back=days_back,
+            date_after=date_after,
+            date_before=date_before,
+        )
+        return [SummaryBreakdownOut(**row) for row in rows]
 
 
 @app.get(f"{API_PREFIX}/reimbursements", response_model=list[ReimbursementOut])

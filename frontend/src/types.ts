@@ -12,6 +12,12 @@ export type Summary = {
    row_count: number
 }
 
+export type SummaryBreakdown = {
+   reason: string
+   amount: number
+   cases: number
+}
+
 
 export type Reimbursement = {
    id: number
