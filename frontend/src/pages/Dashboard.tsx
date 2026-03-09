@@ -13,6 +13,7 @@ const currencyFormatter = (currency = "USD") =>
   });
 
 type StoreFromApi = { id: number; store_name: string; is_connected: boolean };
+const LOAD_TIMEOUT_MS = 15000;
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -68,14 +69,29 @@ export default function Dashboard() {
       paramsBreakdown._ = String(Date.now());
       const qsBreakdown = new URLSearchParams(paramsBreakdown).toString();
 
-      const [s, b, st] = await Promise.all([
-        api.get<Summary>(`/summary?${qsSummary}`).then((res) => res.data),
-        api.get<SummaryBreakdown[]>(`/summary-breakdown?${qsBreakdown}`).then((res) => res.data),
-        api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((res) => res.data),
+      const [summaryResult, breakdownResult, storesResult] = await Promise.allSettled([
+        api.get<Summary>(`/summary?${qsSummary}`, { timeout: LOAD_TIMEOUT_MS }).then((res) => res.data),
+        api.get<SummaryBreakdown[]>(`/summary-breakdown?${qsBreakdown}`, { timeout: LOAD_TIMEOUT_MS }).then((res) => res.data),
+        api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((res) => res.data),
       ]);
-      setSummary(s);
-      setBreakdownRows(Array.isArray(b) ? b : []);
-      setStores(st);
+
+      const nextSummary = summaryResult.status === "fulfilled" ? summaryResult.value : null;
+      const nextBreakdown = breakdownResult.status === "fulfilled" && Array.isArray(breakdownResult.value) ? breakdownResult.value : [];
+      const nextStores = storesResult.status === "fulfilled" && Array.isArray(storesResult.value) ? storesResult.value : [];
+
+      setSummary(nextSummary);
+      setBreakdownRows(nextBreakdown);
+      setStores(nextStores);
+
+      const failedMessages = [
+        summaryResult.status === "rejected" ? "summary" : null,
+        breakdownResult.status === "rejected" ? "reason breakdown" : null,
+        storesResult.status === "rejected" ? "stores" : null,
+      ].filter(Boolean);
+
+      if (failedMessages.length > 0) {
+        setLoadError(`Some dashboard data could not load (${failedMessages.join(", ")}). Please try Refresh data.`);
+      }
     } catch (error) {
       setSummary(null);
       setBreakdownRows([]);

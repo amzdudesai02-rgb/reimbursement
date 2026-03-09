@@ -24,6 +24,8 @@ interface StoreFromApi {
   created_at: string
 }
 
+const LOAD_TIMEOUT_MS = 15000
+
 export default function ManageStores() {
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -41,7 +43,7 @@ export default function ManageStores() {
   useEffect(() => {
     let mounted = true
     api
-      .get<StoreFromApi[]>('/stores')
+      .get<StoreFromApi[]>('/stores', { timeout: LOAD_TIMEOUT_MS })
       .then((res) => { if (mounted) setStores(res.data) })
       .catch(() => { if (mounted) setStores([]) })
       .finally(() => { if (mounted) setLoading(false) })

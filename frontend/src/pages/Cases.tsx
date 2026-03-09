@@ -15,6 +15,7 @@ import {
 } from "../styles/tableTheme";
 
 type StoreFromApi = { id: number; store_name: string };
+const LOAD_TIMEOUT_MS = 15000;
 
 const CASE_TABS = [
   { id: "summary", label: "Summary" },
@@ -65,15 +66,25 @@ export default function Cases() {
     setLoading(true);
     // All time: no date filter; cache-bust so we get fresh data after sync
     const reimbursementsUrl = `/reimbursements?skip=0&limit=50000&_=${Date.now()}`;
-    Promise.all([
-      api.get<Reimbursement[]>(reimbursementsUrl).then((r) => r.data),
-      api.get<ShipmentQueueRow[]>(`/shipping-queue?skip=0&limit=50000&_=${Date.now()}`).then((r) => r.data),
-      api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((r) => r.data),
+    Promise.allSettled([
+      api.get<Reimbursement[]>(reimbursementsUrl, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
+      api.get<ShipmentQueueRow[]>(`/shipping-queue?skip=0&limit=50000&_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
+      api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
     ])
       .then(([r, sh, s]) => {
-        setReimbursements(Array.isArray(r) ? r : []);
-        setShipments(Array.isArray(sh) ? sh : []);
-        setStores(Array.isArray(s) ? s : []);
+        setReimbursements(r.status === "fulfilled" && Array.isArray(r.value) ? r.value : []);
+        setShipments(sh.status === "fulfilled" && Array.isArray(sh.value) ? sh.value : []);
+        setStores(s.status === "fulfilled" && Array.isArray(s.value) ? s.value : []);
+
+        const failedMessages = [
+          r.status === "rejected" ? "reimbursements" : null,
+          sh.status === "rejected" ? "shipment detail" : null,
+          s.status === "rejected" ? "stores" : null,
+        ].filter(Boolean);
+
+        if (failedMessages.length > 0) {
+          setFetchError(`Some case data could not load (${failedMessages.join(", ")}). Please try Refresh.`);
+        }
       })
       .catch((err) => {
         const message = err?.response?.status === 401
