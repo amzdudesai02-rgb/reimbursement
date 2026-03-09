@@ -74,7 +74,6 @@ function Shell(){
           <Route path="/support" element={<Support/>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
           <Route path="/security" element={<Security/>} />
-          <Route path="/reimbursement-tool" element={<ReimbursementTool/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/verify" element={<VerifyEmail/>} />
@@ -95,7 +94,8 @@ export default function App(){
      <PageTitle />
      <Routes>
        <Route path="/dashboard" element={<Protected><Dashboard/></Protected>} />
-       <Route path="/cases" element={<Protected><Cases/></Protected>} />
+      <Route path="/cases" element={<Protected><Cases/></Protected>} />
+      <Route path="/reimbursement-tool" element={<Protected><ReimbursementTool/></Protected>} />
        <Route path="/documents" element={<Protected><Documents/></Protected>} />
        <Route path="/orders" element={<Protected><Orders/></Protected>} />
        <Route path="/stores" element={<Protected><ManageStores/></Protected>} />

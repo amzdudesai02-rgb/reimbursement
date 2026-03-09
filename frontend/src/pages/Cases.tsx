@@ -61,7 +61,7 @@ export default function Cases() {
     setFetchError(null);
     setLoading(true);
     // All time: no date filter; cache-bust so we get fresh data after sync
-    const reimbursementsUrl = `/reimbursements?skip=0&limit=10000&_=${Date.now()}`;
+    const reimbursementsUrl = `/reimbursements?skip=0&limit=50000&_=${Date.now()}`;
     Promise.all([
       api.get<Reimbursement[]>(reimbursementsUrl).then((r) => r.data),
       api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`).then((r) => r.data),

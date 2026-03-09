@@ -1,8 +1,38 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, Sparkles, LineChart } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  LineChart,
+  Link2,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import tutorialShot from "../assets/home1.png";
 import { pricingPlans } from "../data/pricingData";
+import DashboardLayout from "../components/DashboardLayout";
+import { useAuth } from "../auth/useAuth";
+import { api } from "../lib/api";
+import type { Reimbursement, Summary, UploadReport } from "../types";
+import {
+  emptyStateCellClass,
+  tableBodyClass,
+  tableCellClass,
+  tableClass,
+  tableHeadClass,
+  tableWrapperClass,
+} from "../styles/tableTheme";
+
+type StoreFromApi = {
+  id: number;
+  store_name: string;
+  region?: string | null;
+  is_connected: boolean;
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -54,7 +84,26 @@ const tutorials = [
   },
 ];
 
-export default function ReimbursementTool() {
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function showText(value?: string | number | null) {
+  if (value == null) return "—";
+  const text = String(value).trim();
+  return text || "—";
+}
+
+function MarketingTool() {
   return (
     <div className="space-y-20">
       <motion.section
@@ -258,5 +307,271 @@ export default function ReimbursementTool() {
       </motion.section>
     </div>
   );
+}
+
+function ReimbursementToolApp() {
+  const [stores, setStores] = useState<StoreFromApi[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const connectedStores = useMemo(
+    () => stores.filter((store) => store.is_connected),
+    [stores]
+  );
+
+  const loadToolData = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const [storesRes, summaryRes, reimbursementsRes] = await Promise.all([
+        api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`),
+        api.get<Summary>(`/summary?days_back=180&_=${Date.now()}`),
+        api.get<Reimbursement[]>(`/reimbursements?skip=0&limit=50000&days_back=180&_=${Date.now()}`),
+      ]);
+      setStores(storesRes.data);
+      setSummary(summaryRes.data);
+      setReimbursements(reimbursementsRes.data);
+    } catch (error) {
+      setStores([]);
+      setSummary(null);
+      setReimbursements([]);
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null;
+      setErrorMessage(typeof message === "string" ? message : "Failed to load reimbursement tool data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadToolData();
+  }, [loadToolData]);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    setInfoMessage(null);
+    setErrorMessage(null);
+    try {
+      const { data } = await api.post<{
+        synced: boolean;
+        stores_synced: number;
+        reimbursements_added: number;
+        shipments_updated: number;
+        message?: string;
+        errors?: string[];
+      }>("/sync", { client_time: new Date().toISOString() });
+      if (!data.synced && data.errors?.length) {
+        setErrorMessage(data.errors[0]);
+      } else {
+        setInfoMessage(
+          data.message ??
+            `Sync complete. ${data.reimbursements_added} reimbursements added across ${data.stores_synced} connected store(s).`
+        );
+      }
+      await loadToolData();
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null;
+      setErrorMessage(typeof message === "string" ? message : "Failed to sync reimbursement data.");
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadToolData]);
+
+  const handleUpload = useCallback(async (file?: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    setInfoMessage(null);
+    setErrorMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await api.post<UploadReport>("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setInfoMessage(
+        `Upload complete. ${data.inserted_rows} rows inserted, ${data.skipped_rows} skipped. Dashboard now shows the latest 180-day totals.`
+      );
+      await loadToolData();
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null;
+      setErrorMessage(typeof message === "string" ? message : "Failed to upload reimbursement file.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [loadToolData]);
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <section className="rounded-3xl bg-gradient-to-br from-orange-50 to-white p-8 shadow-sm border border-orange-100">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
+            Reimbursement Tool
+          </p>
+          <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Fully Working Reimbursement Console</h1>
+              <p className="mt-2 max-w-3xl text-sm text-slate-600">
+                Sync Amazon reimbursements, upload report files, and verify the same data is loading into the dashboard.
+                Dashboard totals below are based on the last 180 days and refresh after each sync/upload.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleSync}
+                disabled={syncing}
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Refresh Amazon Data"}
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading ? "Uploading..." : "Upload CSV / TSV"}
+              </button>
+              <Link
+                to="/stores"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                <Link2 className="h-4 w-4" />
+                Manage Stores
+              </Link>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.tsv,text/csv,text/tab-separated-values"
+            className="hidden"
+            onChange={(event) => handleUpload(event.target.files?.[0])}
+          />
+        </section>
+
+        {infoMessage && (
+          <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>{infoMessage}</span>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Connected Stores</p>
+            <p className="mt-3 text-3xl font-bold text-slate-900">{connectedStores.length}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              {connectedStores.length > 0
+                ? connectedStores.map((store) => store.store_name).join(", ")
+                : "Connect Amazon in Manage Stores to start syncing."}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dashboard Rows (180 Days)</p>
+            <p className="mt-3 text-3xl font-bold text-slate-900">{summary?.row_count ?? 0}</p>
+            <p className="mt-2 text-sm text-slate-500">These rows are what the dashboard is currently using.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Recovered Value (180 Days)</p>
+            <p className="mt-3 text-3xl font-bold text-slate-900">
+              {new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: summary?.currency ?? "USD",
+                maximumFractionDigits: 2,
+              }).format(summary?.total_amount ?? 0)}
+            </p>
+            <p className="mt-2 text-sm text-slate-500">Refresh data to load the newest Amazon reimbursement records.</p>
+          </div>
+        </section>
+
+        {!loading && connectedStores.length === 0 && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+            No connected Amazon stores yet. Open `Manage Stores`, connect Amazon, then return here and click `Refresh Amazon Data`.
+          </div>
+        )}
+
+        <section className={tableWrapperClass}>
+          <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Recent Reimbursements Loaded Into Dashboard</h2>
+              <p className="mt-1 text-sm text-white/60">Latest 180-day records currently available to the dashboard and cases pages.</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className={tableClass}>
+              <thead className={tableHeadClass}>
+                <tr>
+                  <th className="px-6 py-4">Approval Date</th>
+                  <th className="px-6 py-4">Reimbursement ID</th>
+                  <th className="px-6 py-4">Reason</th>
+                  <th className="px-6 py-4">SKU</th>
+                  <th className="px-6 py-4">ASIN</th>
+                  <th className="px-6 py-4 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className={tableBodyClass}>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className={emptyStateCellClass}>Loading reimbursement tool data...</td>
+                  </tr>
+                ) : reimbursements.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className={emptyStateCellClass}>No reimbursement records loaded yet.</td>
+                  </tr>
+                ) : (
+                  reimbursements.slice(0, 12).map((item) => (
+                    <tr key={item.id} className="transition-colors hover:bg-white/5">
+                      <td className={tableCellClass}>{formatDate(item.approval_date ?? item.date)}</td>
+                      <td className={`${tableCellClass} font-mono text-xs`}>{showText(item.reimbursement_id)}</td>
+                      <td className={tableCellClass}>{showText(item.reason ?? item.issue_type).replace(/_/g, " ")}</td>
+                      <td className={tableCellClass}>{showText(item.sku)}</td>
+                      <td className={tableCellClass}>{showText(item.asin)}</td>
+                      <td className={`${tableCellClass} text-right font-semibold text-teal-200`}>
+                        {new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: item.currency_unit ?? item.currency ?? "USD",
+                          maximumFractionDigits: 2,
+                        }).format(item.amount_total ?? item.amount ?? 0)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+export default function ReimbursementTool() {
+  const { token } = useAuth();
+  return token ? <ReimbursementToolApp /> : <MarketingTool />;
 }
 

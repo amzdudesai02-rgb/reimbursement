@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [stores, setStores] = useState<StoreFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState("Last 180 days");
   const [storeFilter, setStoreFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "bars">("grid");
@@ -46,6 +48,7 @@ export default function Dashboard() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const paramsSummary: Record<string, string> = {};
       if (augustSeptemberParams) {
@@ -56,7 +59,7 @@ export default function Dashboard() {
       paramsSummary._ = String(Date.now()); // cache-bust so dashboard always gets fresh data
       const qsSummary = new URLSearchParams(paramsSummary).toString();
 
-      const paramsReimb: Record<string, string> = { skip: "0", limit: "10000" };
+      const paramsReimb: Record<string, string> = { skip: "0", limit: "50000" };
       if (augustSeptemberParams) {
         paramsReimb.date_after = augustSeptemberParams.date_after;
         paramsReimb.date_before = augustSeptemberParams.date_before;
@@ -73,10 +76,15 @@ export default function Dashboard() {
       setSummary(s);
       setReimbursements(r);
       setStores(st);
-    } catch {
+    } catch (error) {
       setSummary(null);
       setReimbursements([]);
       setStores([]);
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null;
+      setLoadError(typeof message === "string" ? message : "Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -93,17 +101,27 @@ export default function Dashboard() {
     // Backend will respond with a helpful message when no stores are connected.
     if (syncing) return;
     setSyncing(true);
+    setSyncMessage(null);
+    setLoadError(null);
     try {
-      await api.post<{
+      const { data } = await api.post<{
         synced: boolean;
         reimbursements_added: number;
         stores_synced: number;
         errors: string[];
         message?: string;
       }>("/sync", { client_time: new Date().toISOString() });
+      setSyncMessage(
+        data.message ??
+          `Sync complete. ${data.reimbursements_added} reimbursements added across ${data.stores_synced} store(s).`
+      );
       await loadData();
-    } catch {
-      // Do not show any update or error message
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null;
+      setLoadError(typeof message === "string" ? message : "Failed to refresh dashboard data.");
     } finally {
       setSyncing(false);
     }
@@ -137,6 +155,16 @@ export default function Dashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+          {syncMessage && (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {syncMessage}
+            </div>
+          )}
+          {loadError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {loadError}
+            </div>
+          )}
           {!hasStores && !loading && (
             <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -213,6 +241,9 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-sm font-semibold text-gray-700 mb-4">NA Region</p>
+          <p className="text-xs text-gray-500 mb-4">
+            Dashboard is loading up to 50,000 reimbursement rows for the selected range, with summary totals based on the full database query.
+          </p>
         </div>
 
         {loading ? (
