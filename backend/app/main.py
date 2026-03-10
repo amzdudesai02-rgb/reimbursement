@@ -380,19 +380,33 @@ def amazon_oauth_init(
     # Always use backend callback - must match Developer Central OAuth Redirect URI
     callback_url = BACKEND_CALLBACK_URL.rstrip('/')
     state = secrets.token_urlsafe(32)
-    
+
     # Store state with 10-minute TTL and user_id (for GET callback)
     now = datetime.utcnow()
     _oauth_state_cache[state] = {"exp": now + timedelta(minutes=10), "user_id": user.id}
-    
+
     # Clean up expired states (simple cleanup, in production use Redis TTL)
     expired = [s for s, v in _oauth_state_cache.items() if v["exp"] < now]
     for s in expired:
         _oauth_state_cache.pop(s, None)
-    
-    authorization_url = generate_authorization_url(state, redirect_uri=callback_url)
+
+    try:
+        authorization_url = generate_authorization_url(state, redirect_uri=callback_url)
+    except ValueError as e:
+        # Configuration problem (e.g. AMAZON_APP_ID or redirect URI). Surface clearly to the UI.
+        logger.error("amazon_oauth_init: configuration error: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Amazon OAuth is not configured correctly on the backend: {e}",
+        )
+    except Exception as e:
+        logger.exception("amazon_oauth_init: unexpected error generating authorization URL")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to start Amazon connection: {e}",
+        )
+
     logger.info("amazon_oauth_init: Generated state=%s for user_id=%s redirect_uri=%s", state[:8] + "...", user.id, callback_url)
-    
     return AmazonOAuthInitOut(authorization_url=authorization_url, state=state)
 
 
