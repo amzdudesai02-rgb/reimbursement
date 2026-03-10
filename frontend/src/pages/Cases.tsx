@@ -68,7 +68,7 @@ export default function Cases() {
     const reimbursementsUrl = `/reimbursements?skip=0&limit=50000&_=${Date.now()}`;
     Promise.allSettled([
       api.get<Reimbursement[]>(reimbursementsUrl, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
-      api.get<ShipmentQueueRow[]>(`/shipping-queue?skip=0&limit=50000&_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
+      api.get<ShipmentQueueRow[]>(`/shipping-queue?skip=0&limit=10000&_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
       api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`, { timeout: LOAD_TIMEOUT_MS }).then((r) => r.data),
     ])
       .then(([r, sh, s]) => {
