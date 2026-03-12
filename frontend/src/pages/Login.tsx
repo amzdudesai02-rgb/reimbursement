@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { AxiosError } from 'axios'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, Lock, Mail, Shield, Zap } from 'lucide-react'
 import { api } from '../lib/api'
 import { useAuth } from '../auth/useAuth'
@@ -29,12 +29,21 @@ export default function Login() {
   const [showResend, setShowResend] = useState(false)
   const { login } = useAuth()
   const nav = useNavigate()
+  const location = useLocation()
 
   const detailToMessage = (detail?: ApiErrorDetail) => {
     if (!detail) return 'Login failed'
     if (typeof detail === 'string') return detail
     return detail.message ?? 'Login failed'
   }
+
+  // Show a friendly message when redirected here after an expired/invalid session.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('session') === 'expired') {
+      setErr('Your session has expired or your account was removed. Please log in again.')
+    }
+  }, [location.search])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
