@@ -11,9 +11,11 @@ const currencyFormatter = (currency = "USD") =>
     currency,
     maximumFractionDigits: 2,
   });
-
 type StoreFromApi = { id: number; store_name: string; is_connected: boolean };
-const LOAD_TIMEOUT_MS = 15000;
+
+// Allow up to 60 seconds for dashboard summary endpoints so we don't
+// prematurely show "could not load" when the backend is still aggregating.
+const LOAD_TIMEOUT_MS = 60000;
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -90,7 +92,28 @@ export default function Dashboard() {
       ].filter(Boolean);
 
       if (failedMessages.length > 0) {
-        setLoadError(`Some dashboard data could not load (${failedMessages.join(", ")}). Please try Refresh data.`);
+        // Try to surface at least one backend error message to help diagnose issues.
+        const firstError =
+          summaryResult.status === "rejected"
+            ? (summaryResult.reason as any)
+            : breakdownResult.status === "rejected"
+              ? (breakdownResult.reason as any)
+              : storesResult.status === "rejected"
+                ? (storesResult.reason as any)
+                : null;
+
+        const detail =
+          firstError && typeof firstError === "object" && "response" in firstError
+            ? (firstError as { response?: { data?: { detail?: string } } }).response?.data?.detail
+            : null;
+
+        const suffix = typeof detail === "string" ? ` Error: ${detail}` : "";
+
+        setLoadError(
+          `Some dashboard data could not load (${failedMessages.join(
+            ", ",
+          )}). Please try Refresh data.${suffix}`,
+        );
       }
     } catch (error) {
       setSummary(null);
