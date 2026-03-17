@@ -25,17 +25,17 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // Default to all-time view; user can choose shorter ranges if desired.
-  const [dateRange, setDateRange] = useState("All Time");
+  // Default to recent data to reduce SP-API load.
+  const [dateRange, setDateRange] = useState("Last 30 days");
   const [storeFilter, setStoreFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "bars">("grid");
   const hasAutoSynced = useRef(false);
 
   const daysBackParam = useMemo(() => {
+    if (dateRange === "Last 7 days") return 7;
     if (dateRange === "Last 30 days") return 30;
     if (dateRange === "Last 90 days") return 90;
-    if (dateRange === "Last 180 days") return 180;
-    // "All Time" and custom ranges use no days_back (backend returns all available data).
+    // "All Time" uses no days_back (backend returns all available data).
     return undefined;
   }, [dateRange]);
 
@@ -237,13 +237,12 @@ export default function Dashboard() {
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
-              title="Last 180 days = default; All Time = all synced data"
+              title="Recent ranges reduce Amazon SP-API usage; All Time loads all synced data."
             >
-              <option value="Last 180 days">Date Range: Last 180 days</option>
-              <option value="All Time">All Time (all synced data)</option>
-              <option value="August & September">August & September (last year)</option>
+              <option value="Last 7 days">Last 7 days</option>
               <option value="Last 30 days">Last 30 days</option>
               <option value="Last 90 days">Last 90 days</option>
+              <option value="All Time">All Time (all synced data)</option>
             </select>
             <select
               value={storeFilter}

@@ -17,8 +17,8 @@ REPORT_TYPE = "GET_FBA_REIMBURSEMENTS_DATA"
 POLL_INTERVAL = 15
 MAX_WAIT_SEC = 600
 # Default lookback window for the FBA reimbursement report when no explicit dates are provided.
-# 365 days ensures we always request at least a year of data (more than the 180-day minimum requested).
-BACKFILL_DAYS = 365
+# Keep this modest to avoid extremely large reports and SP-API QuotaExceeded errors.
+BACKFILL_DAYS = 90
 
 
 def _parse_approval_date(s: Optional[str]) -> Optional[datetime]:

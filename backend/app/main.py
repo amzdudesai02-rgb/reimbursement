@@ -840,10 +840,25 @@ async def sync_reimbursements(
                     selling_partner_id=conn.selling_partner_id,
                     marketplace_id=store.marketplace_id or "ATVPDKIKX0DER",
                 )
+                # Determine incremental sync window based on last_sync_at so we don't
+                # refetch full history on every run.
+                last_sync_at = conn.last_sync_at
+                # Small overlap (7 days) to catch late-arriving adjustments.
+                overlap_days = 7
+                if last_sync_at:
+                    report_start = last_sync_at - timedelta(days=overlap_days)
+                else:
+                    report_start = max_posted_before - timedelta(days=reports_sync.BACKFILL_DAYS)
+                report_end = max_posted_before
+
                 # Reports first (dedicated FBA reimbursements report, often more complete)
                 try:
                     report_rows = reports_sync.fetch_reimbursements_report(
-                        client, store.id, store.marketplace_id or "ATVPDKIKX0DER"
+                        client,
+                        store.id,
+                        store.marketplace_id or "ATVPDKIKX0DER",
+                        data_start_time=report_start,
+                        data_end_time=report_end,
                     )
                     n_report = crud.insert_or_ignore_reimbursements_from_financial_events(db, report_rows)
                     reimbursements_added += n_report
@@ -851,10 +866,13 @@ async def sync_reimbursements(
                 except Exception as report_err:
                     logger.warning("Sync store_id=%s report failed: %s", store.id, report_err)
                     errors.append(f"{store.store_name} (report): {report_err}")
-                # Finances API (adjustments, SAFET, refunds)
+                # Finances API (adjustments, SAFET, refunds) – incremental window.
                 try:
                     events = finances_sync.fetch_reimbursement_events(
-                        client, store.id, max_posted_before=max_posted_before
+                        client,
+                        store.id,
+                        posted_after=report_start,
+                        max_posted_before=max_posted_before,
                     )
                     n_fin = crud.insert_or_ignore_reimbursements_from_financial_events(db, events)
                     reimbursements_added += n_fin

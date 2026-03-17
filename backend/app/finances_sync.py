@@ -20,8 +20,8 @@ FINANCES_PATH = "/finances/v0/financialEvents"
 MAX_PAGES = 50
 DAYS_PER_WINDOW = 30  # Fetch in 30-day chunks to avoid incomplete results
 # How far back to fetch when no explicit posted_after is given.
-# 365 days gives at least 1 year of history (more than the 180-day minimum the user requested)
-BACKFILL_DAYS = 365
+# Keep this modest to avoid hammering SP-API and hitting QuotaExceeded.
+BACKFILL_DAYS = 90
 
 
 def _parse_iso(s: Optional[str]) -> Optional[datetime]:
