@@ -331,8 +331,10 @@ function ReimbursementToolApp() {
     try {
       const [storesRes, summaryRes, reimbursementsRes] = await Promise.all([
         api.get<StoreFromApi[]>(`/stores?_=${Date.now()}`),
-        api.get<Summary>(`/summary?days_back=180&_=${Date.now()}`),
-        api.get<Reimbursement[]>(`/reimbursements?skip=0&limit=50000&days_back=180&_=${Date.now()}`),
+        // All-time summary for connected stores (no days_back filter).
+        api.get<Summary>(`/summary?_=${Date.now()}`),
+        // Load recent reimbursements up to the configured limit for inspection.
+        api.get<Reimbursement[]>(`/reimbursements?skip=0&limit=50000&_=${Date.now()}`),
       ]);
       setStores(storesRes.data);
       setSummary(summaryRes.data);
@@ -400,7 +402,7 @@ function ReimbursementToolApp() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setInfoMessage(
-        `Upload complete. ${data.inserted_rows} rows inserted, ${data.skipped_rows} skipped. Dashboard now shows the latest 180-day totals.`
+        `Upload complete. ${data.inserted_rows} rows inserted, ${data.skipped_rows} skipped. Dashboard totals now reflect the latest data.`
       );
       await loadToolData();
     } catch (error) {
@@ -427,7 +429,7 @@ function ReimbursementToolApp() {
               <h1 className="text-3xl font-bold text-slate-900">Fully Working Reimbursement Console</h1>
               <p className="mt-2 max-w-3xl text-sm text-slate-600">
                 Sync Amazon reimbursements, upload report files, and verify the same data is loading into the dashboard.
-                Dashboard totals below are based on the last 180 days and refresh after each sync/upload.
+                Dashboard totals below reflect all synced data for your connected stores.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -492,12 +494,12 @@ function ReimbursementToolApp() {
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dashboard Rows (180 Days)</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dashboard Rows (All Time)</p>
             <p className="mt-3 text-3xl font-bold text-slate-900">{summary?.row_count ?? 0}</p>
             <p className="mt-2 text-sm text-slate-500">These rows are what the dashboard is currently using.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Recovered Value (180 Days)</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Recovered Value (All Time)</p>
             <p className="mt-3 text-3xl font-bold text-slate-900">
               {new Intl.NumberFormat("en-US", {
                 style: "currency",

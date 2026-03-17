@@ -25,15 +25,17 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState("Last 180 days");
+  // Default to all-time view; user can choose shorter ranges if desired.
+  const [dateRange, setDateRange] = useState("All Time");
   const [storeFilter, setStoreFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "bars">("grid");
   const hasAutoSynced = useRef(false);
 
   const daysBackParam = useMemo(() => {
-    if (dateRange === "Last 180 days") return 180;
     if (dateRange === "Last 30 days") return 30;
     if (dateRange === "Last 90 days") return 90;
+    if (dateRange === "Last 180 days") return 180;
+    // "All Time" and custom ranges use no days_back (backend returns all available data).
     return undefined;
   }, [dateRange]);
 
