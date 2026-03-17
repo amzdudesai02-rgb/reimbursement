@@ -20,9 +20,10 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# Frontend origin for redirects (backend GET callback redirects here)
+# Frontend origin for redirects.
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "https://reimbursement.amzdudes.io").rstrip("/")
-BACKEND_CALLBACK_URL = f"{FRONTEND_ORIGIN}/api/auth/amazon/callback"
+# OAuth redirect goes to the SPA route; that page then posts to the backend.
+BACKEND_CALLBACK_URL = f"{FRONTEND_ORIGIN}/auth/amazon/callback"
 
 # In-memory cache for OAuth state (CSRF protection).
 # Entries: {state: {"exp": datetime, "user_id": int}}

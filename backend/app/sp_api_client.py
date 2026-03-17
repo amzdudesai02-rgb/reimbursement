@@ -34,7 +34,9 @@ AWS_IAM_ROLE_ARN = os.getenv("AMAZON_AWS_IAM_ROLE_ARN")
 AWS_REGION = os.getenv("AMAZON_AWS_REGION", "us-east-1")
 OAUTH_REDIRECT_URI = os.getenv(
     "AMAZON_OAUTH_REDIRECT_URI",
-    "https://reimbursement.amzdudes.io/api/auth/amazon/callback",
+    # Default to frontend callback route. The SPA page at /auth/amazon/callback
+    # reads Amazon's query params and posts them to the backend.
+    "https://reimbursement.amzdudes.io/auth/amazon/callback",
 )
 
 # SP-API endpoints

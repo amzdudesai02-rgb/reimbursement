@@ -138,8 +138,8 @@ export default function ManageStores() {
     setConnectError(null)
     setConnectLoading(true)
     try {
-      // Backend callback: Amazon redirects to /api/auth/amazon/callback, backend exchanges code and redirects to /stores?amazon_connected=1
-      const redirectUri = `${window.location.origin}/api/auth/amazon/callback`.replace(/\/$/, '')
+      // OAuth redirect goes to frontend /auth/amazon/callback; that page then posts to the backend.
+      const redirectUri = `${window.location.origin}/auth/amazon/callback`.replace(/\/$/, '')
       // Add a safety timeout so UI never stays stuck on "Connecting…" if network hangs
       const controller = new AbortController()
       const timeoutId = window.setTimeout(() => controller.abort(), 20000)
