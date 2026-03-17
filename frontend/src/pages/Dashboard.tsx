@@ -95,14 +95,17 @@ export default function Dashboard() {
 
       if (failedMessages.length > 0) {
         // Try to surface at least one backend error message to help diagnose issues.
-        const firstError =
+        type SettledRejection = { reason?: unknown };
+        const firstErrorSource: SettledRejection | null =
           summaryResult.status === "rejected"
-            ? (summaryResult.reason as any)
+            ? summaryResult
             : breakdownResult.status === "rejected"
-              ? (breakdownResult.reason as any)
+              ? breakdownResult
               : storesResult.status === "rejected"
-                ? (storesResult.reason as any)
+                ? storesResult
                 : null;
+
+        const firstError = firstErrorSource?.reason;
 
         const detail =
           firstError && typeof firstError === "object" && "response" in firstError
