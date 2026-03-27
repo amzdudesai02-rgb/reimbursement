@@ -7,6 +7,8 @@ import os
 import json
 import logging
 import time
+import random
+import threading
 import hmac
 import hashlib
 import base64
@@ -16,13 +18,66 @@ from urllib.parse import urlparse, quote
 
 import httpx
 
-# 429 retry: exponential backoff (1s, 2s, 4s, 8s, 16s)
+# 429 retry: exponential backoff with Retry-After support
 MAX_RETRIES_429 = 5
 RETRY_BASE_SECONDS = 1
 import boto3
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
+
+
+class _RateLimiter:
+    """
+    Very small in-process rate limiter to avoid SP-API throttling.
+    Amazon support confirmed Finances listFinancialEvents is 0.5 req/sec (1 request every 2 seconds).
+    We enforce a minimum interval per "bucket".
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._next_allowed_at: dict[str, float] = {}
+
+    def wait(self, bucket: str, min_interval_sec: float) -> None:
+        now = time.monotonic()
+        with self._lock:
+            next_allowed = self._next_allowed_at.get(bucket, 0.0)
+            wait_for = max(0.0, next_allowed - now)
+            # Reserve the next slot now to prevent concurrent callers from bursting.
+            self._next_allowed_at[bucket] = max(next_allowed, now) + min_interval_sec
+        if wait_for > 0:
+            time.sleep(wait_for)
+
+
+_rate_limiter = _RateLimiter()
+
+
+def _bucket_for_path(path: str) -> tuple[str, float] | None:
+    """
+    Return (bucket_name, min_interval_sec) for API paths that need strict pacing.
+    """
+    p = (path or "").lower()
+    if p.startswith("/finances/"):
+        # Per Amazon support: 0.5 req/sec -> 2 seconds minimum spacing.
+        return ("finances", 2.0)
+    return None
+
+
+def _retry_sleep_seconds(response: httpx.Response, attempt: int) -> float:
+    """
+    Determine how long to sleep before retrying after throttling.
+    - Honor Retry-After if provided
+    - Otherwise exponential backoff with small jitter
+    """
+    ra = response.headers.get("Retry-After")
+    if ra:
+        try:
+            return max(0.0, float(ra))
+        except ValueError:
+            pass
+    # Exponential backoff: 1, 2, 4, 8, 16 (plus jitter)
+    base = RETRY_BASE_SECONDS * (2 ** attempt)
+    return base + random.uniform(0.0, 0.25 * base)
 
 # Load environment variables
 LWA_CLIENT_ID = os.getenv("AMAZON_LWA_CLIENT_ID")
@@ -241,6 +296,12 @@ class SPAPIClient:
         body: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Make an authenticated SP-API request"""
+        # Enforce per-operation pacing to prevent QuotaExceeded throttling.
+        bucket = _bucket_for_path(path)
+        if bucket is not None:
+            bucket_name, min_interval_sec = bucket
+            _rate_limiter.wait(bucket_name, min_interval_sec)
+
         url = f"{self.base_url}{path}"
         
         # Build query string
@@ -266,7 +327,7 @@ class SPAPIClient:
 
         # GET/HEAD: no body (SP-API returns 400 if GET has body or Content-Length)
         send_content = body_str if method.upper() not in ("GET", "HEAD") else None
-        last_response = None
+        last_response: httpx.Response | None = None
         for attempt in range(MAX_RETRIES_429):
             response = httpx.request(
                 method=method,
@@ -277,7 +338,7 @@ class SPAPIClient:
             )
             last_response = response
             if response.status_code == 429 and attempt < MAX_RETRIES_429 - 1:
-                wait_sec = RETRY_BASE_SECONDS ** (attempt + 1)
+                wait_sec = _retry_sleep_seconds(response, attempt)
                 logger.warning(
                     "SP-API 429 QuotaExceeded for %s %s, retry %s/%s in %s seconds",
                     method,
